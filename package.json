@@ -1,0 +1,11 @@
+{
+  "name": "english-study-app",
+  "private": true,
+  "description": "中高生向け英文法の自己学習Webアプリ（試作品：不定詞）",
+  "scripts": {
+    "check": "node tools/validate-bank.mjs && node --test tests/*.test.mjs",
+    "e2e": "node tests/e2e.mjs",
+    "build": "node tools/build-artifact.mjs",
+    "serve": "python3 -m http.server 8000"
+  }
+}
