@@ -4,7 +4,7 @@
  * 結果（result）の種類：
  *   correct    正解
  *   minor      確認したい部分（不定詞）は正しいが、ほかに小さな直しがある
- *   alt        英文として正しいが、今回確認したい形（不定詞）を使っていない
+ *   alt        問題で指定した形（to＋動詞）を使っていない（英文として正しいかどうかは判定しない）
  *   incorrect  誤り（よくある誤りに当てはまった、または選択・並び替えが違う）
  *   unmatched  自動では判定できない（正答例とも、よくある誤りとも一致しない）→ 誤りと断定しない
  *   gaveup     「わからない」を選んだ
@@ -92,7 +92,7 @@
       }
       return {
         result: 'unmatched',
-        feedback: '登録されている正答例・よくある誤りのどちらとも一致しなかったため、自動では判定していません。誤りと決まったわけではありません。正答例と見比べてみてください。',
+        feedback: '登録されている正答例・よくある誤りのどちらとも一致しなかったため、自動では判定していません。誤りと決まったわけではありません。正答例と見比べてください（講師が確認できるよう記録しています）。',
         normalized: n
       };
     }
@@ -113,9 +113,9 @@
   var RESULT_INFO = {
     correct:   { mark: '○', label: '正解', tone: 'ok' },
     minor:     { mark: '○', label: '不定詞は正解（ほかに小さな直し）', tone: 'ok' },
-    alt:       { mark: '△', label: '別の正しい表現', tone: 'hold' },
+    alt:       { mark: '△', label: '指定の形（to＋動詞）と違う', tone: 'hold' },
     incorrect: { mark: '×', label: '不正解', tone: 'ng' },
-    unmatched: { mark: '？', label: '判定保留（自動判定できない答え）', tone: 'hold' },
+    unmatched: { mark: '？', label: '採点保留（自動で判定できない答え）', tone: 'hold' },
     gaveup:    { mark: '—', label: '「わからない」を選択', tone: 'ng' }
   };
 

@@ -113,20 +113,5 @@
     draw();
   }
 
-  /** 正解の並びと同じにならないように混ぜる */
-  function shuffledPool(tokens, answers) {
-    var idx = tokens.map(function (_, i) { return i; });
-    for (var tries = 0; tries < 20; tries++) {
-      for (var i = idx.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var t = idx[i]; idx[i] = idx[j]; idx[j] = t;
-      }
-      var text = EA.grading.normalize(idx.map(function (k) { return tokens[k]; }).join(' '));
-      var same = answers.some(function (a) { return EA.grading.normalize(a) === text; });
-      if (!same) break;
-    }
-    return idx;
-  }
-
-  EA.orderWidget = { mount: mount, shuffledPool: shuffledPool };
+  EA.orderWidget = { mount: mount };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -37,6 +37,13 @@ for (const bank of Object.values(EA.banks)) {
     const joined = q.explanation.chunks.map((c) => c.en).join(' ');
     if (N(joined) !== N(q.explanation.answer)) warn(q.id, `解説の区切り「${joined}」が英文と一致しません`);
     if (q.reason && !q.reason.choices.some((c) => c.id === q.reason.answer)) warn(q.id, 'reason.answer が選択肢にありません');
+    if (q.reason && q.format === 'meaning') warn(q.id, '意味の確認問題には reason を付けません（問題そのものが意味の確認のため）');
+    if (q.reason && q.format === 'fill') {
+      const ans = q.choices.find((c) => c.id === q.answer).text;
+      if (q.reason.prompt.includes(ans)) warn(q.id, `理由の質問文に正答「${ans}」が含まれています`);
+    }
+    if (q.format === 'ja2en' && (q.alternatives || []).length && !/to/.test(q.instruction)) warn(q.id, '指定の形と違う答えを扱うなら、指示に条件（to＋動詞）を書いてください');
+    if (q.version > 1 && !(q.changes || []).some((c) => c.version === q.version)) warn(q.id, `版${q.version}の changes（変更内容と過去の記録の扱い）がありません`);
     for (const sid of q.similar || []) {
       const s = bank.questions.find((x) => x.id === sid);
       if (!s) warn(q.id, `類題 ${sid} がありません`);

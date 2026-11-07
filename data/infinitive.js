@@ -16,20 +16,41 @@
  *   meaning … 意味の確認（文法用語を使わずに「誰が・何のために」などを問う）
  *   ※ 正誤判断＋理由選択（judge）は追加候補で、まだ実装していません。
  *
+ * ■ 理由の質問（reason）
+ *   reason: 'role' と書くと、「to＋動詞のまとまりが文にどんな意味を加えているか」を3択で聞きます。
+ *   質問文に正答の語句は入れません（答えがわかってしまうため）。正解の選択肢は skill から自動で決まります。
+ *   出すのは類題・復習・確認問題で、答えが正解かつヒントなしのときだけです（診断と意味の確認問題では聞きません）。
+ *
+ * ■ 版（version）と過去の記録
+ *   changes に、版を上げた理由と過去の記録の扱いを書きます。
+ *   excludedVersions … その版の回答を判定に使わない
+ *   reasonValidFrom  … その版より前の「理由」の回答は判定に使わない（答えの正誤は有効）
+ *
  * ■ ja2en の採点
  *   入力は「大文字小文字・前後や連続する空白・文末の . ! ?・’ と '」を区別せずに比べます。
  *   短縮形（don't / I'd など）は元の形に直してから比べます。
  *   accepted     … 正答として認める英文（小文字・文末記号なしで書く）
  *   errors       … よくある誤り（正規表現）。result: 'incorrect' か 'minor'
  *                  minor = 不定詞の部分は正しいが、冠詞など別の小さな直しがある
- *   alternatives … 正しい英文だが、今回確認したい不定詞を使っていないもの（正規表現）
+ *   alternatives … 指示した形（to＋動詞）を使っていない答え（正規表現）。英文として正しいかどうかは判定しない
  *   どれにも当てはまらない答えは「自動では判定できない（判定保留）」として扱い、誤りとは断定しません。
  */
 (function (root) {
   'use strict';
   var EA = root.EA = root.EA || {};
 
-  EA.registerBank({
+  // 理由の質問：to＋動詞のまとまりが文に加える意味（文法用語を知らなくても選べる言い方）
+  var ROLE_CHOICES = [
+    { id: 'inf-noun', text: '「何を」したい・好き・始めたのか、その中身を表す（〜すること）' },
+    { id: 'inf-adj', text: 'すぐ前の言葉が「どんな〜か」を説明する（〜するための・〜すべき）' },
+    { id: 'inf-adv', text: '「何のために」その行動をしたのかを表す（〜するために）' }
+  ];
+  var ROLE_PROMPT = {
+    fill: 'あなたが空所に入れた語句は、この文でどんな意味を加えていますか？',
+    order: '動詞の前の to から始まるまとまりは、この文でどんな意味を加えていますか？'
+  };
+
+  var bank = {
     unit: {
       id: 'infinitive',
       title: '不定詞（基本）',
@@ -42,26 +63,33 @@
         id: 'inf-noun',
         label: '〜すること',
         term: '名詞的用法',
-        plain: '「何をしたいのか」「何が好きなのか」「夢は何か」を to＋動詞 で表す'
+        plain: '「何をしたいのか」「何が好きなのか」「夢は何か」を to＋動詞 で表す',
+        basics: { example: 'I want to play tennis.', exampleJa: '私はテニスをしたい。', mark: 'to play tennis',
+          point: 'want（望む）の中身＝「テニスをすること」。want to ～ で「～したい」。like to ～ は「～することが好き」。' }
       },
       {
         id: 'inf-adj',
         label: '〜するための・〜すべき',
         term: '形容詞的用法',
-        plain: '前にある「もの・こと・時間」などを、to＋動詞 があとから説明する'
+        plain: '前にある「もの・こと・時間」などを、to＋動詞 があとから説明する',
+        basics: { example: 'I have homework to do.', exampleJa: '私にはやるべき宿題がある。', mark: 'to do',
+          point: 'homework（宿題）→「どんな宿題？」→ to do（やるべき）。この形では、説明の to＋動詞 が名詞のうしろに来ます。' }
       },
       {
         id: 'inf-adv',
         label: '〜するために',
         term: '副詞的用法（目的）',
-        plain: '「何のために」その行動をしたのかを to＋動詞 で表す'
+        plain: '「何のために」その行動をしたのかを to＋動詞 で表す',
+        basics: { example: 'I went to the park to play soccer.', exampleJa: '私はサッカーをするために公園へ行った。', mark: 'to play soccer',
+          point: '「公園へ行った」→「何のために？」→ to play soccer（サッカーをするために）。行動のあとに目的をつけ加えます。' }
       }
     ],
 
     questions: [
       /* ============ 初回診断（6問） ============ */
       {
-        id: 'inf-d1', version: 1, status: 'active',
+        id: 'inf-d1', version: 2, status: 'active',
+        changes: [{ version: 2, what: '選択肢 plays の説明を、主語の形の説明に修正', oldRecords: '答えの正誤は有効（問題文・正答は同じ）' }],
         role: 'diagnostic', skill: 'inf-noun', format: 'fill',
         checks: 'want のあとに「したいこと」を to＋動詞の原形 で表せるか',
         instruction: '日本語に合うように、空所に入るものを選びましょう。',
@@ -70,7 +98,7 @@
         choices: [
           { id: 'a', text: 'play', feedback: 'want のすぐあとに動詞の原形だけを置くことはできません。' },
           { id: 'b', text: 'to play' },
-          { id: 'c', text: 'plays', feedback: 'plays は「（彼が）する」の形です。want のあとには続きません。' },
+          { id: 'c', text: 'plays', feedback: 'plays は主語が he・she などのときの形です。この文では want のあとに置けません。' },
           { id: 'd', text: 'played', feedback: 'played は過去の形です。「したい（こと）」にはなりません。' }
         ],
         answer: 'b',
@@ -89,15 +117,16 @@
         similar: ['inf-p-n1', 'inf-p-n2']
       },
       {
-        id: 'inf-d2', version: 1, status: 'active',
+        id: 'inf-d2', version: 2, status: 'active',
+        changes: [{ version: 2, what: '選択肢の説明を、この文に限った言い方に修正', oldRecords: '答えの正誤は有効（問題文・正答は同じ）' }],
         role: 'diagnostic', skill: 'inf-adv', format: 'fill',
         checks: '行動の目的（何のために）を to＋動詞の原形 で表せるか',
         instruction: '日本語に合うように、空所に入るものを選びましょう。',
         ja: '彼女は本を借りるために図書館へ行った。',
         sentence: 'She went to the library ___ some books.',
         choices: [
-          { id: 'a', text: 'borrow', feedback: 'went のあとに、もう一つの動詞をそのまま続けることはできません。' },
-          { id: 'b', text: 'borrows', feedback: '1つの文に「行った」「借りる」の2つの動詞をそのまま並べることはできません。' },
+          { id: 'a', text: 'borrow', feedback: 'この文では、went … library のあとに borrow をそのまま続けることはできません。「借りるために」は to borrow です。' },
+          { id: 'b', text: 'borrows', feedback: 'この文では、went と borrows をつなぐ言葉がないため、そのまま並べられません。' },
           { id: 'c', text: 'to borrow' },
           { id: 'd', text: 'borrowed', feedback: '「行って借りた」と言いたいなら and が必要です。ここでは「借りるために」です。' }
         ],
@@ -116,7 +145,8 @@
         similar: ['inf-p-v1', 'inf-p-v2']
       },
       {
-        id: 'inf-d3', version: 1, status: 'active',
+        id: 'inf-d3', version: 2, status: 'active',
+        changes: [{ version: 2, what: '解説の「日本語とは逆に」という一般化を、この文の説明に修正', oldRecords: '答えの正誤は有効（問題文・正答は同じ）' }],
         role: 'diagnostic', skill: 'inf-adj', format: 'order',
         checks: '名詞（time）を to＋動詞 があとから説明する語順を作れるか',
         instruction: '日本語に合うように、語句を並べかえましょう。',
@@ -132,7 +162,7 @@
             { en: 'time', ja: '時間（どんな？）' },
             { en: 'to watch TV', ja: 'テレビを見る（ための）', mark: true }
           ],
-          point: 'to watch TV は time を説明しています。日本語とは逆に、説明が名詞のうしろに来ます。',
+          point: 'to watch TV は time を説明しています。この文では、説明の to watch TV が time のうしろに来ます。',
           term: '形容詞的用法（〜するための）'
         },
         similar: ['inf-p-a1', 'inf-p-a3']
@@ -159,10 +189,11 @@
         similar: ['inf-p-v3', 'inf-p-v1']
       },
       {
-        id: 'inf-d5', version: 1, status: 'active',
+        id: 'inf-d5', version: 2, status: 'active',
+        changes: [{ version: 2, what: '指示に「to＋動詞の原形を使って」を明記。別の形の答えを「正しい英文」と表示しないよう変更', oldRecords: '答えの正誤は有効。版1の「別の正しい表現」は「指定の形と違う」として扱う' }],
         role: 'diagnostic', skill: 'inf-noun', format: 'ja2en',
         checks: '「〜になること」を to＋動詞の原形 で表し、文を作れるか',
-        instruction: '日本語の意味になるように、英文を書きましょう。',
+        instruction: 'to＋動詞の原形 を使って、日本語の意味になるように英文を書きましょう。',
         ja: '私の夢は先生になることです。',
         accepted: ['my dream is to be a teacher', 'my dream is to become a teacher'],
         errors: [
@@ -177,7 +208,7 @@
         ],
         alternatives: [
           { pattern: '^my dream is (being|becoming) a teacher$',
-            feedback: '英文としては正しいです。今回は to＋動詞の原形 で書く練習なので、to be / to become でも書いてみましょう。' }
+            feedback: 'この問題は to＋動詞の原形 を使う条件です。to be / to become を使って書いてみましょう。' }
         ],
         hint: '「なる」は be または become。「なること」をどう表すかがポイントです。',
         explanation: {
@@ -188,16 +219,17 @@
             { en: 'My dream is', ja: '私の夢は〜です（何？）' },
             { en: 'to be a teacher', ja: '先生になること', mark: true }
           ],
-          point: '「夢＝先生になること」。to be a teacher が is のあとで夢の中身を表します。to がないと「夢＝先生（人）」のようになってしまいます。',
+          point: '「夢＝先生になること」。to be a teacher が is のあとで夢の中身を表します。My dream is a teacher. とすると「夢＝先生（という人）」という文になります。',
           term: '名詞的用法（〜すること）'
         },
         similar: ['inf-p-n2', 'inf-p-n3']
       },
       {
-        id: 'inf-d6', version: 1, status: 'active',
+        id: 'inf-d6', version: 2, status: 'active',
+        changes: [{ version: 2, what: '指示に「to＋動詞の原形を使って」を明記。「bookの前に読むを置けない」という一般化を修正', oldRecords: '答えの正誤は有効（正答は同じ）' }],
         role: 'diagnostic', skill: 'inf-adj', format: 'ja2en',
         checks: '「読む本」のように、名詞を to＋動詞 があとから説明する文を作れるか',
-        instruction: '日本語の意味になるように、英文を書きましょう。',
+        instruction: 'to＋動詞の原形 を使って、日本語の意味になるように英文を書きましょう。',
         ja: '私は読む本がほしい。',
         accepted: [
           'i want a book to read', 'i want some books to read', 'i want books to read',
@@ -209,7 +241,7 @@
           { pattern: '^i (want|would like) (a |some )?books? read$', result: 'incorrect',
             feedback: 'read の前に to が必要です。「読むための」は to read で表します。' },
           { pattern: '^i (want|would like) (a |some )?read(ing)? books?$', result: 'incorrect',
-            feedback: '英語では「読む本」の「読む」を book の前に置けません。book のうしろに to read を続けます。' },
+            feedback: 'この文では、「読む（ための）本」を book のうしろに to read を置いて表します。' },
           { pattern: '^i (want|would like) book to read$', result: 'minor',
             feedback: 'to read の部分は正しくできています。book の前に a（または books と複数形）が必要です。' }
         ],
@@ -233,7 +265,8 @@
       /* ============ 類題・復習用 ============ */
       /* --- 〜すること（名詞的用法） --- */
       {
-        id: 'inf-p-n1', version: 1, status: 'active',
+        id: 'inf-p-n1', version: 2, status: 'active', reasonValidFrom: 2,
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }],
         role: 'practice', skill: 'inf-noun', format: 'fill',
         checks: 'like のあとに「好きなこと」を to＋動詞 で表せるか',
         instruction: '日本語に合うように、空所に入るものを選びましょう。',
@@ -241,21 +274,13 @@
         sentence: 'Mika likes ___ pictures.',
         choices: [
           { id: 'a', text: 'draw', feedback: 'likes のすぐあとに動詞の原形だけを置くことはできません。' },
-          { id: 'b', text: 'draws', feedback: '「好き」と「かく」の2つの動詞をそのまま並べることはできません。' },
+          { id: 'b', text: 'draws', feedback: 'この文では、likes と draws をつなぐ言葉がないため、そのまま並べられません。' },
           { id: 'c', text: 'drew', feedback: 'drew は過去の形です。' },
           { id: 'd', text: 'to draw' }
         ],
         answer: 'd',
         hint: '「絵をかくこと」が、ミカの好きなものです。',
-        reason: {
-          prompt: 'なぜ to draw になりますか？',
-          choices: [
-            { id: 'a', text: '「かくこと」が、好きなものの中身を表すから' },
-            { id: 'b', text: '「かくために」好きになったから' },
-            { id: 'c', text: '「絵」がどんな絵かを説明しているから' }
-          ],
-          answer: 'a'
-        },
+        reason: 'role',
         explanation: {
           answer: 'Mika likes to draw pictures.',
           translation: 'ミカは絵をかくことが好きです。',
@@ -268,29 +293,21 @@
         }
       },
       {
-        id: 'inf-p-n2', version: 1, status: 'active',
+        id: 'inf-p-n2', version: 2, status: 'active',
+        changes: [{ version: 2, what: '理由の質問を削除（意味の確認問題そのものが意味の確認のため）。選択肢を「〜たい」でそろえ、言葉の形から推測しにくくした', oldRecords: '答えの正誤は有効' }],
         role: 'practice', skill: 'inf-noun', format: 'meaning',
         checks: 'want to be の意味（〜になりたい）を理解しているか',
         instruction: '英文を読んで、質問に答えましょう。',
         sentence: 'My brother wants to be a doctor.',
         question: 'お兄さんは、何をしたいと思っていますか？',
         choices: [
-          { id: 'a', text: '医者に会いたい', feedback: '「会う」は meet / see です。be は「〜である・〜になる」。' },
+          { id: 'a', text: '医者に会いたい', feedback: '「会う」は meet / see です。be はここでは「〜になる」です。' },
           { id: 'b', text: '医者になりたい' },
-          { id: 'c', text: '医者になるために勉強している', feedback: '「勉強している」にあたる語は英文にありません。' },
-          { id: 'd', text: '医者が好きだ', feedback: 'wants は「好き」ではなく「望む・〜したい」です。' }
+          { id: 'c', text: '医者に診てもらいたい', feedback: '「診てもらう」にあたる語は英文にありません。be はここでは「〜になる」です。' },
+          { id: 'd', text: '医者と話したい', feedback: '「話す」にあたる語は英文にありません。' }
         ],
         answer: 'b',
         hint: 'wants to ～ は「～したい」。be はここでは「～になる」です。',
-        reason: {
-          prompt: 'to be a doctor は、どんな意味のまとまりですか？',
-          choices: [
-            { id: 'a', text: '医者になるために' },
-            { id: 'b', text: '医者になること（＝したいことの中身）' },
-            { id: 'c', text: '医者になるべき人' }
-          ],
-          answer: 'b'
-        },
         explanation: {
           answer: 'My brother wants to be a doctor.',
           translation: '兄は医者になりたいと思っている。',
@@ -303,7 +320,8 @@
         }
       },
       {
-        id: 'inf-p-n3', version: 1, status: 'active',
+        id: 'inf-p-n3', version: 2, status: 'active', reasonValidFrom: 2,
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }],
         role: 'practice', skill: 'inf-noun', format: 'order',
         checks: 'like to ＋動詞 の語順を作れるか',
         instruction: '日本語に合うように、語句を並べかえましょう。',
@@ -311,15 +329,7 @@
         tokens: ['I', 'like', 'to', 'speak', 'English'],
         answers: ['I like to speak English'],
         hint: '「私は好き」→「何が？」→「英語を話すこと」の順です。',
-        reason: {
-          prompt: 'to speak English は、文の中でどんな役割ですか？',
-          choices: [
-            { id: 'a', text: '「何のために」好きなのかを表す' },
-            { id: 'b', text: '「何が」好きなのか（好きなことの中身）を表す' },
-            { id: 'c', text: '「英語」がどんな英語かを説明する' }
-          ],
-          answer: 'b'
-        },
+        reason: 'role',
         explanation: {
           answer: 'I like to speak English.',
           translation: '私は英語を話すことが好きです。',
@@ -332,7 +342,8 @@
         }
       },
       {
-        id: 'inf-p-n4', version: 1, status: 'active',
+        id: 'inf-p-n4', version: 2, status: 'active', reasonValidFrom: 2,
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }],
         role: 'practice', skill: 'inf-noun', format: 'fill',
         checks: 'start のあとに「始めたこと」を to＋動詞 で表せるか',
         instruction: '日本語に合うように、空所に入るものを選びましょう。',
@@ -341,11 +352,12 @@
         choices: [
           { id: 'a', text: 'to eat' },
           { id: 'b', text: 'eat', feedback: 'started のすぐあとに動詞の原形だけを置くことはできません。' },
-          { id: 'c', text: 'ate', feedback: '「始めた」と「食べた」の2つの過去形をそのまま並べることはできません。' },
-          { id: 'd', text: 'eats', feedback: 'eats は「（彼が）食べる」の形です。' }
+          { id: 'c', text: 'ate', feedback: 'この文では、started と ate をつなぐ言葉がないため、そのまま並べられません。' },
+          { id: 'd', text: 'eats', feedback: 'eats は主語が he・she などのときの形です。この文では started のあとに置けません。' }
         ],
         answer: 'a',
         hint: '始めたのは「昼食を食べること」です。',
+        reason: 'role',
         explanation: {
           answer: 'We started to eat lunch at noon.',
           translation: '私たちは正午に昼食を食べ始めた。',
@@ -361,7 +373,8 @@
 
       /* --- 〜するための・〜すべき（形容詞的用法） --- */
       {
-        id: 'inf-p-a1', version: 1, status: 'active',
+        id: 'inf-p-a1', version: 2, status: 'active', reasonValidFrom: 2,
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }],
         role: 'practice', skill: 'inf-adj', format: 'fill',
         checks: '名詞（homework）を to＋動詞 があとから説明する形を選べるか',
         instruction: '日本語に合うように、空所に入るものを選びましょう。',
@@ -371,19 +384,11 @@
           { id: 'a', text: 'do', feedback: 'homework のあとに動詞の原形だけを置いても、「やるべき」という説明になりません。' },
           { id: 'b', text: 'to do' },
           { id: 'c', text: 'did', feedback: 'did は過去の形です。' },
-          { id: 'd', text: 'does', feedback: '「持っている」と「する」の2つの動詞をそのまま並べることはできません。' }
+          { id: 'd', text: 'does', feedback: 'この文では、does を homework のあとに置いても「やるべき」という説明になりません。' }
         ],
         answer: 'b',
         hint: '「宿題」→「どんな宿題？」→「今夜やるべき」。',
-        reason: {
-          prompt: 'to do は、どの言葉を説明していますか？',
-          choices: [
-            { id: 'a', text: 'I（私）' },
-            { id: 'b', text: 'homework（宿題）' },
-            { id: 'c', text: 'tonight（今夜）' }
-          ],
-          answer: 'b'
-        },
+        reason: 'role',
         explanation: {
           answer: 'I have a lot of homework to do tonight.',
           translation: '私には今夜やるべき宿題がたくさんある。',
@@ -396,7 +401,8 @@
         }
       },
       {
-        id: 'inf-p-a2', version: 1, status: 'active',
+        id: 'inf-p-a2', version: 2, status: 'active',
+        changes: [{ version: 2, what: '理由の質問を削除（意味の確認問題そのものが意味の確認のため）', oldRecords: '答えの正誤は有効' }],
         role: 'practice', skill: 'inf-adj', format: 'meaning',
         checks: 'to visit が説明している名詞を見分けられるか',
         instruction: '英文を読んで、質問に答えましょう。',
@@ -410,15 +416,6 @@
         ],
         answer: 'c',
         hint: '「どんな場所？」と聞いてみましょう。',
-        reason: {
-          prompt: 'この英文は、どんな意味ですか？',
-          choices: [
-            { id: 'a', text: '京都には訪れるべき場所がたくさんある' },
-            { id: 'b', text: '京都は多くの場所を訪れたい' },
-            { id: 'c', text: '京都を訪れるために、場所がたくさんある' }
-          ],
-          answer: 'a'
-        },
         explanation: {
           answer: 'Kyoto has many places to visit.',
           translation: '京都には訪れるべき場所がたくさんある。',
@@ -432,7 +429,8 @@
         }
       },
       {
-        id: 'inf-p-a3', version: 1, status: 'active',
+        id: 'inf-p-a3', version: 2, status: 'active', reasonValidFrom: 2,
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }],
         role: 'practice', skill: 'inf-adj', format: 'order',
         checks: 'time を to＋動詞 があとから説明する語順を作れるか',
         instruction: '日本語に合うように、語句を並べかえましょう。',
@@ -440,15 +438,7 @@
         tokens: ["It's", 'time', 'to', 'go', 'to', 'bed'],
         answers: ["It's time to go to bed"],
         hint: '「時間です」→「どんな時間？」→「寝る（ための）」。go to bed で「寝る」。',
-        reason: {
-          prompt: 'to go to bed は、どの言葉を説明していますか？',
-          choices: [
-            { id: 'a', text: 'time（時間）' },
-            { id: 'b', text: "It's（それは〜です）" },
-            { id: 'c', text: 'bed（ベッド）' }
-          ],
-          answer: 'a'
-        },
+        reason: 'role',
         explanation: {
           answer: "It's time to go to bed.",
           translation: 'もう寝る時間です。',
@@ -461,7 +451,8 @@
         }
       },
       {
-        id: 'inf-p-a4', version: 1, status: 'active',
+        id: 'inf-p-a4', version: 2, status: 'active', reasonValidFrom: 2,
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }],
         role: 'practice', skill: 'inf-adj', format: 'fill',
         checks: 'something を to＋動詞 があとから説明する形を選べるか',
         instruction: '日本語に合うように、空所に入るものを選びましょう。',
@@ -471,19 +462,11 @@
           { id: 'a', text: 'drink', feedback: 'something のあとに動詞の原形だけを置いても、「飲むための」という説明になりません。' },
           { id: 'b', text: 'drank', feedback: 'drank は過去の形です。' },
           { id: 'c', text: 'to drink' },
-          { id: 'd', text: 'drinks', feedback: 'drinks は「（彼が）飲む」の形です。' }
+          { id: 'd', text: 'drinks', feedback: 'drinks は主語が he・she などのときの形です。この文では something のあとに置けません。' }
         ],
         answer: 'c',
         hint: '「何か」→「どんな何か？」→「飲むための」。',
-        reason: {
-          prompt: 'to drink は、どの言葉を説明していますか？',
-          choices: [
-            { id: 'a', text: 'me（私に）' },
-            { id: 'b', text: 'give（ください）' },
-            { id: 'c', text: 'something（何か）' }
-          ],
-          answer: 'c'
-        },
+        reason: 'role',
         explanation: {
           answer: 'Please give me something to drink.',
           translation: '何か飲むものをください。',
@@ -499,7 +482,8 @@
 
       /* --- 〜するために（副詞的用法・目的） --- */
       {
-        id: 'inf-p-v1', version: 1, status: 'active',
+        id: 'inf-p-v1', version: 2, status: 'active', reasonValidFrom: 2,
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }],
         role: 'practice', skill: 'inf-adv', format: 'fill',
         checks: '行動の目的を to＋動詞 で表す形を選べるか',
         instruction: '日本語に合うように、空所に入るものを選びましょう。',
@@ -509,19 +493,11 @@
           { id: 'a', text: 'take', feedback: '「起きた」のあとに、もう一つの動詞をそのまま続けることはできません。' },
           { id: 'b', text: 'to take' },
           { id: 'c', text: 'took', feedback: '「起きて乗った」と言いたいなら and が必要です。ここでは「乗るために」です。' },
-          { id: 'd', text: 'takes', feedback: '2つの動詞をそのまま並べることはできません。' }
+          { id: 'd', text: 'takes', feedback: 'この文では、got up と takes をつなぐ言葉がないため、そのまま並べられません。' }
         ],
         answer: 'b',
         hint: 'トムは「何のために」早く起きたのでしょう？',
-        reason: {
-          prompt: 'なぜ to take になりますか？',
-          choices: [
-            { id: 'a', text: '「何のために」早く起きたのかを表すから' },
-            { id: 'b', text: '「電車」がどんな電車かを説明しているから' },
-            { id: 'c', text: '「乗ること」が好きだと言っているから' }
-          ],
-          answer: 'a'
-        },
+        reason: 'role',
         explanation: {
           answer: 'Tom got up early to take the first train.',
           translation: 'トムは始発電車に乗るために早く起きた。',
@@ -534,29 +510,21 @@
         }
       },
       {
-        id: 'inf-p-v2', version: 1, status: 'active',
+        id: 'inf-p-v2', version: 2, status: 'active', excludedVersions: [1],
+        changes: [{ version: 2, what: '選択肢を「〜ため」でそろえ、質問の言葉から答えを推測できないようにした。理由の質問を削除', oldRecords: '版1は選択肢から推測できたため判定に使わない' }],
         role: 'practice', skill: 'inf-adv', format: 'meaning',
         checks: 'to＋動詞 が行動の目的を表すと読み取れるか',
         instruction: '英文を読んで、質問に答えましょう。',
         sentence: 'I went to the station to meet my aunt.',
         question: '「私」は、何のために駅へ行きましたか？',
         choices: [
-          { id: 'a', text: 'おばさんが駅で働いているから', feedback: '「働いている」にあたる語は英文にありません。' },
-          { id: 'b', text: 'おばさんに会うことが好きだから', feedback: '「好き」にあたる語は英文にありません。' },
+          { id: 'a', text: 'おばさんを見送るため', feedback: '「見送る」は see off です。meet は「会う・出迎える」です。' },
+          { id: 'b', text: 'おばさんと買い物をするため', feedback: '「買い物をする」にあたる語は英文にありません。' },
           { id: 'c', text: 'おばさんに会うため' },
-          { id: 'd', text: 'おばさんと別れたあと、駅へ行った', feedback: '「別れた」にあたる語は英文にありません。' }
+          { id: 'd', text: 'おばさんに荷物を届けるため', feedback: '「届ける」にあたる語は英文にありません。' }
         ],
         answer: 'c',
         hint: 'to meet my aunt が「行った」に何をつけ加えているか考えましょう。',
-        reason: {
-          prompt: 'to meet my aunt は、どんな意味のまとまりですか？',
-          choices: [
-            { id: 'a', text: 'おばさんに会うこと（したいことの中身）' },
-            { id: 'b', text: 'おばさんに会うために（目的）' },
-            { id: 'c', text: 'おばさんに会うべき（駅の説明）' }
-          ],
-          answer: 'b'
-        },
         explanation: {
           answer: 'I went to the station to meet my aunt.',
           translation: '私はおばに会うために駅へ行った。',
@@ -569,7 +537,8 @@
         }
       },
       {
-        id: 'inf-p-v3', version: 1, status: 'active',
+        id: 'inf-p-v3', version: 2, status: 'active', reasonValidFrom: 2,
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }],
         role: 'practice', skill: 'inf-adv', format: 'order',
         checks: '「場所へ行った」のあとに目的を続ける語順を作れるか',
         instruction: '日本語に合うように、語句を並べかえましょう。',
@@ -577,15 +546,7 @@
         tokens: ['I', 'went', 'to', 'Kyoto', 'to', 'take', 'pictures'],
         answers: ['I went to Kyoto to take pictures'],
         hint: 'まず「私は京都へ行った」、そのあとに「何のために」。',
-        reason: {
-          prompt: '2つめの to（to take の to）は、どんな意味を作っていますか？',
-          choices: [
-            { id: 'a', text: '「〜へ（場所）」' },
-            { id: 'b', text: '「〜するために（目的）」' },
-            { id: 'c', text: '「〜すること（好きなこと）」' }
-          ],
-          answer: 'b'
-        },
+        reason: 'role',
         explanation: {
           answer: 'I went to Kyoto to take pictures.',
           translation: '私は写真をとるために京都へ行った。',
@@ -598,7 +559,8 @@
         }
       },
       {
-        id: 'inf-p-v4', version: 1, status: 'active',
+        id: 'inf-p-v4', version: 2, status: 'active', reasonValidFrom: 2,
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }],
         role: 'practice', skill: 'inf-adv', format: 'fill',
         checks: '努力の目的を to＋動詞 で表す形を選べるか',
         instruction: '日本語に合うように、空所に入るものを選びましょう。',
@@ -607,11 +569,12 @@
         choices: [
           { id: 'a', text: 'passed', feedback: '「勉強して合格した」と言いたいなら and が必要です。ここでは「合格するために」です。' },
           { id: 'b', text: 'pass', feedback: 'studied hard のあとに動詞の原形だけを置くことはできません。' },
-          { id: 'c', text: 'passes', feedback: '2つの動詞をそのまま並べることはできません。' },
+          { id: 'c', text: 'passes', feedback: 'この文では、studied と passes をつなぐ言葉がないため、そのまま並べられません。' },
           { id: 'd', text: 'to pass' }
         ],
         answer: 'd',
         hint: '彼は「何のために」一生懸命勉強したのでしょう？',
+        reason: 'role',
         explanation: {
           answer: 'He studied hard to pass the test.',
           translation: '彼はテストに合格するために一生懸命勉強した。',
@@ -622,7 +585,92 @@
           point: '勉強した目的を to pass the test が表しています。',
           term: '副詞的用法（目的：〜するために）'
         }
+      },
+
+      /* --- 意味の確認（理由を取り違えたときの確認問題にも使う） --- */
+      {
+        id: 'inf-p-n5', version: 1, status: 'active',
+        role: 'practice', skill: 'inf-noun', format: 'meaning',
+        checks: 'want to ～（～したい）と「～するための…がほしい」の意味の違いがわかるか',
+        instruction: '英文を読んで、質問に答えましょう。',
+        sentence: 'I want to read a book.',
+        question: 'この英文の意味に合うものはどれですか？',
+        choices: [
+          { id: 'a', text: '読むための本がほしい', feedback: 'それなら I want a book to read. です。この文の to read a book は want の中身（したいこと）です。' },
+          { id: 'b', text: '本を読みたい' },
+          { id: 'c', text: '本を読むために出かけたい', feedback: '「出かける」にあたる語は英文にありません。' }
+        ],
+        answer: 'b',
+        hint: 'want のすぐあとの to read a book は「何をしたいのか」を表しています。',
+        explanation: {
+          answer: 'I want to read a book.',
+          translation: '私は本を読みたい。',
+          chunks: [
+            { en: 'I want', ja: '私は望む（何を？）' },
+            { en: 'to read a book', ja: '本を読むこと', mark: true }
+          ],
+          point: 'want の中身が to read a book。I want a book to read.（読む本がほしい）とは意味が違います。',
+          term: '名詞的用法（〜すること）'
+        }
+      },
+      {
+        id: 'inf-p-a5', version: 1, status: 'active',
+        role: 'practice', skill: 'inf-adj', format: 'meaning',
+        checks: '名詞のうしろの to＋動詞 が、その名詞を説明していると読み取れるか',
+        instruction: '英文を読んで、質問に答えましょう。',
+        sentence: 'He has a lot of work to do today.',
+        question: 'この英文の意味に合うものはどれですか？',
+        choices: [
+          { id: 'a', text: '彼は今日、たくさん仕事をしたい', feedback: '「〜したい」にあたる want などの語は英文にありません。' },
+          { id: 'b', text: '彼には今日やるべき仕事がたくさんある' },
+          { id: 'c', text: '彼は今日、仕事をするためにたくさん持ってきた', feedback: '「持ってきた」にあたる語は英文にありません。has は「持っている・ある」です。' }
+        ],
+        answer: 'b',
+        hint: 'work（仕事）→「どんな仕事？」と考えましょう。',
+        explanation: {
+          answer: 'He has a lot of work to do today.',
+          translation: '彼には今日やるべき仕事がたくさんある。',
+          chunks: [
+            { en: 'He has a lot of work', ja: '彼はたくさんの仕事を持っている（どんな？）' },
+            { en: 'to do today', ja: '今日やるべき', mark: true }
+          ],
+          point: 'to do today が work を説明しています。',
+          term: '形容詞的用法（〜すべき・〜するための）'
+        }
+      },
+      {
+        id: 'inf-p-v5', version: 1, status: 'active',
+        role: 'practice', skill: 'inf-adv', format: 'meaning',
+        checks: '行動のうしろの to＋動詞 を「目的」として読み取れるか',
+        instruction: '英文を読んで、質問に答えましょう。',
+        sentence: 'She went to the shop to buy some milk.',
+        question: '彼女が店へ行った目的はどれですか？',
+        choices: [
+          { id: 'a', text: '牛乳を売るため', feedback: '「売る」は sell です。buy は「買う」です。' },
+          { id: 'b', text: '牛乳を届けるため', feedback: '「届ける」にあたる語は英文にありません。' },
+          { id: 'c', text: '牛乳を買うため' },
+          { id: 'd', text: '牛乳を飲むため', feedback: '「飲む」は drink です。' }
+        ],
+        answer: 'c',
+        hint: 'to buy some milk が「行った」に何をつけ加えているか考えましょう。',
+        explanation: {
+          answer: 'She went to the shop to buy some milk.',
+          translation: '彼女は牛乳を買うために店へ行った。',
+          chunks: [
+            { en: 'She went to the shop', ja: '彼女は店へ行った（何のために？）' },
+            { en: 'to buy some milk', ja: '牛乳を買うために', mark: true }
+          ],
+          point: '店へ行った目的を to buy some milk が表しています。',
+          term: '副詞的用法（目的：〜するために）'
+        }
       }
     ]
+  };
+
+  bank.questions.forEach(function (q) {
+    if (q.reason === 'role') {
+      q.reason = { kind: 'role', prompt: ROLE_PROMPT[q.format], choices: ROLE_CHOICES, answer: q.skill };
+    }
   });
+  EA.registerBank(bank);
 })(typeof window !== 'undefined' ? window : globalThis);
