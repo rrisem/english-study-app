@@ -228,9 +228,10 @@ test('11. 旧形式（v1）の記録を読み込める：削除せず控えを�
   const v1 = {
     schemaVersion: 1, settings: { dailyGoalMinutes: 15, devDayOffset: 3 },
     attempts: [
-      { id: 'a1', questionId: 'inf-d1', questionVersion: 1, skillId: 'inf-noun', format: 'fill', attemptType: 'diagnostic', sessionId: 's1', result: 'correct', confidence: 'none', hintUsed: false, reason: null, answeredAt: realNow - 2 * DAY },
-      { id: 'a2', questionId: 'inf-p-n1', questionVersion: 1, skillId: 'inf-noun', format: 'fill', attemptType: 'similar', sessionId: 's2', result: 'correct', confidence: 'none', hintUsed: false, reason: { prompt: 'なぜ to draw', choiceId: 'b', correct: false }, answeredAt: realNow - DAY },
-      { id: 'a3', questionId: 'inf-p-n3', questionVersion: 1, skillId: 'inf-noun', format: 'order', attemptType: 'review', sessionId: 's3', result: 'correct', confidence: 'none', hintUsed: false, reason: null, answeredAt: realNow + 2 * DAY },
+      { id: 'a1', questionId: 'inf-d5', questionVersion: 1, skillId: 'inf-noun', format: 'ja2en', attemptType: 'diagnostic', sessionId: 's1', result: 'correct', confidence: 'none', hintUsed: false, reason: null, answeredAt: realNow - 2 * DAY },
+      { id: 'a2', questionId: 'inf-p-n3', questionVersion: 1, skillId: 'inf-noun', format: 'order', attemptType: 'similar', sessionId: 's2', result: 'correct', confidence: 'none', hintUsed: false, reason: { prompt: 'to speak English は…', choiceId: 'a', correct: false }, answeredAt: realNow - DAY },
+      { id: 'a3', questionId: 'inf-p-n2', questionVersion: 1, skillId: 'inf-noun', format: 'meaning', attemptType: 'review', sessionId: 's3', result: 'correct', confidence: 'none', hintUsed: false, reason: null, answeredAt: realNow + 2 * DAY },
+      { id: 'a4', questionId: 'inf-d1', questionVersion: 1, skillId: 'inf-noun', format: 'fill', attemptType: 'diagnostic', sessionId: 's1', result: 'correct', confidence: 'none', hintUsed: false, reason: null, answeredAt: realNow - 2 * DAY + 1 },
     ],
     schedule: { 'inf-noun': { skillId: 'inf-noun', step: 1, dueAt: realNow + 5 * DAY } }, units: { infinitive: { diagnosticDoneAt: realNow - 2 * DAY } },
     activeSession: null, sessions: [],
@@ -239,14 +240,17 @@ test('11. 旧形式（v1）の記録を読み込める：削除せず控えを�
   EA.__store.set(EA.storage.KEYS.normal, raw);
   const r = EA.storage.load();
   assert.equal(r.status, 'migrated');
-  assert.equal(r.state.attempts.length, 3, '記録を削除しない');
+  assert.equal(r.state.attempts.length, 4, '記録を削除しない');
   assert.equal(r.state.settings.dailyGoalMinutes, 15);
   assert.equal('devDayOffset' in r.state.settings, false);
   assert.equal(r.state.attempts.find((a) => a.id === 'a3').devDated, true);
   assert.equal(r.state.attempts.find((a) => a.id === 'a2').afterExplanation, true);
+  assert.equal(r.state.attempts.find((a) => a.id === 'a2').translationShown, true, 'v2までの並び替えは日本語つき');
+  assert.equal(r.state.schemaVersion, 3);
   assert.equal(EA.__store.get(EA.storage.KEYS.backupPrefix + 'schema1-normal'), raw, '元のデータの控え');
   const st = EA.mastery.analyze('inf-noun', r.state.attempts, EA.banks.infinitive);
-  assert.equal(st.attemptCount, 2, '開発用の日付の記録を除外');
+  assert.equal(st.attemptCount, 2, '開発用の日付の記録と、手がかりのあった旧版の空所補充を判定から除外');
+  assert.ok(EA.mastery.isExcluded(r.state.attempts.find((a) => a.id === 'a4'), EA.banks.infinitive), '旧版の空所補充（正答だけが to で始まる）は判定に使わない');
   assert.equal(st.meaning, 'unchecked', '版1の理由（答えがわかる質問）は判定に使わない');
 });
 

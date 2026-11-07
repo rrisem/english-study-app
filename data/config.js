@@ -23,7 +23,10 @@
     questionsPerReviewSkill: 2,
 
     // 類題・復習で間違えたとき、1回の学習に追加する確認問題の上限（際限なく増やさないため）
-    maxFollowUpsPerSession: 3,
+    maxFollowUpsPerSession: 2,
+
+    // 意味・理由の問いを1回の学習で聞く上限（全問で聞いて負担にならないように）
+    maxReasonQuestionsPerSession: 3,
 
     // 確認状況「後日の復習でも正解」に必要な、前回の回答からの間隔（日数）
     spacedLevelMinDays: 3,

@@ -42,6 +42,13 @@ for (const bank of Object.values(EA.banks)) {
       const ans = q.choices.find((c) => c.id === q.answer).text;
       if (q.reason.prompt.includes(ans)) warn(q.id, `理由の質問文に正答「${ans}」が含まれています`);
     }
+    if (q.format === 'fill' && q.choices.filter((c) => /^to /.test(c.text)).length < 2) warn(q.id, 'to で始まる選択肢が正答だけです（形の手がかりだけで選べてしまう）');
+    if (q.choices) {
+      const lens = q.choices.map((c) => c.text.length), ans = q.choices.find((c) => c.id === q.answer).text.length;
+      const others = lens.filter((_, i) => q.choices[i].id !== q.answer);
+      if (ans > Math.max(...others) * 1.5) warn(q.id, '正答だけが極端に長い（内容を読まずに選べてしまう）');
+    }
+    for (const pat of q.acceptedPatterns || []) { try { new RegExp(pat); } catch { warn(q.id, `正規表現が不正: ${pat}`); } }
     if (q.format === 'ja2en' && (q.alternatives || []).length && !/to/.test(q.instruction)) warn(q.id, '指定の形と違う答えを扱うなら、指示に条件（to＋動詞）を書いてください');
     if (q.version > 1 && !(q.changes || []).some((c) => c.version === q.version)) warn(q.id, `版${q.version}の changes（変更内容と過去の記録の扱い）がありません`);
     for (const sid of q.similar || []) {

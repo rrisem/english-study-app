@@ -17,7 +17,8 @@
  *   unsure  自力で正解したが、本人は「自信がない」
  *   解消の条件：
  *     error / hint … つまずいた学習回とは別の学習回で、別の問題に自力正解
- *     meaning      … つまずいた学習回とは別の学習回で、別の問題の意味・理由の問いに、ヒント・解説なしで正解
+ *     meaning      … つまずいた学習回とは別の学習回で、別の問題の意味・理由の問いに、
+ *                    日本語訳・解説・ヒントを見ずに正解（訳を見たあとの正解は「参考」で、解消には使わない）
  *     unsure       … そのあと別の問題に、自信がないの申告なしで自力正解
  *   同じ学習回の中で解説を見たあとの正解は、「解説後の正解」として記録しますが、解消には使いません。
  *
@@ -79,12 +80,30 @@
     return isIndependentCorrect(a) && a.confidence !== 'unsure';
   }
 
-  /** 意味・理由の確認の結果：true 正解 / false 誤り / null 確認していない */
+  /**
+   * 答える前に、その英文の日本語訳を見ていたか。
+   * 新しい記録は translationShown を持つ。古い記録は、当時の問題の出し方から推定する。
+   */
+  function sawTranslation(a, bank) {
+    if (typeof a.translationShown === 'boolean') return a.translationShown;
+    if (a.format === 'meaning') return false;
+    if (a.format === 'fill') {
+      var q = EA.findQuestion(bank, a.questionId);
+      return !(q && q.showJa === 'after' && a.questionVersion >= q.version);
+    }
+    return true; // 並び替え・日→英は日本語を見て答える
+  }
+
+  /**
+   * 意味・理由の確認の結果。null ＝ 確認していない（理由を聞かなかった回答は「理解している」とは扱わない）
+   *   ok          正しいか
+   *   independent 日本語訳・解説・ヒントを見ずに答えたか（true のときだけ意味理解の根拠にする。false は参考）
+   */
   function meaningCheck(a, bank) {
     var r = reasonResult(a, bank);
-    if (r !== null) return r;
-    if (a.format === 'meaning' && a.result !== 'gaveup') return G.isSkillCorrect(a.result);
-    if (a.format === 'meaning' && a.result === 'gaveup') return false;
+    var indep = !a.hintUsed && !a.afterExplanation && a.attemptType !== 'retry';
+    if (r !== null) return { ok: r, independent: indep && !sawTranslation(a, bank), via: 'reason' };
+    if (a.format === 'meaning') return { ok: G.isSkillCorrect(a.result), independent: indep, via: 'meaning' };
     return null;
   }
 
@@ -95,9 +114,10 @@
 
     var c = { diagnostic: 0, retry: 0, similar: 0, followup: 0, review: 0 };
     var solidQs = {}, spaced = null;
-    var n = { solid: 0, unsure: 0, hint: 0, afterExpl: 0, wrong: 0, hold: 0, reasonOk: 0, reasonNg: 0, meaningOk: 0, meaningNg: 0 };
+    var n = { solid: 0, unsure: 0, hint: 0, afterExpl: 0, wrong: 0, hold: 0, retryOk: 0, otherAfterExplOk: 0, reviewSolid: 0,
+      mIndepOk: 0, mIndepNg: 0, mRefOk: 0, mRefNg: 0 };
     var issues = {};           // type → { since, sessionId, questionId, count }
-    var lastMeaning = null;
+    var meaningIndepOk = false, meaningRefOk = false;
     var afterExplCorrectSinceError = 0;
 
     function open(type, a) {
@@ -120,7 +140,7 @@
       // ---- 解消の判定（この回答より前に開いていたもの）
       if (issues.error && solid && laterSessionOtherQuestion(issues.error, a)) delete issues.error;
       if (issues.hint && solid && laterSessionOtherQuestion(issues.hint, a)) delete issues.hint;
-      if (issues.meaning && mc === true && !a.hintUsed && !a.afterExplanation && laterSessionOtherQuestion(issues.meaning, a)) delete issues.meaning;
+      if (issues.meaning && mc && mc.ok && mc.independent && laterSessionOtherQuestion(issues.meaning, a)) delete issues.meaning;
       if (issues.unsure && solid && a.questionId !== issues.unsure.questionId) delete issues.unsure;
 
       // ---- 数える
@@ -129,16 +149,22 @@
       if (correct && a.hintUsed) { n.hint++; if (!issues.error) open('hint', a); }
       if (correct && !a.hintUsed && (a.afterExplanation || a.attemptType === 'retry')) {
         n.afterExpl++;
+        if (a.attemptType === 'retry') n.retryOk++; else n.otherAfterExplOk++;
         if (issues.error && a.questionId !== issues.error.questionId) afterExplCorrectSinceError++;
       }
       if (indep && a.confidence === 'unsure') { n.unsure++; if (!issues.error && !issues.hint) open('unsure', a); }
-      if (mc === true) { lastMeaning = true; if (a.reason) n.reasonOk++; else n.meaningOk++; }
-      if (mc === false) {
-        lastMeaning = false; if (a.reason) n.reasonNg++; else n.meaningNg++;
-        open('meaning', a);
+      if (mc) {
+        if (mc.ok && mc.independent) { n.mIndepOk++; meaningIndepOk = true; }
+        if (mc.ok && !mc.independent) { n.mRefOk++; meaningRefOk = true; }
+        if (!mc.ok) {
+          if (mc.independent) n.mIndepNg++; else n.mRefNg++;
+          // 理由・意味の誤りは、訳を見たあとでも「再確認が必要」の合図として扱う（理解していないとは断定しない）
+          open('meaning', a);
+        }
       }
       if (solid) {
         n.solid++;
+        if (a.attemptType === 'review') n.reviewSolid++;
         solidQs[a.questionId] = true;
         if (a.attemptType === 'review' && idx > 0) {
           var prev = counted[idx - 1];
@@ -171,7 +197,8 @@
     else if (n.hold) { headline = '採点保留のみ（自動で判定できない答え）'; tone = 'none'; }
     else { headline = 'まだ自力の正解なし'; tone = 'none'; }
 
-    var meaning = issues.meaning ? 'recheck' : (lastMeaning === true ? 'confirmed' : 'unchecked');
+    // 意味の確認：recheck 再確認が必要 / confirmed 訳を見ずに確認できた / reference 訳・解説を見たあとの回答だけ（参考）/ unchecked まだ
+    var meaning = issues.meaning ? 'recheck' : (meaningIndepOk ? 'confirmed' : (meaningRefOk ? 'reference' : 'unchecked'));
 
     var evidence = [];
     if (counted.length) {
@@ -183,8 +210,11 @@
       if (n.afterExpl) evidence.push('解説を見たあとの正解：' + n.afterExpl + '回（自力の正解には数えていません）');
       if (n.wrong) evidence.push('不正解・「わからない」：' + n.wrong + '回');
       if (n.hold) evidence.push('採点保留・指定の形と違う答え：' + n.hold + '回（正解にも誤りにも数えていません）');
-      if (n.reasonOk + n.reasonNg) evidence.push('理由の問い：正しい ' + n.reasonOk + '回・違う ' + n.reasonNg + '回');
-      if (n.meaningOk + n.meaningNg) evidence.push('意味の確認問題：正解 ' + n.meaningOk + '回・誤り ' + n.meaningNg + '回');
+      if (n.retryOk) evidence.push('同じ問題の解き直しで正解：' + n.retryOk + '回');
+      if (n.otherAfterExplOk) evidence.push('別の問題・解説直後に正解：' + n.otherAfterExplOk + '回（直後の確認）');
+      if (n.reviewSolid) evidence.push('後日の復習で自力正解：' + n.reviewSolid + '回');
+      if (n.mIndepOk + n.mIndepNg) evidence.push('意味・理由の問い（訳を見ずに）：正しい ' + n.mIndepOk + '回・違う ' + n.mIndepNg + '回');
+      if (n.mRefOk + n.mRefNg) evidence.push('意味・理由の問い（訳・解説を見たあと＝参考）：正しい ' + n.mRefOk + '回・違う ' + n.mRefNg + '回');
       if (spaced) evidence.push(EA.util.fmtDate(spaced.answeredAt) + 'の復習で、日を空けて自力正解');
       if (issues.error && afterExplCorrectSinceError) evidence.push('誤答のあと、解説後に別の問題で正解：' + afterExplCorrectSinceError + '回（自力の確認はまだ）');
     } else {
@@ -219,6 +249,7 @@
     isIndependentCorrect: isIndependentCorrect,
     isSolid: isSolid,
     meaningCheck: meaningCheck,
+    sawTranslation: sawTranslation,
     reasonResult: reasonResult,
     analyze: analyze
   };

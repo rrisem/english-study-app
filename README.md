@@ -5,6 +5,7 @@
 
 - 設計の考え方・判定ルール・今後の計画： [docs/design.md](docs/design.md)
 - 外部レビューへの対応・問題の点検・テスト結果： [docs/review-response.md](docs/review-response.md)
+- 第3回の改善（答えと理解の確認を分ける）・学習例： [docs/review-response-3.md](docs/review-response-3.md)、[docs/learning-examples.txt](docs/learning-examples.txt)
 - 問題の編集のしかた（講師向け）： [data/infinitive.js](data/infinitive.js) の先頭の説明
 
 ## iPad で開く
@@ -33,6 +34,8 @@ claude.ai にログインしている必要があります。
 python3 -m http.server 8000      # → http://localhost:8000 を開く
 npm run check                     # 問題集の形式チェック ＋ ルール・学習の流れのテスト
 npm run e2e                       # iPad を想定したブラウザでの通し確認（Playwright が必要）
+node tests/repro-screen.mjs       # 意味の問いの画面に訳・正誤・解説が出ないかの確認
+node tools/scenario.mjs           # 2人の生徒の学習を、実際の判定ロジックで再現して表示
 npm run build                     # 1つのHTMLにまとめる（dist/english-drill.html）
 ```
 

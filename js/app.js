@@ -90,7 +90,7 @@
     if (a.hintUsed) f.push('<span class="flag">ヒントあり</span>');
     if (a.confidence === 'unsure') f.push('<span class="flag">自信がない</span>');
     if (a.afterExplanation && a.attemptType !== 'retry') f.push('<span class="flag">解説後</span>');
-    if (a.reason) f.push('<span class="flag' + (a.reason.correct ? '' : ' flag-warn') + '">意味の問い ' + (a.reason.correct ? '○' : '×') + '</span>');
+    if (a.reason) f.push('<span class="flag' + (a.reason.correct ? '' : ' flag-warn') + '">意味の問い ' + (a.reason.correct ? '○' : '×') + (a.reason.independent === false ? '（参考）' : '') + '</span>');
     if (a.devDated) f.push('<span class="flag">開発用の日付</span>');
     return f.join('');
   }
@@ -133,13 +133,18 @@
       '<p class="ex-answer" lang="en">' + ex + '</p><p>' + esc(b.exampleJa) + '</p><p class="ex-point">' + esc(b.point) + '</p></div>';
   }
 
-  function questionPromptHtml(qq, draftChoice) {
-    var h = '<p class="q-instruction">' + esc(qq.instruction) + '</p>';
+  /**
+   * 問題文。opts.hideJa のときは英文全体の日本語訳を出さない
+   * （訳なしで出題する問題の回答中、および理由・意味の問いに答える前）
+   */
+  function questionPromptHtml(qq, draftChoice, opts) {
+    opts = opts || {};
+    var h = opts.noInstruction ? '' : '<p class="q-instruction">' + esc(qq.instruction) + '</p>';
     if (qq.format === 'meaning') {
       h += '<p class="q-sentence" lang="en">' + esc(qq.sentence) + '</p>';
       h += '<p class="q-ja q-question">' + esc(qq.question) + '</p>';
     } else {
-      h += '<p class="q-ja">' + esc(qq.ja) + '</p>';
+      if (!opts.hideJa) h += '<p class="q-ja">' + esc(qq.ja) + '</p>';
       if (qq.format === 'fill') {
         var chosen = null;
         (qq.choices || []).forEach(function (c) { if (c.id === draftChoice) chosen = c.text; });
@@ -284,7 +289,7 @@
       '<p class="eyebrow">' + esc(TYPE_LABEL[item.attemptType]) + ' ・ ' + esc(FORMAT_LABEL[qq2.format]) + '<span class="eyebrow-note">' + esc(typeNote) + '</span></p>';
 
     if (cur.phase === 'answer') {
-      body += questionPromptHtml(qq2, cur.draft) + '<div class="answer-area" id="answer-area">' + answerControlHtml(qq2, cur) + '</div>';
+      body += questionPromptHtml(qq2, cur.draft, { hideJa: qq2.showJa === 'after' }) + '<div class="answer-area" id="answer-area">' + answerControlHtml(qq2, cur) + '</div>';
       if (cur.hintUsed) body += '<div class="hint" role="note"><span class="label">ヒント</span>' + esc(qq2.hint) + '</div>';
       body += '<div class="helpers">' +
         '<button type="button" class="btn-toggle" data-act="unsure" aria-pressed="' + (cur.unsure ? 'true' : 'false') + '">' +
@@ -296,20 +301,24 @@
         '<div class="actions"><button type="button" class="btn-primary btn-lg" data-act="submit" id="submit-btn"' + (hasDraft(qq2, cur) ? '' : ' disabled') + '>回答を確定</button></div>';
     } else {
       var a = attemptById(cur.attemptId);
-      body += questionPromptHtml(qq2, qq2.format === 'fill' ? a.response : null);
-      body += '<div class="your-answer"><span class="label">あなたの答え</span><span lang="en">' + (a.responseText ? esc(a.responseText) : '（わからない）') + '</span></div>';
       if (cur.phase === 'reason') {
+        // 理由・意味の問いに答えるまでは、日本語訳・正答・正誤・解説を出さない（あなたの答えだけを英文で示す）
+        body += questionPromptHtml(qq2, qq2.format === 'fill' ? a.response : null, { hideJa: true, noInstruction: true });
+        if (qq2.format !== 'fill') body += '<div class="your-answer"><span class="label">あなたの答え</span><span lang="en">' + esc(a.responseText) + '</span></div>';
         body += '<div class="reason"><p class="reason-q"><span class="label">意味の問い</span>' + esc(qq2.reason.prompt) + '</p>' +
-          '<p class="reason-note">答えの正誤は、このあと表示します。</p><div class="choices">' +
-          qq2.reason.choices.map(function (c) { return '<button type="button" class="choice" data-act="reason" data-choice="' + c.id + '">' + esc(c.text) + '</button>'; }).join('') +
+          '<p class="reason-note">日本語訳・正誤・解説は、この問いに答えたあとに表示します。</p><div class="choices">' +
+          ordered(qq2.reason.choices, cur.reasonOrder).map(function (c) { return '<button type="button" class="choice" data-act="reason" data-choice="' + c.id + '">' + esc(c.text) + '</button>'; }).join('') +
           '</div></div>';
       } else {
+        body += questionPromptHtml(qq2, qq2.format === 'fill' ? a.response : null);
+        body += '<div class="your-answer"><span class="label">あなたの答え</span><span lang="en">' + (a.responseText ? esc(a.responseText) : '（わからない）') + '</span></div>';
         body += '<div class="verdict"><span class="label">答え</span>' + resultBadge(a.result) + flagsHtml(a) + '</div>';
         if (a.feedback) body += '<p class="feedback-note">' + esc(a.feedback) + '</p>';
         if (a.reason) {
           var rc = null; qq2.reason.choices.forEach(function (c) { if (c.id === qq2.reason.answer) rc = c; });
           body += '<div class="reason-result"><span class="label">意味の問い</span>' +
             (a.reason.correct ? '○ 選んだ意味は合っています。' : '× 選んだ意味とは違います。答えは正解なので、意味をもう一度確かめましょう。') +
+            (a.reason.independent === false ? '<span class="reason-correct">日本語訳や解説を見たあとの回答なので、考え方の参考として記録します。</span>' : '') +
             '<span class="reason-correct">この文では：' + esc(rc.text) + '</span></div>';
         }
         if (a.followUp) {
@@ -325,6 +334,15 @@
     return progress + body + '</section>';
   }
 
+  /** 選択肢を、学習回の中で決めた順番（正答の位置が毎回変わる）に並べる */
+  function ordered(choices, order) {
+    if (!order) return choices;
+    var byId = {};
+    choices.forEach(function (c) { byId[c.id] = c; });
+    var out = order.map(function (id) { return byId[id]; }).filter(Boolean);
+    return out.length === choices.length ? out : choices;
+  }
+
   function hasDraft(qq, cur) {
     if (qq.format === 'order') return !!(cur.draft && cur.draft.length === qq.tokens.length);
     if (qq.format === 'ja2en') return !!(cur.draft && cur.draft.trim());
@@ -333,7 +351,7 @@
 
   function answerControlHtml(qq, cur) {
     if (qq.format === 'fill' || qq.format === 'meaning') {
-      return '<div class="choices" role="radiogroup" aria-label="選択肢">' + qq.choices.map(function (c) {
+      return '<div class="choices" role="radiogroup" aria-label="選択肢">' + ordered(qq.choices, cur.choiceOrder).map(function (c) {
         var on = cur.draft === c.id;
         return '<button type="button" role="radio" aria-checked="' + on + '" class="choice' + (on ? ' is-selected' : '') + '" data-act="choose" data-choice="' + c.id + '"' + (qq.format === 'fill' ? ' lang="en"' : '') + '>' +
           '<span class="choice-dot" aria-hidden="true"></span>' + esc(c.text) + '</button>';
@@ -449,7 +467,7 @@
         var sch = state.schedule[sk.id];
         var open = view.params.skill === sk.id;
         var qs = BANK.questions.filter(function (x) { return x.skill === sk.id; });
-        var meaningText = { confirmed: '確認できた', recheck: '再確認が必要', unchecked: 'まだ確認していない' }[st.meaning];
+        var meaningText = { confirmed: '訳を見ずに確認できた', recheck: '再確認が必要', reference: '訳・解説を見たあとの回答のみ（参考）', unchecked: 'まだ確認していない' }[st.meaning];
         return '<section class="panel skill-panel" id="skill-' + sk.id + '"><div class="skill-panel-head">' +
           '<div><h2>' + esc(sk.label) + '<span class="skill-term">' + esc(sk.term) + '</span></h2><p class="muted">' + esc(sk.plain) + '</p></div>' +
           '<div class="skill-panel-due">' + (sch ? '<span class="label">次の復習</span><strong>' + U.fmtDate(sch.dueAt) + '</strong><span class="muted">' + U.relDay(sch.dueAt, t) + ' ・ 間隔 ' + sch.intervalDays + '日</span>' : '<span class="muted">予定なし（診断前）</span>') + '</div></div>' +

@@ -14,6 +14,11 @@
     return bank.questions.filter(function (q) { return q.status !== 'excluded'; });
   }
 
+  /** 日本語訳を見せずに出題する問題か（訳なしで意味を確かめられる） */
+  function isEnglishOnly(q) {
+    return q.format === 'meaning' || (q.format === 'fill' && q.showJa === 'after');
+  }
+
   function newSession(type, unitId, items, now, extra) {
     var s = {
       id: EA.util.uid('s'), type: type, unitId: unitId, items: items, index: 0, startedAt: now,
@@ -129,20 +134,21 @@
   /**
    * 復習で出す問題を選ぶ。
    * 1問目（解説を見る前に答える＝判定の中心）：最近つまずいた問題「以外」で、しばらく見ていない問題。
-   *   意味の再確認が必要なら、意味・理由を問える問題を優先。
+   *   訳を見ずに意味を確かめた実績がない（または再確認が必要な）項目では、英文だけで出す問題を優先。
    * 2問目：前に間違えた問題（あれば）、なければ次にしばらく見ていない問題。
    */
   function pickReviewQuestions(state, bank, skillId, count) {
     var st = EA.mastery.analyze(skillId, state.attempts, bank);
     var issueQ = {};
     st.issues.forEach(function (i) { issueQ[i.questionId] = true; });
-    var needMeaning = st.issues.some(function (i) { return i.type === 'meaning'; });
+    // 訳を見ずに意味を確かめた実績がない・再確認が必要なら、英文だけで出す問題（意味の確認・訳なしの空所補充）を優先
+    var needMeaning = st.meaning !== 'confirmed';
     var info = seenInfo(state, bank);
     var list = Object.keys(info).map(function (k) { return info[k]; }).filter(function (x) { return x.q.skill === skillId; });
     var byOldest = list.slice().sort(function (a, b) { return a.lastSeen - b.lastSeen; });
     var firstCands = byOldest.filter(function (x) { return !issueQ[x.q.id]; });
     if (needMeaning) {
-      var m = firstCands.filter(function (x) { return x.q.format === 'meaning' || x.q.reason; });
+      var m = firstCands.filter(function (x) { return isEnglishOnly(x.q); });
       if (m.length) firstCands = m;
     }
     var picks = [];
@@ -260,6 +266,7 @@
     dueReviews: dueReviews,
     nextReviewDate: nextReviewDate,
     needsFollowUp: needsFollowUp,
+    isEnglishOnly: isEnglishOnly,
     homeTask: homeTask,
     unitState: unitState
   };

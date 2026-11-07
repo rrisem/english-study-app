@@ -42,7 +42,8 @@
       var step, why;
 
       var solidNoMeaningNg = list.filter(function (a) {
-        return EA.mastery.isSolid(a) && EA.mastery.meaningCheck(a, bank) !== false;
+        var mc = EA.mastery.meaningCheck(a, bank);
+        return EA.mastery.isSolid(a) && !(mc && !mc.ok);
       });
       var onlyHold = list.every(function (a) { return a.result === 'unmatched' || a.result === 'alt'; });
 

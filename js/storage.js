@@ -17,7 +17,7 @@
   'use strict';
   var EA = root.EA = root.EA || {};
   var KEYS = { normal: 'ea-study-v1', demo: 'ea-study-demo-v1', mode: 'ea-study-mode', backupPrefix: 'ea-study-backup-' };
-  var SCHEMA = 2;
+  var SCHEMA = 3;
 
   function ls() { return root.localStorage; }
   function get(k) { try { return ls().getItem(k); } catch (e) { return undefined; } }
@@ -48,7 +48,8 @@
    */
   function migrate(s, realNow) {
     var notes = [];
-    if (!s.schemaVersion || s.schemaVersion < 2) {
+    if (!s.schemaVersion) s.schemaVersion = 1;
+    if (s.schemaVersion < 2) {
       var offset = (s.settings && s.settings.devDayOffset) || 0;
       if (s.settings) delete s.settings.devDayOffset;
       var marked = 0;
@@ -74,6 +75,27 @@
       s.schemaVersion = 2;
       s.mode = s.mode || 'normal';
       s.migrations = (s.migrations || []).concat([{ at: realNow, from: 1, to: 2, note: notes[0] }]);
+    }
+    /*
+     * v2 → v3：答える前に日本語訳を見ていたか（translationShown）と、理由の回答が訳なしで答えたものか（independent）を補う。
+     * v2 までは空所補充・並び替え・日→英はすべて日本語つきで出題していたので true、意味の確認問題は false。
+     */
+    if (s.schemaVersion < 3) {
+      var filled = 0;
+      (s.attempts || []).forEach(function (a) {
+        if (typeof a.translationShown !== 'boolean') {
+          a.translationShown = a.format !== 'meaning' || a.attemptType === 'retry';
+          filled++;
+        }
+        if (a.reason && typeof a.reason.independent !== 'boolean') {
+          a.reason.independent = !a.translationShown && !a.afterExplanation && !a.hintUsed;
+        }
+      });
+      if (s.activeSession) s.activeSession.reasonsAsked = s.activeSession.reasonsAsked || 0;
+      var note = 'v2→v3：記録 ' + (s.attempts || []).length + '件を引き継ぎ、日本語訳を見ていたかを ' + filled + '件に補足';
+      notes.push(note);
+      s.schemaVersion = 3;
+      s.migrations = (s.migrations || []).concat([{ at: realNow, from: 2, to: 3, note: note }]);
     }
     var d = defaultState(s.mode);
     Object.keys(d).forEach(function (k) { if (s[k] === undefined) s[k] = d[k]; });

@@ -78,6 +78,10 @@
       for (j = 0; j < q.accepted.length; j++) {
         if (normalize(q.accepted[j]) === n) return { result: 'correct', feedback: '', normalized: n };
       }
+      var pats = q.acceptedPatterns || [];
+      for (j = 0; j < pats.length; j++) {
+        if (new RegExp(pats[j]).test(n)) return { result: 'correct', feedback: '', normalized: n };
+      }
       var errs = q.errors || [];
       for (j = 0; j < errs.length; j++) {
         if (new RegExp(errs[j].pattern).test(n)) {

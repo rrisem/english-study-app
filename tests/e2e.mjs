@@ -161,6 +161,10 @@ for (let guard = 0; guard < 40; guard++) {
   if (await page.locator('[data-act="reason"]').count()) {
     if (!reasonDone) {
       await shot('07-reason');
+      const mainText = await page.textContent('main');
+      assert.ok(!q.ja || !mainText.includes(q.ja), '理由の画面に日本語訳を出さない');
+      assert.ok(!mainText.includes(q.explanation.translation), '理由の画面に訳を出さない');
+      assert.equal(await page.locator('.verdict, .explain, .badge').count(), 0, '理由の画面に正誤・解説を出さない');
       const prompt = await page.textContent('.reason-q');
       assert.ok(!prompt.includes(q.choices?.find((c) => c.id === q.answer)?.text ?? '@@'), '意味の問いに正答が書かれていない');
       await reasonIfAsked(q, false); reasonDone = true;
@@ -188,6 +192,11 @@ assert.deepEqual(d1, ['diagnostic:incorrect', 'retry:correct']);
 assert.ok(s.attempts.filter((a) => a.sessionType === 'practice').every((a) => a.afterExplanation));
 log('初回の誤答と解説後の解き直しが別々に記録され、解説後の回答には「解説後」の印がつく');
 log('答えは正解・意味の問いが違う → その場で説明し、意味の確認問題が出る');
+log('理由の画面では、日本語訳・正誤・解説を出さない（答えたあとに表示）');
+const reasonAtts = s.attempts.filter((a) => a.reason);
+assert.ok(reasonAtts.every((a) => a.reason.independent === false), '解説後の理由は参考として記録');
+assert.ok(s.attempts.some((a) => a.reasonDecision && !a.reasonDecision.ask), '理由を聞かない問題もある');
+log('解説後の理由は「参考」として記録し、理由を聞かない問題もある');
 const days = (k) => Math.round((new Date(s.schedule[k].dueAt).setHours(0) - new Date(START).setHours(0, 0, 0, 0)) / DAY);
 assert.deepEqual([days('inf-noun'), days('inf-adj'), days('inf-adv')], [1, 1, 1]);
 log('つまずき・ヒント・自信なしがある項目は、すべて翌日に再確認');
@@ -285,7 +294,7 @@ await page.goto(url);
 await page.waitForSelector('.hero');
 assert.match(await page.textContent('.warnbar'), /引き継ぎました/);
 s = await state();
-assert.equal(s.schemaVersion, 2); assert.equal(s.attempts.length, 1);
+assert.equal(s.schemaVersion, 3); assert.equal(s.attempts.length, 1);
 assert.ok(await page.evaluate(() => !!localStorage.getItem('ea-study-backup-schema1-normal')));
 log('旧形式の記録を読み込み、元データの控えを残す');
 await ctx.close();
