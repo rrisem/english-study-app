@@ -8,7 +8,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 export function loadEA(files, opts = {}) {
   return loadWith(files || DEFAULT_FILES, opts);
 }
-const DEFAULT_FILES = ['js/core.js', 'data/config.js', 'data/infinitive.js', 'js/grading.js', 'js/mastery.js', 'js/scheduler.js', 'js/storage.js', 'js/planner.js', 'js/session.js'];
+const DEFAULT_FILES = ['js/core.js', 'data/config.js', 'data/infinitive.js', 'data/structure-trial.js', 'js/grading.js', 'js/mastery.js', 'js/scheduler.js', 'js/storage.js', 'js/planner.js', 'js/session.js', 'js/structure.js'];
 function loadWith(files, opts) {
   const store = opts.store || new Map();
   const ctx = {

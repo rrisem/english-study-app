@@ -415,3 +415,43 @@ details.panel > p { margin-top: 8px; }
 .collapse.is-open { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows 0.24s ease-out, visibility 0s linear 0s; }
 .collapse-inner { min-height: 0; overflow: hidden; }
 .explain.explain-bare { border-top: 0; padding-top: 4px; }
+
+/* ---------- 英文構造の段階解説（回答後に開く） ----------
+ * 色だけに頼らない：主語＝下線＋ラベル、動詞＝二重下線＋ラベル、説明のまとまり＝（ ）＋破線の枠＋ラベル、
+ * 骨格からはずす部分＝（ ）＋薄い文字＋ラベル、補語＝点線の下線＋ラベル
+ */
+.sx { display: grid; gap: 12px; border-top: 1px solid var(--line); padding-top: 16px; }
+.sx-open { justify-self: start; }
+.sx-panel { display: grid; gap: 14px; background: var(--surface-2); border-radius: var(--r-s); padding: 16px clamp(12px, 3vw, 20px); min-width: 0; }
+.sx-progress { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-weight: 700; }
+.sx-count { font-size: var(--fs-xs); color: var(--muted); font-weight: 700; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+.sx-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; }
+.sx-steps li { width: 28px; height: 6px; border-radius: 3px; background: var(--line); }
+.sx-steps li.is-done { background: var(--accent-soft); outline: 1px solid var(--accent); }
+.sx-steps li.is-current { background: var(--accent); }
+/* 英文：まとまりごとに「語句の上・ラベルの下」で並べ、狭い画面ではまとまり単位で折り返す（重ならない） */
+.sx-sentence { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 10px; font-family: var(--font-en); font-size: clamp(1.25rem, 3.6vw, 1.625rem); line-height: 1.5; margin: 0; }
+.sx-sentence-sm { font-size: clamp(1.125rem, 3vw, 1.375rem); }
+.sx-plain { padding-top: 2px; }
+.sx-seg { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; max-width: 100%; min-width: 0; }
+.sx-words { padding: 2px 4px 3px; border-radius: 4px; overflow-wrap: anywhere; }
+.sx-label { font-family: var(--font-ja); font-size: var(--fs-xs); font-weight: 700; line-height: 1.35; padding-left: 4px; overflow-wrap: anywhere; }
+.sx-bracket { font-family: var(--font-ja); font-weight: 700; color: var(--muted); }
+.sx-subject .sx-words { border-bottom: 3px solid var(--accent); background: var(--accent-soft); }
+.sx-subject .sx-label { color: var(--accent); }
+.sx-verb .sx-words { border-bottom: 6px double var(--ok); }
+.sx-verb .sx-label { color: var(--ok); }
+.sx-modifier .sx-words { border: 2px dashed var(--hold); background: var(--hold-soft); }
+.sx-modifier .sx-label { color: var(--hold); }
+.sx-omit .sx-words { border: 2px dashed var(--line); color: var(--muted); }
+.sx-omit .sx-label { color: var(--muted); }
+.sx-complement .sx-words { border-bottom: 3px dotted var(--ink); }
+.sx-skel .sx-words { border-bottom: 3px solid var(--accent); background: var(--surface); }
+.sx-skeleton { display: grid; gap: 6px; border-left: 4px solid var(--accent); padding-left: 12px; }
+.sx-text { max-width: 40em; }
+.sx-controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.sx-controls .btn-quiet { min-width: 88px; }
+.sx-trans-text { font-size: var(--fs-l); margin-top: 4px; }
+/* 新しく強調した部分だけ、控えめに現れる（動きを減らす設定では止まり、内容は同じ） */
+.sx-seg.is-new .sx-words, .sx-seg.is-new .sx-label { animation: sx-in 0.28s ease-out both; }
+@keyframes sx-in { from { opacity: 0.3; transform: translateY(3px); } to { opacity: 1; transform: none; } }

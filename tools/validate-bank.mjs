@@ -36,6 +36,7 @@ for (const bank of Object.values(EA.banks)) {
     } else warn(q.id, `未対応の形式 ${q.format}`);
     const joined = q.explanation.chunks.map((c) => c.en).join(' ');
     if (N(joined) !== N(q.explanation.answer)) warn(q.id, `解説の区切り「${joined}」が英文と一致しません`);
+    if (q.structure) for (const p of EA.structure.validate(q.structure)) warn(q.id, '構造の解説：' + p);
     if (q.reason && !q.reason.choices.some((c) => c.id === q.reason.answer)) warn(q.id, 'reason.answer が選択肢にありません');
     if (q.reason && q.format === 'meaning') warn(q.id, '意味の確認問題には reason を付けません（問題そのものが意味の確認のため）');
     if (q.reason && q.format === 'fill') {

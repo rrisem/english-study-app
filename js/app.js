@@ -24,8 +24,8 @@
   var tapGuardUntil = 0;
   var TAP_GUARD_MS = 250;
 
-  var TYPE_LABEL = { diagnostic: '初回診断', retry: '解き直し', similar: '類題', followup: '確認問題', review: '復習' };
-  var SESSION_LABEL = { diagnostic: '初回診断', practice: '解説と類題', review: '復習' };
+  var TYPE_LABEL = { diagnostic: '初回診断', retry: '解き直し', similar: '類題', followup: '確認問題', review: '復習', trial: '試作' };
+  var SESSION_LABEL = { diagnostic: '初回診断', practice: '解説と類題', review: '復習', trial: '試作：英文の構造' };
   var FORMAT_LABEL = { fill: '空所補充', order: '並び替え', ja2en: '日本語→英語', meaning: '意味の確認' };
 
   function syncClock() { EA.clock.offsetDays = state.mode === 'demo' && state.demo ? state.demo.dayOffset : 0; }
@@ -36,8 +36,11 @@
     saveOk = readOnly ? false : EA.storage.save(state);
     return saveOk;
   }
-  function q(id) { return EA.findQuestion(BANK, id); }
-  function skill(id) { return EA.findSkill(BANK, id); }
+  // 問題・項目はすべての単元から探す（試作の単元の回答も履歴に表示するため）
+  function q(id) { for (var k in EA.banks) { var r = EA.findQuestion(EA.banks[k], id); if (r) return r; } return null; }
+  function skill(id) { for (var k in EA.banks) { var r = EA.findSkill(EA.banks[k], id); if (r) return r; } return null; }
+  /** いまの学習回の単元の問題集（試作の単元なら、その問題集） */
+  function SB() { var s = state.activeSession; return (s && EA.banks[s.unitId]) || BANK; }
   function attemptById(id) { return S.attemptById(state, id); }
 
   function go(name, params) {
@@ -59,7 +62,7 @@
 
   /* ================= 学習の流れ（進行は session.js） ================= */
   function startSession(session) {
-    var rec = S.start(state, BANK, session, T());
+    var rec = S.start(state, EA.banks[session.unitId] || BANK, session, T());
     persist();
     if (rec) go('summary', { sessionId: rec.id }); else go('session');
   }
@@ -78,7 +81,7 @@
   function stopForToday() {
     var s = state.activeSession;
     if (s && s.current) S.pause(s.current, Date.now());
-    var rec = S.finish(state, BANK, T(), { early: true });
+    var rec = S.finish(state, SB(), T(), { early: true });
     persist();
     go('summary', { sessionId: rec.id });
   }
@@ -253,6 +256,7 @@
       '<button type="button" class="btn-primary" data-go="home">ホームの課題へ</button></div>' +
       '<ol class="steps">' + steps.map(function (s) { return '<li class="' + (s[1] ? 'done' : '') + '"><span class="step-mark" aria-hidden="true">' + (s[1] ? '✓' : '') + '</span>' + s[0] + '<span class="sr">' + (s[1] ? '（済み）' : '（まだ）') + '</span></li>'; }).join('') + '</ol>' +
       '<p class="unit-scope">この単元で扱う範囲：' + esc(BANK.unit.scopeNote) + '</p></section>' +
+      trialUnitsHtml() +
       '<section class="later"><h2>今後追加する予定の単元</h2><p>動名詞・比較・関係代名詞などを予定しています。まだ利用できません。</p></section>';
   }
 
@@ -287,13 +291,14 @@
     }
 
     var qq2 = q(item.questionId);
-    var cur = S.ensureCurrent(state, BANK, T());
+    var cur = S.ensureCurrent(state, SB(), T());
     var typeNote = {
       diagnostic: '解説は全問に答えたあとに表示します。',
       retry: '解説を読んだ直後の解き直しです（類題とは別に記録します）。',
       similar: '単語や場面を変えた類題です。',
       followup: '前の問題でつまずいた内容を、別の問題で確かめます。',
-      review: '復習です。答えを見ずに思い出してみましょう。'
+      review: '復習です。答えを見ずに思い出してみましょう。',
+      trial: '試作の問題です（確認状況・復習予定には反映しません）。'
     }[item.attemptType];
 
     var body = '<section class="sheet" aria-live="polite">' +
@@ -339,7 +344,8 @@
             : esc(a.followUp.why)) + '</div>';
           if (a.followUp.basics) body += basicsHtml(skill(a.skillId));
         }
-        body += collapsibleExplanationHtml(qq2);
+        // 構造の段階解説がある問題は、それを解説とする（日本語訳も解説の中で任意に開く）
+        body += qq2.structure ? structureHtml(qq2, cur) : collapsibleExplanationHtml(qq2);
         body += '<div class="actions"><button type="button" class="btn-primary btn-lg" data-act="next">' + (s.index + 1 >= total ? '結果を見る' : '次へ') + '</button></div>';
       }
     }
@@ -375,6 +381,97 @@
       '<span class="explain-chevron" aria-hidden="true"></span></button>' +
       '<div class="collapse is-open" id="ex-body"><div class="collapse-inner">' + explanationHtml(qq, { bare: true }) + '</div></div>' +
       '</section>';
+  }
+
+  /* ================= 英文構造の段階解説（回答を確定したあとだけ表示） ================= */
+  var SX_BRACKETS = { modifier: ['（', '）'], omit: ['（', '）'] };
+
+  function sxState(cur) { return cur.structure || (cur.structure = { open: false, step: 0, translation: false }); }
+
+  function structureHtml(qq, cur) {
+    var sv = sxState(cur);
+    return '<section class="sx" aria-label="英文構造の段階解説">' +
+      '<button type="button" class="btn-quiet sx-open" data-act="sx-toggle" aria-expanded="' + sv.open + '" aria-controls="sx-panel">' +
+      (sv.open ? '構造をとじる' : '構造を見る') + '</button>' +
+      '<div class="sx-panel" id="sx-panel"' + (sv.open ? '' : ' hidden') + '>' + (sv.open ? structurePanelInner(qq, sv) : '') + '</div></section>';
+  }
+
+  function segHtml(sg) {
+    if (!sg.role) return '<span class="sx-plain">' + esc(sg.text) + '</span>';
+    var b = SX_BRACKETS[sg.role] || ['', ''];
+    return '<span class="sx-seg sx-' + sg.role + (sg.isNew ? ' is-new' : '') + '">' +
+      '<span class="sx-words" lang="en">' + (b[0] ? '<span class="sx-bracket" aria-hidden="true">' + b[0] + '</span>' : '') + esc(sg.text) +
+      (b[1] ? '<span class="sx-bracket" aria-hidden="true">' + b[1] + '</span>' : '') + '</span>' +
+      '<span class="sx-label">' + esc(sg.label) + '</span></span>';
+  }
+
+  function structurePanelInner(qq, sv) {
+    var m = EA.structure.stepModel(qq.structure, sv.step);
+    var last = m.index === m.total - 1;
+    return '<p class="sx-progress" aria-live="polite"><span class="sx-count">段階 ' + (m.index + 1) + ' / ' + m.total + '</span>' + esc(m.title) + '</p>' +
+      '<ol class="sx-steps" aria-hidden="true">' + qq.structure.steps.map(function (s, i) {
+        return '<li class="' + (i === m.index ? 'is-current' : i < m.index ? 'is-done' : '') + '"></li>';
+      }).join('') + '</ol>' +
+      '<p class="sx-sentence">' + m.segments.map(segHtml).join(' ') + '</p>' +
+      (m.skeleton ? '<div class="sx-skeleton"><span class="label">骨格</span><p class="sx-sentence sx-sentence-sm">' +
+        m.skeleton.map(function (p) { return segHtml({ text: p.text, role: 'skel', label: p.label, isNew: true }); }).join(' ') + '</p></div>' : '') +
+      '<p class="sx-text">' + esc(m.text) + '</p>' +
+      '<div class="sx-controls">' +
+        '<button type="button" class="btn-quiet" data-act="sx-prev" aria-label="前の段階へ"' + (m.index === 0 ? ' disabled' : '') + '>← 前へ</button>' +
+        '<button type="button" class="btn-quiet" data-act="sx-next" aria-label="次の段階へ"' + (last ? ' disabled' : '') + '>次へ →</button>' +
+        '<button type="button" class="btn-quiet" data-act="sx-restart"' + (m.index === 0 ? ' disabled' : '') + '>最初から</button>' +
+      '</div>' +
+      '<div class="sx-trans"><button type="button" class="btn-text" data-act="sx-trans" aria-expanded="' + sv.translation + '" aria-controls="sx-trans-text">' +
+        (sv.translation ? '日本語訳をかくす' : '日本語訳を見る') + '</button>' +
+        '<p id="sx-trans-text" class="sx-trans-text"' + (sv.translation ? '' : ' hidden') + '>' + esc(qq.structure.translation) + '</p></div>';
+  }
+
+  /** 構造解説の操作：段階の状態を保存し、解説の部分だけを描き直す（読んでいる位置を動かさない） */
+  function structureAction(act) {
+    var s = state.activeSession;
+    if (!s || !s.current || s.current.phase !== 'feedback') return;
+    var qq = q(s.items[s.index].questionId);
+    if (!qq || !qq.structure) return;
+    var sv = sxState(s.current), total = qq.structure.steps.length;
+    var a = attemptById(s.current.attemptId), at = now();
+    if (act === 'sx-toggle') { sv.open = !sv.open; if (sv.open) EA.structure.recordView(a, 'open', sv.step, total, at); }
+    if (act === 'sx-prev' && sv.step > 0) sv.step--;
+    if (act === 'sx-next' && sv.step < total - 1) { sv.step++; EA.structure.recordView(a, 'step', sv.step, total, at); }
+    if (act === 'sx-restart') sv.step = 0;
+    if (act === 'sx-trans') { sv.translation = !sv.translation; if (sv.translation) EA.structure.recordView(a, 'translation', null, total, at); }
+    var section = appEl.querySelector('.sx');
+    var tmp = document.createElement('div');
+    tmp.innerHTML = structureHtml(qq, s.current);
+    section.replaceWith(tmp.firstChild);
+    // 押したボタンにフォーカスを戻す（押せなくなったときは、となりの操作へ）
+    var focusAct = act;
+    if (act === 'sx-next' && sv.step === total - 1) focusAct = 'sx-prev';
+    if ((act === 'sx-prev' || act === 'sx-restart') && sv.step === 0) focusAct = 'sx-next';
+    var f = appEl.querySelector('[data-act="' + focusAct + '"]');
+    if (f && act !== 'sx-toggle') f.focus({ preventScroll: true });
+    if (act === 'sx-toggle') appEl.querySelector('[data-act="sx-toggle"]').focus({ preventScroll: true });
+    schedulePersist();
+  }
+
+  /** 単元一覧の試作の単元 */
+  function trialUnitsHtml() {
+    return Object.keys(EA.banks).filter(function (k) { return EA.banks[k].unit.trial; }).map(function (k) {
+      var b = EA.banks[k];
+      return '<section class="panel unit-card"><div class="unit-head"><div><p class="eyebrow">試作（確認状況・復習予定には反映しません）</p><h2>' + esc(b.unit.title) + '</h2>' +
+        '<p>' + esc(b.unit.description) + '</p></div>' +
+        '<button type="button" class="btn-quiet" data-act="task-trial" data-unit="' + k + '"' + (state.activeSession ? ' disabled' : '') + '>試す（' + b.questions.length + '問）</button></div>' +
+        (state.activeSession ? '<p class="unit-scope">途中の学習があるため、ホームで再開するか終えてから試せます。</p>' : '') + '</section>';
+    }).join('');
+  }
+
+  function trialSummaryHtml(atts) {
+    return '<section class="panel"><div class="panel-head"><h2>今回の回答</h2><p class="panel-note">試作の問題です。確認状況・復習予定には反映しません。構造の解説を見たことも、正解や理解の根拠にはしていません。</p></div><ul class="att-list">' +
+      atts.map(function (a) {
+        var qq = q(a.questionId), v = a.structureView;
+        return '<li><button type="button" class="att-row" data-act="question" data-q="' + qq.id + '"><span class="att-type">試作</span>' +
+          '<span class="att-q" lang="en">' + esc(qq.sentence) + '<span class="muted">構造の解説：' + (v ? '開いた（' + v.maxStepSeen + ' / ' + v.totalSteps + ' 段階まで' + (v.translationOpened ? '・訳を見た' : '') + '）' : '開いていない') + '</span></span>' +
+          '<span class="att-tags">' + resultBadge(a.result) + '</span></button></li>';
+      }).join('') + '</ul></section><div class="actions"><button type="button" class="btn-primary btn-lg" data-go="home">ホームへ</button></div>';
   }
 
   /** 選択肢を、学習回の中で決めた順番（正答の位置が毎回変わる）に並べる */
@@ -515,6 +612,7 @@
     var t = now();
     var atts = rec.attemptIds.map(attemptById).filter(Boolean);
     var h = '<p class="eyebrow">' + esc(SESSION_LABEL[rec.type]) + 'のまとめ' + (rec.endedEarly ? '（今日はここまで）' : '') + '</p><h1 class="page-title">おつかれさまでした</h1>';
+    if (rec.type === 'trial') return h + trialSummaryHtml(atts);
     if (atts.length) {
       h += '<section class="panel"><div class="panel-head"><h2>今回の回答</h2></div><ul class="att-list">' + atts.map(function (a) {
         var qq = q(a.questionId);
@@ -702,22 +800,24 @@
       case 'stop-today': stopForToday(); break;
       case 'choose': selectChoice(el.getAttribute('data-choice')); break;
       case 'toggle-explain': toggleExplanation(el); break;
+      case 'task-trial': startSession(P.buildTrialSession(EA.banks[el.getAttribute('data-unit')], t.app)); break;
+      case 'sx-toggle': case 'sx-prev': case 'sx-next': case 'sx-restart': case 'sx-trans': structureAction(act); break;
       case 'unsure': s.current.unsure = !s.current.unsure; persist(); render(); break;
       case 'hint': s.current.hintUsed = true; persist(); render(); break;
       case 'giveup':
       case 'submit': {
         el.disabled = true;
-        var res = S.submit(state, BANK, act === 'giveup', t);
+        var res = S.submit(state, SB(), act === 'giveup', t);
         if (!res) break; // すでに確定済み（二重確定は記録しない）
         tapGuardUntil = Date.now() + TAP_GUARD_MS;
         afterProgress(res.finished); break;
       }
       case 'reason':
-        if (!S.submitReason(state, BANK, el.getAttribute('data-choice'))) break;
+        if (!S.submitReason(state, SB(), el.getAttribute('data-choice'))) break;
         tapGuardUntil = Date.now() + TAP_GUARD_MS;
         persist(); render(); break;
       case 'next': {
-        var r = S.next(state, BANK, t);
+        var r = S.next(state, SB(), t);
         if (r === false) break;
         tapGuardUntil = Date.now() + TAP_GUARD_MS;
         afterProgress(r); break;

@@ -56,6 +56,12 @@
     return newSession('diagnostic', bank.unit.id, items, now);
   }
 
+  /** 試作の単元：問題を順に出すだけ（確認状況・復習予定には反映しない） */
+  function buildTrialSession(bank, now) {
+    var items = activeQuestions(bank).map(function (q) { return { kind: 'question', questionId: q.id, attemptType: 'trial' }; });
+    return newSession('trial', bank.unit.id, items, now);
+  }
+
   /** 解説を見るべき回答か（誤り・採点保留・指定の形と違う・ヒント・自信がない・小さな直し） */
   function needsFollowUp(a) {
     return !EA.mastery.isSolid(a) || a.result === 'minor';
@@ -209,7 +215,7 @@
     var u = unitState(state, bank.unit.id);
     var s = state.activeSession;
     if (s) {
-      var label = { diagnostic: '初回診断', practice: '解説と類題', review: '復習' }[s.type];
+      var label = { diagnostic: '初回診断', practice: '解説と類題', review: '復習', trial: '試作：英文の構造' }[s.type];
       return {
         kind: 'resume', title: label + 'の続き',
         detail: (Math.min(s.index + 1, s.items.length)) + ' / ' + s.items.length + ' から再開します',
@@ -259,6 +265,7 @@
 
   EA.planner = {
     buildDiagnosticSession: buildDiagnosticSession,
+    buildTrialSession: buildTrialSession,
     buildPracticeSession: buildPracticeSession,
     buildReviewSession: buildReviewSession,
     pickReviewQuestions: pickReviewQuestions,

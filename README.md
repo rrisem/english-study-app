@@ -36,6 +36,8 @@ npm run check                     # 問題集の形式チェック ＋ ルール
 npm run e2e                       # iPad を想定したブラウザでの通し確認（Playwright が必要）
 node tests/repro-screen.mjs       # 意味の問いの画面に訳・正誤・解説が出ないかの確認
 node tools/scenario.mjs           # 2人の生徒の学習を、実際の判定ロジックで再現して表示
+node tests/interaction-e2e.mjs    # 問題画面の操作（選択・二重確定・解説の開閉・進捗）の確認
+node tests/structure-e2e.mjs      # 英文構造の段階解説（試作）の確認
 npm run build                     # 1つのHTMLにまとめる（dist/english-drill.html）
 ```
 
@@ -52,6 +54,8 @@ npm run build                     # 1つのHTMLにまとめる（dist/english-dr
 | `index.html` | 入口のページ |
 | `css/app.css` | 見た目 |
 | `data/infinitive.js` | 問題・正答・解説（講師が編集する場所） |
+| `data/structure-trial.js` | 試作：英文構造の段階解説の問題（段階・強調・説明をデータで指定） |
+| `js/structure.js` | 構造の段階解説の表示用データづくりと閲覧の記録 |
 | `data/config.js` | 復習間隔などのルールの数値（講師が調整してよい） |
 | `js/grading.js` | 採点 |
 | `js/mastery.js` | 確認状況（4段階）の判定 |

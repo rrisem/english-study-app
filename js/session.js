@@ -251,7 +251,8 @@
     var s = state.activeSession;
     var early = !!(opts && opts.early);
     var attempts = s.attemptIds.map(function (id) { return attemptById(state, id); }).filter(Boolean);
-    var changes = EA.scheduler.applySession(state.schedule, s.type, attempts, state.attempts, t.app, EA.config, bank);
+    // 試作の単元は復習予定に入れない
+    var changes = s.type === 'trial' ? [] : EA.scheduler.applySession(state.schedule, s.type, attempts, state.attempts, t.app, EA.config, bank);
     var u = EA.planner.unitState(state, s.unitId);
     if (s.type === 'diagnostic') { u.diagnosticDoneAt = t.app; u.diagnosticSessionId = s.id; }
     if (s.type === 'practice') { u.practiceDoneAt = t.app; if (early) u.practiceEndedEarly = true; }
