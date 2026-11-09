@@ -19,6 +19,10 @@
   var view = { name: 'home', params: {} };
   var appEl = null;
   var notice = null;
+  // 表示だけの状態（保存しない）：進捗バーの直前の値（動きの起点）と、連続タップを無視する期限
+  var progressShown = { sessionId: null, pct: 0 };
+  var tapGuardUntil = 0;
+  var TAP_GUARD_MS = 250;
 
   var TYPE_LABEL = { diagnostic: '初回診断', retry: '解き直し', similar: '類題', followup: '確認問題', review: '復習' };
   var SESSION_LABEL = { diagnostic: '初回診断', practice: '解説と類題', review: '復習' };
@@ -107,16 +111,17 @@
       '<span class="status-text tone-text-' + st.tone + '">' + (st.tone === 'recheck' ? '<span aria-hidden="true">！ </span>' : '') + esc(st.headline) + '</span></span>';
   }
 
-  function explanationHtml(qq) {
+  function explanationHtml(qq, opts) {
     var e = qq.explanation;
+    opts = opts || {};
     var sentence = e.chunks.map(function (c) { return c.mark ? '<mark>' + esc(c.en) + '</mark>' : esc(c.en); }).join(' ');
     var lastPunct = /[.?!]$/.test(e.answer) ? e.answer.slice(-1) : '';
     var rows = e.chunks.map(function (c) {
       return '<li class="' + (c.mark ? 'is-mark' : '') + '"><span class="ex-en" lang="en">' + esc(c.en) + '</span>' +
         '<span class="ex-arrow" aria-hidden="true">→</span><span class="ex-ja">' + esc(c.ja) + '</span></li>';
     }).join('');
-    return '<div class="explain">' +
-      '<p class="eyebrow">解説</p>' +
+    return '<div class="explain' + (opts.bare ? ' explain-bare' : '') + '">' +
+      (opts.bare ? '' : '<p class="eyebrow">解説</p>') +
       '<p class="ex-answer" lang="en">' + sentence + esc(lastPunct) + '</p>' +
       '<p class="ex-translation">' + esc(e.translation) + '</p>' +
       (e.also ? '<p class="ex-also">' + esc(e.also) + '</p>' : '') +
@@ -257,9 +262,15 @@
     if (!s) return renderHome();
     var item = s.items[s.index];
     var total = s.items.length;
+    // 進捗＝この学習回で終えた項目の数 ÷ 全項目（既存の定義）。答えを確定して正誤を表示した時点で、その項目を「終えた」に数える
+    var done = s.index + (s.current && s.current.index === s.index && s.current.phase === 'feedback' ? 1 : 0);
+    var pct = Math.round(done / total * 100);
+    var fromPct = progressShown.sessionId === s.id ? progressShown.pct : pct;
+    progressShown = { sessionId: s.id, pct: pct };
     var progress = '<div class="q-progress"><span class="q-type">' + esc(SESSION_LABEL[s.type]) + '</span>' +
       '<span class="q-count">' + (s.index + 1) + ' / ' + total + '</span>' +
-      '<span class="q-bar" aria-hidden="true"><span style="width:' + Math.round(s.index / total * 100) + '%"></span></span></div>';
+      '<span class="q-bar" role="progressbar" aria-label="この学習の進み具合（終えた項目）" aria-valuemin="0" aria-valuemax="' + total + '" aria-valuenow="' + done + '">' +
+      '<span class="q-bar-fill" data-to="' + pct + '" style="width:' + fromPct + '%"></span></span></div>';
 
     if (item.kind === 'explain') {
       var qq = q(item.questionId), src = attemptById(item.sourceAttemptId);
@@ -311,7 +322,8 @@
           '</div></div>';
       } else {
         body += questionPromptHtml(qq2, qq2.format === 'fill' ? a.response : null);
-        body += '<div class="your-answer"><span class="label">あなたの答え</span><span lang="en">' + (a.responseText ? esc(a.responseText) : '（わからない）') + '</span></div>';
+        if (qq2.choices) body += resultChoicesHtml(qq2, a, cur);
+        else body += '<div class="your-answer"><span class="label">あなたの答え</span><span lang="en">' + (a.responseText ? esc(a.responseText) : '（わからない）') + '</span></div>';
         body += '<div class="verdict"><span class="label">答え</span>' + resultBadge(a.result) + flagsHtml(a) + '</div>';
         if (a.feedback) body += '<p class="feedback-note">' + esc(a.feedback) + '</p>';
         if (a.reason) {
@@ -327,11 +339,42 @@
             : esc(a.followUp.why)) + '</div>';
           if (a.followUp.basics) body += basicsHtml(skill(a.skillId));
         }
-        body += explanationHtml(qq2);
+        body += collapsibleExplanationHtml(qq2);
         body += '<div class="actions"><button type="button" class="btn-primary btn-lg" data-act="next">' + (s.index + 1 >= total ? '結果を見る' : '次へ') + '</button></div>';
       }
     }
     return progress + body + '</section>';
+  }
+
+  /**
+   * 採点後の選択肢：色だけでなく記号と文字で示す。
+   *   正答 …「✓ 正解」／ 選んだ誤答 …「× あなたの答え」／ 選んで正解 …「✓ 正解・あなたの答え」
+   * 採点後は押せない（選び直しはできない）。
+   */
+  function resultChoicesHtml(qq, a, cur) {
+    var chosen = a.gaveUp ? null : a.response;
+    return '<ul class="choices choices-result" aria-label="採点結果">' + ordered(qq.choices, cur.choiceOrder).map(function (c) {
+      var isAns = c.id === qq.answer, isMine = c.id === chosen;
+      var cls = isAns ? 'is-correct' : (isMine ? 'is-wrong' : 'is-other');
+      var tag = isAns && isMine ? '✓ 正解・あなたの答え' : isAns ? '✓ 正解' : isMine ? '× あなたの答え' : '';
+      return '<li class="choice choice-result ' + cls + '"' + (qq.format === 'fill' ? ' lang="en"' : '') + '>' +
+        '<span class="result-icon" aria-hidden="true">' + (isAns ? '✓' : isMine ? '×' : '') + '</span>' +
+        '<span class="choice-text">' + esc(c.text) + '</span>' +
+        (tag ? '<span class="result-tag" lang="ja">' + tag + '</span>' : '') + '</li>';
+    }).join('') + '</ul>' + (a.gaveUp ? '<p class="your-answer"><span class="label">あなたの答え</span>（わからない）</p>' : '');
+  }
+
+  /**
+   * 開閉できる解説。最初は開いた状態。高さの上限を設けないので長い解説も欠けない。
+   * 開閉の動きの途中でも中身は読める・押せる（visibility は閉じ終わったときだけ hidden になる）。
+   */
+  function collapsibleExplanationHtml(qq) {
+    return '<section class="explain-block">' +
+      '<button type="button" class="explain-toggle" data-act="toggle-explain" aria-expanded="true" aria-controls="ex-body">' +
+      '<span class="explain-toggle-label">解説</span><span class="explain-toggle-state">とじる</span>' +
+      '<span class="explain-chevron" aria-hidden="true"></span></button>' +
+      '<div class="collapse is-open" id="ex-body"><div class="collapse-inner">' + explanationHtml(qq, { bare: true }) + '</div></div>' +
+      '</section>';
   }
 
   /** 選択肢を、学習回の中で決めた順番（正答の位置が毎回変わる）に並べる */
@@ -364,6 +407,55 @@
         '<p class="field-note">大文字・小文字、余分な空白、文末の「.」の有無は採点に影響しません。登録されていない答えは「採点保留」になり、誤りとはしません。</p>';
     }
     return '';
+  }
+
+  /** 選択肢をタップしたとき：画面全体を描き直さず、その場で選択状態だけを変える（すぐに反応が見えるように） */
+  function selectChoice(id) {
+    var s = state.activeSession;
+    if (!s || !s.current || s.current.phase !== 'answer') return;
+    var qq = q(s.items[s.index].questionId);
+    s.current.draft = id;
+    var btns = appEl.querySelectorAll('[data-act="choose"]');
+    for (var i = 0; i < btns.length; i++) {
+      var on = btns[i].getAttribute('data-choice') === id;
+      btns[i].classList.toggle('is-selected', on);
+      btns[i].setAttribute('aria-checked', on ? 'true' : 'false');
+    }
+    var blank = appEl.querySelector('.q-sentence .blank');
+    if (blank && qq.format === 'fill') {
+      var text = ''; qq.choices.forEach(function (c) { if (c.id === id) text = c.text; });
+      blank.textContent = text;
+      blank.classList.add('filled');
+    }
+    var submit = document.getElementById('submit-btn');
+    if (submit) submit.disabled = false;
+    schedulePersist();
+  }
+
+  /** 選択の途中経過は、表示が変わったあとで保存する（画面を閉じるときは pagehide でも保存） */
+  var persistTimer = null;
+  function schedulePersist() {
+    if (persistTimer) return;
+    persistTimer = setTimeout(function () { persistTimer = null; persist(); }, 0);
+  }
+
+  /** 解説の開閉（表示だけ。保存しない） */
+  function toggleExplanation(btn) {
+    var body = document.getElementById(btn.getAttribute('aria-controls'));
+    var open = btn.getAttribute('aria-expanded') !== 'true';
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.querySelector('.explain-toggle-state').textContent = open ? 'とじる' : 'ひらく';
+    body.classList.toggle('is-open', open);
+  }
+
+  /** 進捗バー：直前の値から新しい値へ動かす（表示だけ。記録はすでに保存済み） */
+  function animateProgress() {
+    var fill = appEl.querySelector('.q-bar-fill');
+    if (!fill) return;
+    var to = fill.getAttribute('data-to') + '%';
+    if (fill.style.width === to) return;
+    fill.getBoundingClientRect(); // 起点の幅を確定させてから変える
+    root.requestAnimationFrame(function () { fill.style.width = to; });
   }
 
   function mountSessionWidgets() {
@@ -577,13 +669,15 @@
     appEl.innerHTML = topbar() + '<main class="main view-' + view.name + '" id="main">' + n + main + '</main>';
     appEl.setAttribute('data-view', view.name);
     appEl.setAttribute('data-mode', state.mode);
-    if (view.name === 'session') mountSessionWidgets();
+    if (view.name === 'session') { mountSessionWidgets(); animateProgress(); }
   }
 
   function reloadFrom(result) {
     state = result.state; readOnly = result.readOnly; loadMessage = result.message || '';
     syncClock(); saveOk = true;
   }
+
+  var GUARDED = { submit: 1, giveup: 1, reason: 1, next: 1 };
 
   function onClick(ev) {
     var el = ev.target.closest('[data-go],[data-act]');
@@ -592,6 +686,11 @@
     var act = el.getAttribute('data-act');
     var s = state.activeSession;
     var t = T();
+    // 画面が切り替わった直後の連続タップ（二重タップ）は無視する。
+    // 前の画面へのタップが、新しく出たボタン（次へ・次の問題の選択肢など）に当たるのを防ぐ
+    if (GUARDED[act]) {
+      if (Date.now() < tapGuardUntil) return;
+    }
     switch (act) {
       case 'task-resume': go('session'); break;
       case 'task-diagnostic': startSession(P.buildDiagnosticSession(BANK, t.app)); break;
@@ -601,13 +700,28 @@
       case 'skip-practice': P.unitState(state, BANK.unit.id).practiceSkippedAt = t.app; persist(); go('home'); break;
       case 'quit': quitSession(); break;
       case 'stop-today': stopForToday(); break;
-      case 'choose': s.current.draft = el.getAttribute('data-choice'); persist(); render(); break;
+      case 'choose': selectChoice(el.getAttribute('data-choice')); break;
+      case 'toggle-explain': toggleExplanation(el); break;
       case 'unsure': s.current.unsure = !s.current.unsure; persist(); render(); break;
       case 'hint': s.current.hintUsed = true; persist(); render(); break;
-      case 'giveup': afterProgress(S.submit(state, BANK, true, t).finished); break;
-      case 'submit': afterProgress(S.submit(state, BANK, false, t).finished); break;
-      case 'reason': S.submitReason(state, BANK, el.getAttribute('data-choice')); persist(); render(); break;
-      case 'next': afterProgress(S.next(state, BANK, t)); break;
+      case 'giveup':
+      case 'submit': {
+        el.disabled = true;
+        var res = S.submit(state, BANK, act === 'giveup', t);
+        if (!res) break; // すでに確定済み（二重確定は記録しない）
+        tapGuardUntil = Date.now() + TAP_GUARD_MS;
+        afterProgress(res.finished); break;
+      }
+      case 'reason':
+        if (!S.submitReason(state, BANK, el.getAttribute('data-choice'))) break;
+        tapGuardUntil = Date.now() + TAP_GUARD_MS;
+        persist(); render(); break;
+      case 'next': {
+        var r = S.next(state, BANK, t);
+        if (r === false) break;
+        tapGuardUntil = Date.now() + TAP_GUARD_MS;
+        afterProgress(r); break;
+      }
       case 'skill': go('history', { tab: 'plan', skill: el.getAttribute('data-skill') }); scrollToSkill(el.getAttribute('data-skill')); break;
       case 'question': go('question', { q: el.getAttribute('data-q') }); break;
       case 'back-history': go('history', { tab: 'plan', skill: el.getAttribute('data-skill') }); scrollToSkill(el.getAttribute('data-skill')); break;
@@ -655,7 +769,8 @@
   }
 
   // テストや開発用に中身を見られるようにしておく
-  EA.app = { getState: function () { return state; }, go: go, isSaveOk: function () { return saveOk; } };
+  EA.app = { getState: function () { return state; }, go: go, isSaveOk: function () { return saveOk; },
+    isTapGuarded: function () { return Date.now() < tapGuardUntil; } };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

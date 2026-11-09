@@ -45,7 +45,9 @@ const curQ = async () => {
   const q = await page.evaluate((id) => JSON.parse(JSON.stringify(window.EA.findQuestion(window.EA.banks.infinitive, id))), item.questionId);
   return { item, q };
 };
-const tap = (sel) => page.locator(sel).first().tap();
+// 画面が切り替わった直後の二重タップ防止（約0.25秒）が終わるまで待ってから押す（人が操作する速さに合わせる）
+const settle = (p = page) => p.waitForFunction(() => !window.EA.app.isTapGuarded());
+const tap = async (sel) => { await settle(); await page.locator(sel).first().tap(); };
 const shot = (name, p = page) => p.screenshot({ path: join(outDir, name + '.png'), fullPage: true });
 const esc = (w) => w.replace(/[.*+?^${}()|[\]\\']/g, '\\$&');
 async function placeTokens(words, p = page) {
@@ -69,6 +71,7 @@ async function answer(q, how = 'correct', p = page) {
 }
 async function reasonIfAsked(q, correct = true) {
   if (await page.locator('[data-act="reason"]').count()) {
+    await settle();
     const id = correct ? q.reason.answer : q.reason.choices.find((c) => c.id !== q.reason.answer).id;
     await page.locator(`[data-act="reason"][data-choice="${id}"]`).tap();
     return true;
@@ -318,14 +321,14 @@ for (const [name, dev] of [['portrait', devices['iPad (gen 7)']], ['phone', devi
   await p2.waitForSelector('.hero');
   await p2.screenshot({ path: join(outDir, `20-${name}-home.png`), fullPage: true });
   await p2.locator('[data-act="task-diagnostic"]').tap();
-  await p2.locator('[data-act="choose"]').first().tap(); await p2.locator('#submit-btn').tap();
-  await p2.locator('[data-act="choose"]').first().tap(); await p2.locator('#submit-btn').tap();
+  await p2.locator('[data-act="choose"]').first().tap(); await settle(p2); await p2.locator('#submit-btn').tap();
+  await p2.locator('[data-act="choose"]').first().tap(); await settle(p2); await p2.locator('#submit-btn').tap();
   await placeTokens(['I', "don't", 'have'], p2);
   assert.deepEqual(await p2.locator('.order-answer .chip').allTextContents(), ['I', "don't", 'have']);
   await p2.screenshot({ path: join(outDir, `21-${name}-order.png`), fullPage: true });
-  await placeTokens(['time', 'to', 'watch', 'TV'], p2); await p2.locator('#submit-btn').tap();
+  await placeTokens(['time', 'to', 'watch', 'TV'], p2); await settle(p2); await p2.locator('#submit-btn').tap();
   await p2.locator('.order-pool button.chip').first().tap();
-  await p2.locator('[data-act="giveup"]').tap();
+  await settle(p2); await p2.locator('[data-act="giveup"]').tap(); await settle(p2);
   await p2.fill('#ja2en-input', 'My dream is to be a teacher.');
   assert.equal(await p2.locator('#submit-btn').isDisabled(), false);
   await p2.screenshot({ path: join(outDir, `22-${name}-ja2en.png`), fullPage: true });

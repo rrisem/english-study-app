@@ -115,11 +115,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   font-weight: 700; font-size: var(--fs-s); border: 1px solid transparent; touch-action: manipulation;
 }
 .btn-primary { background: var(--accent); color: var(--accent-ink); }
-.btn-primary:hover { filter: brightness(1.08); }
+@media (hover: hover) { .btn-primary:hover:not(:disabled) { filter: brightness(1.08); } }
 .btn-primary:disabled { background: var(--surface-2); color: var(--muted); cursor: not-allowed; filter: none; }
 .btn-lg { min-height: 56px; padding: 12px 28px; font-size: var(--fs-m); }
 .btn-quiet { background: var(--surface); border-color: var(--line); color: var(--ink); font-weight: 400; }
-.btn-quiet:hover:not(:disabled) { border-color: var(--accent); }
+@media (hover: hover) { .btn-quiet:hover:not(:disabled) { border-color: var(--accent); } }
 .btn-quiet:disabled { color: var(--muted); opacity: 0.6; cursor: not-allowed; }
 .btn-danger { background: var(--ng); color: var(--surface); }
 .btn-text { background: none; border: 0; padding: 8px 4px; color: var(--accent); cursor: pointer; font-size: var(--fs-s); text-decoration: underline; text-underline-offset: 3px; min-height: 40px; }
@@ -189,7 +189,7 @@ h2 .skill-term { margin-left: 10px; }
 .q-type { font-weight: 700; color: var(--accent); }
 .q-count { font-family: var(--font-en); font-variant-numeric: tabular-nums; color: var(--muted); }
 .q-bar { height: 6px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
-.q-bar span { display: block; height: 100%; background: var(--accent); }
+.q-bar .q-bar-fill { display: block; height: 100%; background: var(--accent); transition: width 0.45s ease-out; }
 .sheet { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: clamp(20px, 4vw, 40px); display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .q-instruction { color: var(--muted); font-size: var(--fs-s); }
 .q-ja { font-size: var(--fs-l); font-weight: 700; }
@@ -204,7 +204,7 @@ h2 .skill-term { margin-left: 10px; }
   background: var(--surface); border: 2px solid var(--line); cursor: pointer; font-size: var(--fs-m); touch-action: manipulation;
 }
 .choice[lang="en"] { font-size: 1.25rem; }
-.choice:hover { border-color: var(--accent); }
+@media (hover: hover) { .choice:hover:not(.choice-result) { border-color: var(--accent); } }
 .choice.is-selected { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
 .choice-dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--muted); flex: none; }
 .choice.is-selected .choice-dot { border-color: var(--accent); background: radial-gradient(circle, var(--accent) 0 45%, transparent 50%); }
@@ -347,7 +347,7 @@ ul.att-list.panel { padding-block: 8px; }
   .brand-name { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; animation: none !important; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
 }
 
 /* ---------- 確認状況（実績＋いまの状態）・確認問題の案内 ---------- */
@@ -372,3 +372,46 @@ details.panel > p { margin-top: 8px; }
   .status-inline { grid-column: 1 / -1; grid-row: 2; }
   .status-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------- 問題画面の操作への反応（表示だけ。採点・保存には関係しない） ---------- */
+/* 押した瞬間の手ごたえ（タップ・クリック共通） */
+.choice, .btn-primary, .btn-quiet, .btn-toggle, .chip { transition: transform 0.08s ease-out, background-color 0.15s ease-out, border-color 0.15s ease-out; }
+.choice:active:not(.choice-result), .btn-primary:active:not(:disabled), .btn-quiet:active:not(:disabled), .btn-toggle:active, .chip:active { transform: scale(0.98); }
+/* 選択中：枠と背景の色＋丸の中が埋まる（採点結果とは別の見た目） */
+.choice-dot { transition: border-color 0.15s ease-out; position: relative; }
+.choice-dot::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--accent); transform: scale(0); transition: transform 0.15s ease-out; }
+.choice.is-selected .choice-dot { background: none; }
+.choice.is-selected .choice-dot::after { transform: scale(1); }
+.blank.filled { transition: background-color 0.15s ease-out; }
+
+/* 採点後：記号・文字・色で示す。押せない */
+.choices-result { list-style: none; margin: 0; padding: 0; }
+.choice-result { cursor: default; flex-wrap: wrap; animation: result-in 0.2s ease-out both; }
+.choice-result .result-icon { width: 24px; height: 24px; flex: none; display: inline-grid; place-items: center; font-weight: 700; border-radius: 50%; font-family: var(--font-ja); }
+.choice-result .choice-text { flex: 1 1 auto; min-width: 0; }
+.choice-result .result-tag { font-size: var(--fs-xs); font-weight: 700; font-family: var(--font-ja); white-space: nowrap; }
+.choice-result.is-correct { border-color: var(--ok); background: var(--ok-soft); }
+.choice-result.is-correct .result-icon { background: var(--ok); color: var(--surface); }
+.choice-result.is-correct .result-tag { color: var(--ok); }
+.choice-result.is-wrong { border-color: var(--ng); background: var(--ng-soft); border-style: dashed; }
+.choice-result.is-wrong .result-icon { background: var(--ng); color: var(--surface); }
+.choice-result.is-wrong .result-tag { color: var(--ng); }
+.choice-result.is-other { opacity: 0.6; }
+.choice-result.is-other .result-icon { border: 2px solid var(--line); }
+.verdict, .reason-result, .next-note { animation: result-in 0.2s ease-out both; }
+@keyframes result-in { from { opacity: 0.35; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* 解説の開閉：高さの上限なし（長い解説も欠けない）。動きの途中も読める・押せる */
+.explain-block { border-top: 1px solid var(--line); padding-top: 8px; }
+.explain-toggle {
+  width: 100%; display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 4px;
+  background: none; border: 0; cursor: pointer; text-align: left; touch-action: manipulation;
+}
+.explain-toggle-label { font-weight: 700; font-size: var(--fs-m); }
+.explain-toggle-state { margin-left: auto; color: var(--accent); font-size: var(--fs-s); }
+.explain-chevron { width: 10px; height: 10px; border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(45deg); transition: transform 0.24s ease-out; margin: 0 6px 4px 0; }
+.explain-toggle[aria-expanded="false"] .explain-chevron { transform: rotate(-45deg); margin-bottom: 0; }
+.collapse { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows 0.24s ease-out, visibility 0s linear 0.24s; }
+.collapse.is-open { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows 0.24s ease-out, visibility 0s linear 0s; }
+.collapse-inner { min-height: 0; overflow: hidden; }
+.explain.explain-bare { border-top: 0; padding-top: 4px; }

@@ -131,9 +131,14 @@
     return a;
   }
 
-  /** 回答を確定する。戻り値 { attempt, finished }（診断は自動で次へ進む） */
+  /**
+   * 回答を確定する。戻り値 { attempt, finished }（診断は自動で次へ進む）。
+   * 二重確定の防止：回答を受け付ける段階（phase: answer）で、まだ記録していないときだけ処理し、それ以外は null を返す。
+   */
   function submit(state, bank, gaveUp, t) {
-    var s = state.activeSession, cur = s.current, it = item(state), qq = q(bank, it.questionId);
+    var s = state.activeSession;
+    if (!s || !s.current || s.current.phase !== 'answer' || s.current.attemptId) return null;
+    var cur = s.current, it = item(state), qq = q(bank, it.questionId);
     pause(cur, t.real);
     var response = gaveUp ? null : cur.draft;
     if (qq.format === 'order' && response) response = response.map(function (i) { return qq.tokens[i]; });
@@ -166,7 +171,7 @@
 
     if (s.type === 'diagnostic') {
       // 初回診断中は、後の問題の答えにつながらないよう解説を出さずに次へ
-      return { attempt: a, finished: next(state, bank, t) };
+      return { attempt: a, finished: next(state, bank, t, { internal: true }) };
     }
     if (a.reasonDecision && a.reasonDecision.ask) {
       s.reasonsAsked = (s.reasonsAsked || 0) + 1;
@@ -178,7 +183,9 @@
   }
 
   function submitReason(state, bank, choiceId) {
-    var s = state.activeSession, qq = q(bank, item(state).questionId);
+    var s = state.activeSession;
+    if (!s || !s.current || s.current.phase !== 'reason') return null; // 二重送信の防止
+    var qq = q(bank, item(state).questionId);
     var a = attemptById(state, s.current.attemptId);
     a.reason = {
       asked: true, kind: qq.reason.kind || 'reason', prompt: qq.reason.prompt, choiceId: choiceId, correct: choiceId === qq.reason.answer,
@@ -219,9 +226,16 @@
     a.followUp = { added: fq.id, trigger: trigger };
   }
 
-  /** 次へ。最後まで進んだら学習回を終えて記録を返す */
-  function next(state, bank, t) {
+  /**
+   * 次へ。最後まで進んだら学習回を終えて記録を返す（続くときは null）。
+   * 解説の項目か、正誤を表示している段階でだけ進める。それ以外（二重タップなど）は false を返して何もしない。
+   */
+  function next(state, bank, t, opts) {
     var s = state.activeSession;
+    if (!s) return false;
+    var it = s.items[s.index];
+    var allowed = (opts && opts.internal) || (it && it.kind === 'explain') || (s.current && s.current.index === s.index && s.current.phase === 'feedback');
+    if (!allowed) return false;
     s.index++;
     s.current = null;
     if (s.index >= s.items.length) return finish(state, bank, t);
