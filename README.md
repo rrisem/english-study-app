@@ -8,6 +8,7 @@
 - 第3回の改善（答えと理解の確認を分ける）・学習例： [docs/review-response-3.md](docs/review-response-3.md)、[docs/learning-examples.txt](docs/learning-examples.txt)
 - 第4回の改善（学習履歴を次の復習に生かす）： [docs/review-response-4.md](docs/review-response-4.md)
 - ホーム画面のデザイン改善（評価・変更前後の比較）： [docs/home-redesign/README.md](docs/home-redesign/README.md)
+- ホーム画面のデザイン改善 第2段階（標準と試作の2種類・Impeccable での検査）： [docs/home-redesign-2/README.md](docs/home-redesign-2/README.md)
 - 問題の編集のしかた（講師向け）： [data/infinitive.js](data/infinitive.js) の先頭の説明
 
 ## iPad で開く
@@ -41,7 +42,8 @@ node tools/scenario.mjs           # 2人の生徒の学習を、実際の判定�
 node tests/interaction-e2e.mjs    # 問題画面の操作（選択・二重確定・解説の開閉・進捗）の確認
 node tests/structure-e2e.mjs      # 英文構造の段階解説（試作）の確認
 node tests/history-e2e.mjs        # 学習履歴を復習に生かす仕組み（記録の保持・自信度・復習の選定・日付の変化）の確認
-node tools/home-shots.mjs <出力先>  # ホーム画面を状態×端末（スマホ・iPad縦横）で撮影
+node tests/home-e2e.mjs           # ホームの導線・はみ出し・見た目の切り替え（標準／試作）の確認
+node tools/home-shots.mjs <出力先> [calm|bold]  # ホーム画面を状態×端末（スマホ・iPad縦横）で撮影
 npm run build                     # 1つのHTMLにまとめる（dist/english-drill.html）
 ```
 

@@ -1,5 +1,6 @@
 // ホーム画面を、学習の状態 × 端末の大きさ で撮影する（デザイン変更の前後比較用）
-// 使い方： node tools/home-shots.mjs <出力先フォルダ>
+// 使い方： node tools/home-shots.mjs <出力先フォルダ> [calm|bold]
+//   2つ目の引数でホームの見た目を指定（省略時は calm＝標準。設定画面の切り替えと同じ保存先を使う）
 //   状態：初回 / 途中で中断 / 復習あり（再確認の項目あり） / 今日の課題完了
 //   端末：スマホ（iPhone 13 相当）/ iPad 縦 / iPad 横
 // 学習記録は実際の判定ロジック（tests/helpers.mjs）で作り、localStorage に入れてから表示します。
@@ -13,6 +14,7 @@ import { setup } from '../tests/helpers.mjs';
 const { chromium, devices } = createRequire(import.meta.url)('playwright');
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = resolve(process.argv[2] || join(root, 'test-output', 'home'));
+const homeStyle = process.argv[3] === 'bold' ? 'bold' : 'calm';
 mkdirSync(outDir, { recursive: true });
 
 /* ---------- 学習記録をつくる ---------- */
@@ -70,7 +72,7 @@ for (const [sceneName, scene] of Object.entries(scenes)) {
   for (const [sizeName, dev] of Object.entries(sizes)) {
     const ctx = await browser.newContext({ ...dev });
     await ctx.clock.setSystemTime(scene.now);
-    await ctx.addInitScript((s) => { localStorage.setItem('ea-study-v1', s); }, JSON.stringify(scene.state));
+    await ctx.addInitScript(([s, style]) => { localStorage.setItem('ea-study-v1', s); localStorage.setItem('ea-home-style', style); }, [JSON.stringify(scene.state), homeStyle]);
     const page = await ctx.newPage();
     page.on('pageerror', (e) => errors.push(`${sceneName}/${sizeName}: ${e.message}`));
     await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
