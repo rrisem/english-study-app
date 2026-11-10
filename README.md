@@ -14,7 +14,7 @@
 ## iPad で開く
 
 ### 方法A：claude.ai のページとして開く（いちばん簡単）
-Claude が作ったページ https://claude.ai/artifact/37Px7633MSSzHZQtcoPeDC を、iPad の Safari で開くだけで使えます。
+Claude が作ったページ https://claude.ai/artifact/DVd6BQGMa99wwrRkoeQQiK を、iPad の Safari で開くだけで使えます。
 （コードを直したら `npm run build` で dist/english-drill.html を作り直し、同じページに更新します）
 claude.ai にログインしている必要があります。
 
