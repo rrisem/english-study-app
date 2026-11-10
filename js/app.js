@@ -199,6 +199,31 @@
       .reduce(function (sum, a) { return sum + Math.min(a.activeMs || 0, cap); }, 0);
   }
 
+  /* 線だけの小さなアイコン（文字色を継ぐ・太さを統一） */
+  var ICON_PATH = {
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    repeat: '<path d="M4.5 11a7.5 7.5 0 0 1 13-4.5L19.5 8"/><path d="M19.5 4v4h-4"/><path d="M19.5 13a7.5 7.5 0 0 1-13 4.5L4.5 16"/><path d="M4.5 20v-4h4"/>',
+    calendar: '<rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+    play: '<path d="M8 5.5v13l10-6.5z"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    compass: '<circle cx="12" cy="12" r="8.5"/><path d="M15 9l-2 4-4 2 2-4z"/>',
+    book: '<path d="M4.5 5.5c2.5-1 5-1 7.5.5v13c-2.5-1.5-5-1.5-7.5-.5z"/><path d="M19.5 5.5c-2.5-1-5-1-7.5.5v13c2.5-1.5 5-1.5 7.5-.5z"/>',
+    arrow: '<path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/>'
+  };
+  function icon(name) {
+    return '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + ICON_PATH[name] + '</svg>';
+  }
+  var TASK_ICON = { resume: 'play', diagnostic: 'compass', practice: 'book', review: 'repeat', done: 'check' };
+
+  /** 今日の学習時間を目標に対する輪で示す（数字が主、輪は補助） */
+  function goalRing(min, goal, pct) {
+    var r = 42, c = 2 * Math.PI * r, off = c * (1 - pct / 100);
+    return '<div class="goal-ring" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="目標に対する今日の学習時間">' +
+      '<svg viewBox="0 0 100 100" aria-hidden="true" focusable="false"><circle class="goal-track" cx="50" cy="50" r="' + r + '"/>' +
+      (pct > 0 ? '<circle class="goal-fill" cx="50" cy="50" r="' + r + '" stroke-dasharray="' + c.toFixed(2) + '" stroke-dashoffset="' + off.toFixed(2) + '"/>' : '') + '</svg>' +
+      '<span class="goal-ring-text"><span class="num">' + min + '</span><span class="goal-ring-unit">/ ' + goal + '分</span></span></div>';
+  }
+
   function renderHome() {
     var t = now();
     var task = P.homeTask(state, BANK, t);
@@ -207,29 +232,39 @@
     var goal = state.settings.dailyGoalMinutes;
     var pct = Math.min(100, Math.round(studyMs / 60000 / goal * 100));
     var due = P.dueReviews(state, BANK, t);
-    var scheduled = BANK.skills.filter(function (sk) { return state.schedule[sk.id]; }).length;
     var next = P.nextReviewDate(state, BANK);
     var statuses = BANK.skills.map(function (sk) { return M.analyze(sk.id, state.attempts, BANK); });
     var recheckN = statuses.filter(function (s) { return s.needsRecheck; }).length;
+    var reached = studyMin >= goal;
 
-    var h = '<section class="hero">' +
-      '<p class="eyebrow">' + U.fmtDate(t) + ' ・ 次にやること</p>' +
-      '<h1 class="hero-title">' + esc(task.title) + '</h1>' +
+    // 1. 次にやること（画面で唯一の強いボタン）
+    var h = '<div class="home-top"><section class="hero hero-' + task.kind + '" aria-labelledby="hero-title">' +
+      '<p class="hero-kicker"><span class="hero-icon">' + icon(TASK_ICON[task.kind] || 'arrow') + '</span>' + (task.kind === 'done' ? '今日の課題' : '次にやること') + '</p>' +
+      '<h1 class="hero-title" id="hero-title">' + esc(task.title) + '</h1>' +
       (task.detail ? '<p class="hero-detail">' + esc(task.detail) + '</p>' : '') +
       '<p class="hero-why">' + esc(task.why) + '</p>' +
-      (task.cta ? '<button type="button" class="btn-primary btn-lg" data-act="task-' + task.kind + '">' + esc(task.cta) + '<span aria-hidden="true"> →</span></button>' : '') +
+      (task.cta ? '<button type="button" class="btn-primary btn-lg hero-cta" data-act="task-' + task.kind + '">' + esc(task.cta) + icon('arrow') + '</button>'
+        : '<button type="button" class="btn-quiet hero-cta" data-go="history">' + icon('book') + '解説と回答を見返す</button>') +
       '</section>';
 
-    h += '<section class="stats" aria-label="今日の状況">' +
-      '<div class="stat"><p class="stat-label">今日の学習時間</p><p class="stat-value"><span class="num">' + studyMin + '</span>分<span class="stat-sub"> ／ 目標 ' + goal + '分</span></p>' +
-        '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="目標に対する学習時間"><span style="width:' + pct + '%"></span></div></div>' +
-      '<div class="stat"><p class="stat-label">今日の復習</p><p class="stat-value"><span class="num">' + due.length + '</span>件<span class="stat-sub"> ／ 予定 ' + scheduled + '件</span></p>' +
-        '<p class="stat-note">' + (next ? '次の復習予定：' + U.fmtDate(next) : '診断のあとに予定が決まります') + '</p></div>' +
-      '<div class="stat"><p class="stat-label">再確認が必要な項目</p><p class="stat-value"><span class="num">' + recheckN + '</span><span class="stat-sub"> ／ ' + BANK.skills.length + ' 項目</span></p>' +
-        '<p class="stat-note">復習のときに別の問題で確かめます</p></div>' +
-      '</section>';
+    // 2. 今日の学習（時間・目標・復習の予定を1か所に）
+    var dueText = due.length ? '<strong class="num">' + due.length + '</strong>件 残り'
+      : ((state.sessions || []).some(function (s) { return s.type === 'review' && U.startOfDay(s.finishedAt || 0) === U.startOfDay(t); }) ? '完了' : 'なし');
+    h += '<section class="today" aria-labelledby="today-title">' +
+      '<div class="today-head"><h2 id="today-title">今日の学習</h2><p class="today-date">' + U.fmtDate(t) + '</p></div>' +
+      '<div class="today-body">' + goalRing(studyMin, goal, pct) +
+        '<div class="today-goal"><p class="today-goal-main">' + (reached ? '目標を達成しました' : '目標まで あと<strong class="num">' + (goal - studyMin) + '</strong>分') + '</p>' +
+        '<p class="today-goal-sub">1日の目標 ' + goal + '分 <button type="button" class="btn-text btn-inline" data-go="settings">変更</button></p></div>' +
+      '</div>' +
+      '<dl class="today-facts">' +
+        '<div class="fact"><dt>' + icon('repeat') + '今日の復習</dt><dd>' + dueText + '</dd></div>' +
+        '<div class="fact"><dt>' + icon('calendar') + '次の復習</dt><dd>' + (next ? (next > t ? U.fmtDate(next) + '<span class="fact-sub">' + U.relDay(next, t) + '</span>' : '今日') : '<span class="fact-sub">診断のあとに決まります</span>') + '</dd></div>' +
+      '</dl></section></div>';
 
-    h += '<section class="panel"><div class="panel-head"><h2>確認状況</h2><p class="panel-note">■の数＝これまでの確認実績（1問自力・別の問題でも・後日の復習でも）。アプリ内の記録で、習得の保証ではありません。</p></div><ul class="skill-list">' +
+    // 3. 項目ごとの確認状況（記録の確認。押すと詳しい予定へ）
+    h += '<section class="panel skills-panel" aria-labelledby="skills-title"><div class="panel-head"><h2 id="skills-title">項目ごとの確認状況</h2>' +
+      (recheckN ? '<p class="skills-alert">再確認 ' + recheckN + '項目</p>' : '') + '</div>' +
+      '<ul class="skill-list">' +
       BANK.skills.map(function (sk, i) {
         var st = statuses[i];
         var sch = state.schedule[sk.id];
@@ -238,7 +273,9 @@
           statusInline(st) +
           '<span class="skill-due">' + (sch ? '復習 ' + U.relDay(sch.dueAt, t) : '—') + '</span>' +
           '</button></li>';
-      }).join('') + '</ul></section>';
+      }).join('') + '</ul>' +
+      '<p class="panel-note skills-note"><span class="meter meter-legend" aria-hidden="true"><span class="meter-seg on"></span><span class="meter-seg"></span><span class="meter-seg"></span></span>' +
+      '＝これまでの確認実績（1問自力・別の問題でも・後日の復習でも）。アプリ内の記録で、習得の保証ではありません。</p></section>';
     return h;
   }
 
