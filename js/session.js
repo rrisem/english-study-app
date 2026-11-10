@@ -156,6 +156,8 @@
       // 答える前にこの英文の日本語訳を見ていたか（日本語が問題文の形式・解き直し）
       translationShown: qq.format === 'ja2en' || qq.format === 'order' || (qq.format === 'fill' && qq.showJa !== 'after') || it.attemptType === 'retry',
       choiceOrder: cur.choiceOrder || null,
+      // 復習でこの問題を選んだ理由（planner.reviewPicks の why）。復習以外は null
+      pickWhy: it.pickWhy || null,
       reason: null,                                         // null ＝ 理由は聞いていない
       reasonDecision: null,
       followUp: null,

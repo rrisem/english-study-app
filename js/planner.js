@@ -35,15 +35,50 @@
     return state.units[unitId] = state.units[unitId] || {};
   }
 
-  /** 各問題を最後に解いた日時と、そのときの結果 */
+  /**
+   * 問題ごとの「次の復習で優先して出す理由」（need）を、回答履歴から決める。
+   *   その問題の回答を古い順に見て、「根拠にする回答」で need を更新する。
+   *   根拠にしない回答（need を変えない）：
+   *     ・判定から除外した回答（問題の不備・開発用の日付）
+   *     ・採点保留・指定の形と違う答え（判別できないため、誤りにも正解にも数えない）
+   *     ・解き直しの正解（答えを見た直後に同じ問題を解いたため）
+   *     ・解説を見たあとの正解のうち、つまずいた日と同じ日のもの（直後の確認で、時間を空けて思い出せた根拠にならないため）
+   *   need: recent-error（不正解・「わからない」）> hint-used（ヒントで正解）> meaning-mismatch（答えは正解・意味の問いが違った）
+   *         > low-confidence（「自信がない」と申告して正解）。どれでもなければ null（優先しない）。
+   *   自信度は 'unsure' だけを低い自信として扱う。'none'（申告なし）や、項目がない古い記録は低い自信とは扱わない。
+   *   ※ これは「どの問題を出すか」の優先だけ。項目の確認状況・再確認の解消は mastery.js のルールのまま（別の問題での自力正解が必要）。
+   */
+  var NEED_RANK = { 'recent-error': 0, 'hint-used': 1, 'meaning-mismatch': 2, 'low-confidence': 3 };
+  function needOf(a, bank, prev) {
+    if (G.isSkillWrong(a.result)) return 'recent-error';
+    if (!G.isSkillCorrect(a.result)) return undefined;              // 採点保留・指定の形と違う → 根拠にしない
+    if (a.hintUsed) return 'hint-used';
+    if (a.attemptType === 'retry') return undefined;                 // 解き直し → 根拠にしない
+    if (a.afterExplanation) {
+      // 別の問題の解説を見たあとの正解は、つまずいた日より後の日なら、その問題の優先を外す根拠にする
+      if (!prev || !prev.need || EA.util.dayDiff(prev.needAt, a.answeredAt) < 1) return undefined;
+      return a.confidence === 'unsure' ? 'low-confidence' : null;
+    }
+    var mc = EA.mastery.meaningCheck(a, bank);
+    if (mc && !mc.ok) return 'meaning-mismatch';
+    if (a.confidence === 'unsure') return 'low-confidence';
+    return null;                                                      // 自力で正解 → 優先しない
+  }
+
+  /** 各問題を最後に解いた日時と、優先して出す理由 */
   function seenInfo(state, bank) {
     var info = {};
-    activeQuestions(bank).forEach(function (q) { info[q.id] = { q: q, lastSeen: -Infinity, lastWrong: false, times: 0 }; });
-    state.attempts.forEach(function (a) {
+    activeQuestions(bank).forEach(function (q) { info[q.id] = { q: q, lastSeen: -Infinity, need: null, needAt: -Infinity, times: 0 }; });
+    state.attempts.slice().sort(function (x, y) { return x.answeredAt - y.answeredAt; }).forEach(function (a) {
       var i = info[a.questionId];
       if (!i) return;
       i.times++;
-      if (a.answeredAt >= i.lastSeen) { i.lastSeen = a.answeredAt; i.lastWrong = !G.isSkillCorrect(a.result); }
+      if (a.answeredAt >= i.lastSeen) i.lastSeen = a.answeredAt;
+      if (EA.mastery.isExcluded(a, bank)) return;
+      var n = needOf(a, bank, i);
+      if (n === undefined) return;
+      if (n !== i.need || n) i.needAt = a.answeredAt;
+      i.need = n;
     });
     return info;
   }
@@ -138,12 +173,14 @@
   }
 
   /**
-   * 復習で出す問題を選ぶ。
-   * 1問目（解説を見る前に答える＝判定の中心）：最近つまずいた問題「以外」で、しばらく見ていない問題。
-   *   訳を見ずに意味を確かめた実績がない（または再確認が必要な）項目では、英文だけで出す問題を優先。
-   * 2問目：前に間違えた問題（あれば）、なければ次にしばらく見ていない問題。
+   * 復習で出す問題を選ぶ。戻り値 [{ q, why }]（why は回答の記録 pickWhy に残す）
+   * 1問目（解説を見る前に答える＝判定の中心）：最近つまずいた問題「以外」で、しばらく見ていない問題（why: other-question）。
+   *   同じ理解を別の問題で確かめるため。訳を見ずに意味を確かめた実績がない（または再確認が必要な）項目では、英文だけで出す問題を優先。
+   * 2問目：回答履歴で優先する理由がある問題（誤答 → ヒントで正解 → 意味の問いが違った → 自信がない正解、同じ順位なら最近のもの）。
+   *   why はその理由。なければ、しばらく見ていない問題（why: oldest）。
+   * 項目に問題が1問しかないとき：その問題を出し、why: no-other-question（同じ問題の正解では再確認を解消しない）。
    */
-  function pickReviewQuestions(state, bank, skillId, count) {
+  function reviewPicks(state, bank, skillId, count) {
     var st = EA.mastery.analyze(skillId, state.attempts, bank);
     var issueQ = {};
     st.issues.forEach(function (i) { issueQ[i.questionId] = true; });
@@ -151,21 +188,30 @@
     var needMeaning = st.meaning !== 'confirmed';
     var info = seenInfo(state, bank);
     var list = Object.keys(info).map(function (k) { return info[k]; }).filter(function (x) { return x.q.skill === skillId; });
+    if (!list.length) return [];
+    if (list.length === 1) return [{ q: list[0].q, why: 'no-other-question' }];
     var byOldest = list.slice().sort(function (a, b) { return a.lastSeen - b.lastSeen; });
-    var firstCands = byOldest.filter(function (x) { return !issueQ[x.q.id]; });
+    var firstCands = byOldest.filter(function (x) { return !issueQ[x.q.id] && !x.need; });
+    if (!firstCands.length) firstCands = byOldest.filter(function (x) { return !issueQ[x.q.id]; });
     if (needMeaning) {
       var m = firstCands.filter(function (x) { return isEnglishOnly(x.q); });
       if (m.length) firstCands = m;
     }
     var picks = [];
-    if (firstCands[0]) picks.push(firstCands[0].q); else if (byOldest[0]) picks.push(byOldest[0].q);
-    var wrongOnes = list.filter(function (x) { return x.lastWrong && picks.indexOf(x.q) < 0; })
-      .sort(function (a, b) { return b.lastSeen - a.lastSeen; });
-    if (picks.length < count && wrongOnes[0]) picks.push(wrongOnes[0].q);
+    function has(q) { return picks.some(function (p) { return p.q === q; }); }
+    if (firstCands[0]) picks.push({ q: firstCands[0].q, why: 'other-question' });
+    else picks.push({ q: byOldest[0].q, why: 'oldest' });
+    var needed = list.filter(function (x) { return x.need && !has(x.q); })
+      .sort(function (a, b) { return (NEED_RANK[a.need] - NEED_RANK[b.need]) || (b.needAt - a.needAt); });
+    for (var j = 0; picks.length < count && j < needed.length; j++) picks.push({ q: needed[j].q, why: needed[j].need });
     for (var i = 0; picks.length < count && i < byOldest.length; i++) {
-      if (picks.indexOf(byOldest[i].q) < 0) picks.push(byOldest[i].q);
+      if (!has(byOldest[i].q)) picks.push({ q: byOldest[i].q, why: 'oldest' });
     }
     return picks;
+  }
+  /** 互換用：問題だけの配列 */
+  function pickReviewQuestions(state, bank, skillId, count) {
+    return reviewPicks(state, bank, skillId, count).map(function (p) { return p.q; });
   }
 
   /** 復習：期限が来た skill を、再確認が必要なもの → 実績の低いもの → 期限の古いものの順に、上限数まで */
@@ -173,13 +219,18 @@
     var cfg = EA.config;
     var due = dueReviews(state, bank, now);
     var take = due.slice(0, cfg.maxReviewSkillsPerSession);
-    var items = [];
+    var items = [], unresolved = [];
     take.forEach(function (e) {
-      pickReviewQuestions(state, bank, e.skillId, cfg.questionsPerReviewSkill).forEach(function (q) {
-        items.push({ kind: 'question', questionId: q.id, attemptType: 'review', forSkill: e.skillId });
+      reviewPicks(state, bank, e.skillId, cfg.questionsPerReviewSkill).forEach(function (p) {
+        items.push({ kind: 'question', questionId: p.q.id, attemptType: 'review', forSkill: e.skillId, pickWhy: p.why });
+        if (p.why === 'no-other-question') {
+          unresolved.push({ skillId: e.skillId, questionId: p.q.id, trigger: 'no-other-question',
+            why: 'この項目には別の問題がないため、同じ問題で確認しました。同じ問題の正解では再確認を解消しません（別の問題が追加されると確かめられます）。' });
+        }
       });
     });
     return newSession('review', bank.unit.id, items, now, {
+      unresolved: unresolved,
       reviewSkills: take.map(function (e) { return e.skillId; }),
       deferredSkills: due.slice(take.length).map(function (e) { return e.skillId; })
     });
@@ -188,7 +239,8 @@
   function priorityOf(state, bank) {
     return function (e) {
       var st = EA.mastery.analyze(e.skillId, state.attempts, bank);
-      return (st.needsRecheck ? 0 : 10) + st.achievement;
+      // 再確認が必要 → 「自信がない」が残る → それ以外。同じ区分の中では実績の低い順（実績は 0〜3）
+      return (st.needsRecheck ? 0 : st.unsure ? 5 : 10) + st.achievement;
     };
   }
 
@@ -269,6 +321,8 @@
     buildPracticeSession: buildPracticeSession,
     buildReviewSession: buildReviewSession,
     pickReviewQuestions: pickReviewQuestions,
+    reviewPicks: reviewPicks,
+    needOf: needOf,
     pickFollowUp: pickFollowUp,
     dueReviews: dueReviews,
     nextReviewDate: nextReviewDate,

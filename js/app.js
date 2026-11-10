@@ -49,12 +49,21 @@
     try { root.scrollTo(0, 0); } catch (e) { /* 無視 */ }
   }
 
+  // 画面に戻ったとき、日付が変わっていればホームを描き直す（開いたまま日をまたいだとき、前日の課題・予定を出し続けないため）
+  var shownDay = null;
+  function refreshHomeIfDayChanged() {
+    if (document.hidden || view.name !== 'home' || !appEl) return;
+    if (shownDay !== null && shownDay !== U.startOfDay(now())) render();
+  }
   document.addEventListener('visibilitychange', function () {
+    refreshHomeIfDayChanged();
     var s = state.activeSession;
     if (!s || !s.current) return;
     if (document.hidden) S.pause(s.current, Date.now()); else S.resume(s.current, Date.now());
     persist();
   });
+  root.addEventListener('pageshow', refreshHomeIfDayChanged);
+  root.addEventListener('focus', refreshHomeIfDayChanged);
   root.addEventListener('pagehide', function () {
     var s = state.activeSession;
     if (s && s.current) { S.pause(s.current, Date.now()); persist(); }
@@ -803,6 +812,7 @@
     notice = null;
     appEl.innerHTML = topbar() + '<main class="main view-' + view.name + '" id="main">' + n + main + '</main>';
     appEl.setAttribute('data-view', view.name);
+    shownDay = U.startOfDay(now());
     appEl.setAttribute('data-mode', state.mode);
     if (view.name === 'session') { mountSessionWidgets(); animateProgress(); }
   }
