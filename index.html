@@ -367,6 +367,9 @@ h2 .skill-term { margin-left: 10px; }
 .steps li.done { background: var(--ok-soft); color: var(--ok); font-weight: 700; }
 .step-mark { width: 20px; height: 20px; border-radius: 50%; border: 2px solid currentColor; display: inline-grid; place-items: center; font-size: 0.75rem; }
 .unit-scope { font-size: var(--fs-s); color: var(--muted); }
+/* 単元で扱う範囲：既存の用法ラベル（タグ）だけで示す */
+.unit-range { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; }
+.unit-range .label { margin-right: 4px; }
 .later { color: var(--muted); padding: 0 4px; }
 .later h2 { font-size: var(--fs-m); margin-bottom: 4px; }
 
@@ -640,6 +643,8 @@ details.panel > p { margin-top: 8px; }
 @keyframes sx-in { from { opacity: 0.3; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 
 /* ---------- 保存してホームへ・意味の問い（英文に即した3択） ---------- */
+.toast-temp { transition: opacity 0.3s ease-out; }
+.toast-temp.is-leaving { opacity: 0; }
 .toast-error { background: var(--ng-soft); color: var(--ng); border-left: 4px solid var(--ng); font-weight: 700; }
 .hero-due { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 12px 14px; border-radius: var(--r-s); background: var(--hold-soft); color: var(--ink); font-size: var(--fs-s); }
 .hero-due .icon { color: var(--hold); margin-top: 0.2em; }
@@ -2791,7 +2796,7 @@ details.panel > p { margin-top: 8px; }
       return {
         kind: 'resume', title: label + 'の続き',
         detail: (Math.min(s.index + 1, s.items.length)) + ' / ' + s.items.length + ' ' + where + 'から再開します',
-        why: '途中で保存してホームへ戻りました。答えた問題と、入力の途中の内容は残っています。',
+        why: '', // 保存できたことは「途中経過を保存しました」の一時表示で伝える（ホームに定型文を残さない）
         cta: '続きから再開',
         dueWaiting: dueWaiting
       };
@@ -3465,6 +3470,10 @@ details.panel > p { margin-top: 8px; }
   var view = { name: 'home', params: {} };
   var appEl = null;
   var notice = null;
+  var toastTimer = null;
+  var TOAST_MS = 3000;
+  // 初回診断の1問目の案内を出す学習回（診断を始めたときだけ立てる。表示だけで保存しない）
+  var firstNoteFor = null;
   // 表示だけの状態（保存しない）：進捗バーの直前の値（動きの起点）と、連続タップを無視する期限
   var progressShown = { sessionId: null, pct: 0 };
   var tapGuardUntil = 0;
@@ -3520,6 +3529,7 @@ details.panel > p { margin-top: 8px; }
 
   /* ================= 学習の流れ（進行は session.js） ================= */
   function startSession(session) {
+    firstNoteFor = session.type === 'diagnostic' ? session.id : null;
     var rec = S.start(state, EA.banks[session.unitId] || BANK, session, T());
     persist();
     if (rec) go('summary', { sessionId: rec.id }); else go('session');
@@ -3543,7 +3553,8 @@ details.panel > p { margin-top: 8px; }
       render();
       return;
     }
-    notice = '保存しました。ホームの「続きから再開」で、同じところから続けられます。';
+    firstNoteFor = null; // 再開したときは「結果と解説は全問回答後に表示されます」を繰り返さない
+    notice = { tone: 'info', text: '途中経過を保存しました', temp: true }; // 保存に成功したときだけ、一時表示
     go('home');
   }
 
@@ -3608,7 +3619,7 @@ details.panel > p { margin-top: 8px; }
    */
   function questionPromptHtml(qq, draftChoice, opts) {
     opts = opts || {};
-    var h = opts.noInstruction ? '' : '<p class="q-instruction">' + esc(qq.instruction) + '</p>';
+    var h = opts.noInstruction || !needsInstruction(qq) ? '' : '<p class="q-instruction">' + esc(qq.instruction) + '</p>';
     if (qq.format === 'meaning') {
       h += '<p class="q-sentence" lang="en">' + esc(qq.sentence) + '</p>';
       h += '<p class="q-ja q-question">' + esc(qq.question) + '</p>';
@@ -3624,6 +3635,14 @@ details.panel > p { margin-top: 8px; }
       }
     }
     return h;
+  }
+
+  /**
+   * 回答のしかたの指示を出すか。意味の確認（英文＋質問＋選択肢）は画面を見れば操作がわかるので出さない。
+   * 空所補充（選ぶ）・並び替え・日本語→英語（to＋動詞の原形を使う条件）は、答えるために必要なので残す。
+   */
+  function needsInstruction(qq) {
+    return !!qq.instruction && qq.format !== 'meaning';
   }
 
   function topbar() {
@@ -3884,7 +3903,10 @@ details.panel > p { margin-top: 8px; }
       '<p>' + esc(BANK.unit.description) + '</p></div>' +
       '<button type="button" class="btn-primary" data-go="home">ホームの課題へ</button></div>' +
       '<ol class="steps">' + steps.map(function (s) { return '<li class="' + (s[1] ? 'done' : '') + '"><span class="step-mark" aria-hidden="true">' + (s[1] ? '✓' : '') + '</span>' + s[0] + '<span class="sr">' + (s[1] ? '（済み）' : '（まだ）') + '</span></li>'; }).join('') + '</ol>' +
-      '<p class="unit-scope">この単元で扱う範囲：' + esc(BANK.unit.scopeNote) + '</p></section>' +
+      // 扱う範囲は既存の用法ラベルで示す（詳しい範囲の説明 scopeNote は問題集に残し、出題範囲は変えない）
+      '<p class="unit-range"><span class="label">扱う範囲</span>' + BANK.skills.map(function (sk, i) {
+        return '<span class="tag tag-' + (i + 1) + '">' + esc(sk.term) + '</span>';
+      }).join('') + '</p></section>' +
       trialUnitsHtml() +
       '<section class="later"><h2>今後追加する予定の単元</h2><p>動名詞・比較・関係代名詞などを予定しています。まだ利用できません。</p></section>';
   }
@@ -3921,19 +3943,21 @@ details.panel > p { margin-top: 8px; }
 
     var qq2 = q(item.questionId);
     var cur = S.ensureCurrent(state, SB(), T());
+    // 見出しの補足（定型文）。初回診断・確認問題は出さない（診断の案内は1問目の first-note だけ）
     var typeNote = {
-      diagnostic: '解説は全問に答えたあとに表示します。',
       retry: '解説を読んだ直後の解き直しです（類題とは別に記録します）。',
       similar: '単語や場面を変えた類題です。',
-      followup: '前の問題でつまずいた内容を、別の問題で確かめます。',
       review: '復習です。答えを見ずに思い出してみましょう。',
       trial: '試作の問題です（確認状況・復習予定には反映しません）。'
-    }[item.attemptType];
+    }[item.attemptType] || '';
+    // 確認問題は、問題画面の見出しでは「類題」と短く示す（記録・履歴の種類は「確認問題」のまま）
+    var typeLabel = item.attemptType === 'followup' ? '類題' : TYPE_LABEL[item.attemptType];
 
-    // 初回診断の1問目だけ、結果と解説がいつ出るかを短く案内する（閉じなくてもそのまま答えられる）
-    var firstDiag = s.type === 'diagnostic' && s.index === 0 && cur.phase === 'answer';
+    // 初回診断の1問目を初めて開いたときだけ、結果と解説がいつ出るかを短く案内する（そのまま答えられる位置）。
+    // 診断を始めた直後だけ firstNoteFor が立つ。途中から再開したとき・再読み込みしたとき・2問目以降では出さない
+    var firstDiag = firstNoteFor === s.id && s.type === 'diagnostic' && s.index === 0 && cur.phase === 'answer';
     var body = '<section class="sheet" aria-live="polite">' +
-      '<p class="eyebrow">' + esc(TYPE_LABEL[item.attemptType]) + ' ・ ' + esc(FORMAT_LABEL[qq2.format]) + (firstDiag ? '' : '<span class="eyebrow-note">' + esc(typeNote) + '</span>') + '</p>' +
+      '<p class="eyebrow">' + esc(typeLabel) + ' ・ ' + esc(FORMAT_LABEL[qq2.format]) + (typeNote ? '<span class="eyebrow-note">' + esc(typeNote) + '</span>' : '') + '</p>' +
       (firstDiag ? '<p class="first-note" role="note">' + icon('clock') + '<span>結果と解説は全問回答後に表示されます</span></p>' : '');
 
     if (cur.phase === 'answer') {
@@ -4463,13 +4487,26 @@ details.panel > p { margin-top: 8px; }
       default: main = renderHome();
     }
     var n = !notice ? '' : typeof notice === 'string' ? '<div class="toast" role="status">' + esc(notice) + '</div>'
+      : notice.temp ? '<div class="toast toast-temp" role="status">' + esc(notice.text) + '</div>'
       : '<div class="toast toast-' + notice.tone + '" role="alert">' + esc(notice.text) + '</div>';
+    var tempToast = !!(notice && notice.temp);
     notice = null;
     appEl.innerHTML = topbar() + '<main class="main view-' + view.name + '" id="main">' + n + main + '</main>';
     appEl.setAttribute('data-view', view.name);
     shownDay = U.startOfDay(now());
     appEl.setAttribute('data-mode', state.mode);
     if (view.name === 'session') { mountSessionWidgets(); animateProgress(); }
+    if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+    if (tempToast) {
+      // 一時表示：数秒で消える（消えても操作には影響しない）
+      toastTimer = setTimeout(function () {
+        toastTimer = null;
+        var el = appEl.querySelector('.toast-temp');
+        if (!el) return;
+        el.classList.add('is-leaving');
+        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+      }, TOAST_MS);
+    }
   }
 
   function reloadFrom(result) {
