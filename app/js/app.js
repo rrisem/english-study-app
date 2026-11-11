@@ -33,6 +33,7 @@
   function now() { return EA.clock.now(); }
   function T() { return { app: EA.clock.now(), real: Date.now() }; }
   function persist() {
+    S.touch(state, Date.now());
     saveOk = readOnly ? false : EA.storage.save(state);
     return saveOk;
   }
@@ -59,7 +60,9 @@
     refreshHomeIfDayChanged();
     var s = state.activeSession;
     if (!s || !s.current) return;
-    if (document.hidden) S.pause(s.current, Date.now()); else S.resume(s.current, Date.now());
+    // 計時を再開するのは学習画面を開いているときだけ（「保存してホームへ」のあと、ホームを見ている時間は数えない）
+    if (document.hidden) S.pause(s.current, Date.now());
+    else if (view.name === 'session') S.resume(s.current, Date.now());
     persist();
   });
   root.addEventListener('pageshow', refreshHomeIfDayChanged);
@@ -80,19 +83,22 @@
     if (rec) go(rec.type === 'diagnostic' ? 'results' : 'summary', { sessionId: rec.id });
     else go('session');
   }
-  function quitSession() {
-    var s = state.activeSession;
-    if (s && s.current) S.pause(s.current, Date.now());
-    var ok = persist();
-    notice = ok ? '途中まで保存しました。ホームの「続きから再開」で戻れます。' : '記録を保存できませんでした。画面を閉じると、この学習の記録は失われます。';
+  /**
+   * 「保存してホームへ」：途中の状態（確定した回答・入力の途中・選択・段階・学習時間）を保存してホームへ。
+   * 学習回は終えず、復習予定も更新しない。保存できなかったときは学習画面にとどまり、入力を保ったまま再試行できる。
+   */
+  function saveAndGoHome() {
+    if (!state.activeSession) { go('home'); return; }
+    S.suspend(state, Date.now());
+    if (!persist()) {
+      notice = { tone: 'error', text: readOnly
+        ? '保存できませんでした。元のデータを守るため、この端末では記録を保存しない状態です。この画面のまま学習を続けられます。講師に伝えてください。'
+        : '保存できませんでした（容量不足など）。答えと入力の途中の内容はこの画面に残っています。もう一度「保存してホームへ」を押してください。' };
+      render();
+      return;
+    }
+    notice = '保存しました。ホームの「続きから再開」で、同じところから続けられます。';
     go('home');
-  }
-  function stopForToday() {
-    var s = state.activeSession;
-    if (s && s.current) S.pause(s.current, Date.now());
-    var rec = S.finish(state, SB(), T(), { early: true });
-    persist();
-    go('summary', { sessionId: rec.id });
   }
 
   /* ================= 共通の部品 ================= */
@@ -181,12 +187,8 @@
       var cur = view.name === n[0] || (n[0] === 'history' && view.name === 'question');
       return '<button type="button" class="nav-item' + (cur ? ' is-current' : '') + '" data-go="' + n[0] + '"' + (cur ? ' aria-current="page"' : '') + '>' + n[1] + '</button>';
     }).join('') + '</nav>';
-    var sessionBtns = '';
-    if (inSession) {
-      sessionBtns = state.activeSession.type === 'diagnostic'
-        ? '<button type="button" class="btn-quiet" data-act="quit">中断（続きはあとで）</button>'
-        : '<button type="button" class="btn-quiet" data-act="quit">中断</button><button type="button" class="btn-quiet" data-act="stop-today">今日はここまで</button>';
-    }
+    // 学習画面の退出は、どの学習回でも「保存してホームへ」1つ（初回診断・解説と類題・復習・試作で同じ）
+    var sessionBtns = inSession ? '<button type="button" class="btn-quiet" data-act="save-home">保存してホームへ</button>' : '';
     var bars = '';
     if (state.mode === 'demo') {
       bars += '<div class="devbar" role="status"><strong>デモモード</strong>（通常の学習記録とは別に保存。終えると消えます）・アプリ内の日付：' + U.fmtDate(now()) +
@@ -310,7 +312,10 @@
       '<div class="hero-actions">' +
       (task.cta ? '<button type="button" class="btn-primary btn-lg hero-cta" data-act="task-' + task.kind + '">' + esc(task.cta) + icon('arrow') + '</button>'
         : '<button type="button" class="btn-quiet hero-cta" data-go="history">' + icon('book') + '解説と回答を見返す</button>') +
-      '</div></section>';
+      '</div>' +
+      (task.kind === 'resume' && task.dueWaiting ? '<p class="hero-due" role="note">' + icon('calendar') +
+        '<span>期限を迎えた復習が <strong class="num">' + task.dueWaiting + '</strong>件あります。この学習を最後まで進めると始められます。</span></p>' : '') +
+      '</section>';
 
     // 2. 今日の学習（時間・目標・今週・復習の予定を1か所に。次の行動の邪魔をしない脇の位置）
     var reviewedToday = (state.sessions || []).some(function (s) { return s.type === 'review' && U.startOfDay(s.finishedAt || 0) === U.startOfDay(t); });
@@ -426,26 +431,15 @@
     } else {
       var a = attemptById(cur.attemptId);
       if (cur.phase === 'reason') {
-        // 理由・意味の問いに答えるまでは、日本語訳・正答・正誤・解説を出さない（あなたの答えだけを英文で示す）
-        body += questionPromptHtml(qq2, qq2.format === 'fill' ? a.response : null, { hideJa: true, noInstruction: true });
-        if (qq2.format !== 'fill') body += '<div class="your-answer"><span class="label">あなたの答え</span><span lang="en">' + esc(a.responseText) + '</span></div>';
-        body += '<div class="reason"><p class="reason-q"><span class="label">意味の問い</span>' + esc(qq2.reason.prompt) + '</p>' +
-          '<p class="reason-note">日本語訳・正誤・解説は、この問いに答えたあとに表示します。</p><div class="choices">' +
-          ordered(qq2.reason.choices, cur.reasonOrder).map(function (c) { return '<button type="button" class="choice" data-act="reason" data-choice="' + c.id + '">' + esc(c.text) + '</button>'; }).join('') +
-          '</div></div>';
+        // 意味の問いに答えるまでは、日本語訳・正答・正誤・解説を出さない。英文と、聞いている部分（太字）だけを示す
+        body += reasonAskHtml(qq2, cur);
       } else {
         body += questionPromptHtml(qq2, qq2.format === 'fill' ? a.response : null);
         if (qq2.choices) body += resultChoicesHtml(qq2, a, cur);
         else body += '<div class="your-answer"><span class="label">あなたの答え</span><span lang="en">' + (a.responseText ? esc(a.responseText) : '（わからない）') + '</span></div>';
         body += '<div class="verdict"><span class="label">答え</span>' + resultBadge(a.result) + flagsHtml(a) + '</div>';
         if (a.feedback) body += '<p class="feedback-note">' + esc(a.feedback) + '</p>';
-        if (a.reason) {
-          var rc = null; qq2.reason.choices.forEach(function (c) { if (c.id === qq2.reason.answer) rc = c; });
-          body += '<div class="reason-result"><span class="label">意味の問い</span>' +
-            (a.reason.correct ? '○ 選んだ意味は合っています。' : '× 選んだ意味とは違います。答えは正解なので、意味をもう一度確かめましょう。') +
-            (a.reason.independent === false ? '<span class="reason-correct">日本語訳や解説を見たあとの回答なので、考え方の参考として記録します。</span>' : '') +
-            '<span class="reason-correct">この文では：' + esc(rc.text) + '</span></div>';
-        }
+        if (a.reason) body += reasonResultHtml(qq2, a);
         if (a.followUp) {
           body += '<div class="next-note" role="note">' + (a.followUp.added
             ? '<strong>このあと、単語や場面を変えた問題でもう一度確かめます。</strong>'
@@ -458,6 +452,77 @@
       }
     }
     return progress + body + '</section>';
+  }
+
+  /** 英文の中で、意味の問いが聞いている部分を太字＋下線にする（to が複数あっても対象がわかるように） */
+  function targetSentenceHtml(sentence, target) {
+    var i = target ? sentence.indexOf(target) : -1;
+    if (i < 0) return esc(sentence);
+    return esc(sentence.slice(0, i)) + '<strong class="reason-target">' + esc(target) + '</strong>' + esc(sentence.slice(i + target.length));
+  }
+
+  /** 意味の問い（回答前）：英文＋太字の部分＋短い質問＋3択。選んでから「回答を確定」 */
+  function reasonAskHtml(qq, cur) {
+    var r = qq.reason;
+    return '<div class="reason">' +
+      '<p class="eyebrow">意味の問い<span class="eyebrow-note">日本語訳・正誤・解説は、この問いに答えたあとに表示します。</span></p>' +
+      '<p class="q-sentence reason-sentence" lang="en">' + targetSentenceHtml(r.sentence, r.target) + '</p>' +
+      '<p class="reason-q">' + esc(r.prompt) + '</p>' +
+      '<div class="choices" role="radiogroup" aria-label="意味の問いの選択肢">' +
+      ordered(r.choices, cur.reasonOrder).map(function (c) {
+        var on = cur.reasonDraft === c.id;
+        return '<button type="button" role="radio" aria-checked="' + on + '" class="choice' + (on ? ' is-selected' : '') + '" data-act="reason-choose" data-choice="' + c.id + '">' +
+          '<span class="choice-dot" aria-hidden="true"></span>' + esc(c.text) + '</button>';
+      }).join('') + '</div>' +
+      '<div class="actions"><button type="button" class="btn-primary btn-lg" data-act="reason" id="reason-submit"' + (cur.reasonDraft ? '' : ' disabled') + '>回答を確定</button></div>' +
+      '</div>';
+  }
+
+  /**
+   * 意味の問い（回答後）：○×、選んだもの・この文での意味、どの語句とどの語句がどうつながるか、文法用語。
+   * 答えたときの文言（a.reason に保存）を使う。問題データの更新前の回答でも、当時の選択肢で表示する。
+   */
+  function reasonResultHtml(qq, a) {
+    var r = a.reason, cur = qq.reason || {};
+    var sameVersion = r.reasonVersion && r.reasonVersion === qq.version;
+    var answerText = r.answerText, choiceText = r.choiceText;
+    if (!answerText || !choiceText) {
+      // 古い記録（文言を保存していない）：今の設問か、以前の共通の選択肢から探す
+      var pool = (cur.choices || []).concat((EA.banks[a.unitId] && EA.banks[a.unitId].legacyReasonChoices) || []);
+      pool.forEach(function (c) { if (!answerText && c.id === (r.answerId || (r.kind === 'role' ? a.skillId : cur.answer))) answerText = c.text; if (!choiceText && c.id === r.choiceId) choiceText = c.text; });
+    }
+    var chosen = null;
+    if (sameVersion) (cur.choices || []).forEach(function (c) { if (c.id === r.choiceId) chosen = c; });
+    var h = '<div class="reason-result"><span class="label">意味の問い</span>' +
+      '<span>' + (r.correct ? '○ 選んだ意味は合っています。' : '× 選んだ意味とは違います。答えは正解なので、意味をもう一度確かめましょう。') + '</span>';
+    if (!r.correct && choiceText) h += '<span class="reason-correct">あなたが選んだもの：' + esc(choiceText) + '</span>';
+    if (!r.correct && chosen && chosen.feedback) h += '<span class="reason-correct">' + esc(chosen.feedback) + '</span>';
+    if (answerText) h += '<span class="reason-answer">この文では：' + esc(answerText) + '</span>';
+    if (sameVersion && cur.link) {
+      h += '<div class="reason-link"><p class="reason-link-map" lang="en"><span class="reason-link-head">' + esc(cur.link.head) + '</span>' +
+        '<span class="reason-link-arrow" aria-hidden="true">←</span><strong class="reason-target">' + esc(cur.target) + '</strong></p>' +
+        '<p>' + esc(cur.link.text) + '</p>' +
+        (cur.link.term ? '<p class="ex-term"><span class="label">文法の名前</span>' + esc(cur.link.term) + '</p>' : '') + '</div>';
+    }
+    if (r.independent === false) h += '<span class="reason-correct">日本語訳や解説を見たあとの回答なので、考え方の参考として記録します。</span>';
+    if (!sameVersion) h += '<span class="reason-correct">この回答は以前の版の設問への回答です（確認状況の判定には使いません）。</span>';
+    return h + '</div>';
+  }
+
+  /** 意味の問いの選択：画面全体を描き直さず、選択状態だけを変える */
+  function selectReason(id) {
+    var s = state.activeSession;
+    if (!s || !s.current || s.current.phase !== 'reason') return;
+    s.current.reasonDraft = id;
+    var btns = appEl.querySelectorAll('[data-act="reason-choose"]');
+    for (var i = 0; i < btns.length; i++) {
+      var on = btns[i].getAttribute('data-choice') === id;
+      btns[i].classList.toggle('is-selected', on);
+      btns[i].setAttribute('aria-checked', on ? 'true' : 'false');
+    }
+    var b = document.getElementById('reason-submit');
+    if (b) b.disabled = false;
+    schedulePersist();
   }
 
   /**
@@ -707,7 +772,8 @@
     }).join('') + '</ol>';
     h += '<div class="actions actions-split">' +
       '<button type="button" class="btn-primary btn-lg" data-act="task-practice">' + (flagged ? '解説と類題へ（' + flagged + '問）' : '別の問題でも確かめる（3問・任意）') + '</button>' +
-      '<button type="button" class="btn-quiet" data-act="skip-practice-later">今日はここまで（あとでホームから）</button>' +
+      // 診断はもう終わっているので、ここは記録を変えずにホームへ戻るだけ
+      '<button type="button" class="btn-quiet" data-act="skip-practice-later">ホームへ戻る（解説と類題はあとで）</button>' +
       (flagged ? '' : '<button type="button" class="btn-quiet" data-act="skip-practice">確認問題はとばす</button>') +
       '</div>';
     return h;
@@ -873,7 +939,8 @@
       case 'settings': main = renderSettings(); break;
       default: main = renderHome();
     }
-    var n = notice ? '<div class="toast" role="status">' + esc(notice) + '</div>' : '';
+    var n = !notice ? '' : typeof notice === 'string' ? '<div class="toast" role="status">' + esc(notice) + '</div>'
+      : '<div class="toast toast-' + notice.tone + '" role="alert">' + esc(notice.text) + '</div>';
     notice = null;
     appEl.innerHTML = topbar() + '<main class="main view-' + view.name + '" id="main">' + n + main + '</main>';
     appEl.setAttribute('data-view', view.name);
@@ -888,7 +955,7 @@
     syncClock(); saveOk = true;
   }
 
-  var GUARDED = { submit: 1, giveup: 1, reason: 1, next: 1 };
+  var GUARDED = { submit: 1, giveup: 1, reason: 1, 'reason-choose': 1, next: 1 };
 
   function onClick(ev) {
     var el = ev.target.closest('[data-go],[data-act]');
@@ -909,8 +976,7 @@
       case 'task-review': startSession(P.buildReviewSession(state, BANK, t.app)); break;
       case 'skip-practice-later': notice = '診断の結果は記録しました。解説と類題はホームから始められます。'; go('home'); break;
       case 'skip-practice': P.unitState(state, BANK.unit.id).practiceSkippedAt = t.app; persist(); go('home'); break;
-      case 'quit': quitSession(); break;
-      case 'stop-today': stopForToday(); break;
+      case 'save-home': saveAndGoHome(); break;
       case 'choose': selectChoice(el.getAttribute('data-choice')); break;
       case 'toggle-explain': toggleExplanation(el); break;
       case 'task-trial': startSession(P.buildTrialSession(EA.banks[el.getAttribute('data-unit')], t.app)); break;
@@ -925,8 +991,11 @@
         tapGuardUntil = Date.now() + TAP_GUARD_MS;
         afterProgress(res.finished); break;
       }
+      case 'reason-choose': selectReason(el.getAttribute('data-choice')); break;
       case 'reason':
-        if (!S.submitReason(state, SB(), el.getAttribute('data-choice'))) break;
+        if (!s || !s.current || !s.current.reasonDraft) break;
+        el.disabled = true;
+        if (!S.submitReason(state, SB(), s.current.reasonDraft)) { render(); break; }
         tapGuardUntil = Date.now() + TAP_GUARD_MS;
         persist(); render(); break;
       case 'next': {
@@ -977,6 +1046,7 @@
   function boot() {
     appEl = document.getElementById('app');
     appEl.addEventListener('click', onClick);
+    S.recover(state); // 前回、計時中のまま閉じていた場合も、閉じていた時間は学習時間に数えない
     if (loaded.status === 'migrated' || loaded.status === 'new' || loaded.status === 'ok') persist();
     if (loaded.status === 'migrated') loadMessage = '記録を新しい形式に引き継ぎました（' + loadMessage + '）。元のデータの控えも保存しています。';
     render();

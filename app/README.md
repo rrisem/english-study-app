@@ -25,3 +25,10 @@
 
 - すべてのファイルは import/export を使わない普通の `<script>` で、`window.EA` に機能を登録します。読み込み順を変えると動きません。
 - 問題の追加・修正は `data/infinitive.js` の先頭コメントに書き方の説明があります。
+
+## 動作確認（テスト）
+
+```
+node tests/logic.test.cjs       # 学習の進行・保存・意味の問い・旧データの読み込み（ブラウザ不要）
+node tests/browser.check.cjs    # 画面での確認（Playwright が必要）。スクリーンショットは tests/out/
+```

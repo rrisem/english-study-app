@@ -607,3 +607,20 @@ details.panel > p { margin-top: 8px; }
 /* 新しく強調した部分だけ、控えめに現れる（動きを減らす設定では止まり、内容は同じ） */
 .sx-seg.is-new .sx-words, .sx-seg.is-new .sx-label { animation: sx-in 0.28s ease-out both; }
 @keyframes sx-in { from { opacity: 0.3; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+/* ---------- 保存してホームへ・意味の問い（英文に即した3択） ---------- */
+.toast-error { background: var(--ng-soft); color: var(--ng); border-left: 4px solid var(--ng); font-weight: 700; }
+.hero-due { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 12px 14px; border-radius: var(--r-s); background: var(--hold-soft); color: var(--ink); font-size: var(--fs-s); }
+.hero-due .icon { color: var(--hold); margin-top: 0.2em; }
+.hero-due .num { font-family: var(--font-en); font-size: 1.125rem; margin: 0 2px; }
+.home-bold .hero-due { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.home-bold .hero-due .icon { color: var(--b-yellow); }
+/* 聞いている部分：太字＋下線＋薄い蛍光（色だけに頼らない） */
+.reason-target { font-weight: 700; text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 0.18em; text-decoration-color: var(--accent); background: linear-gradient(transparent 55%, var(--marker) 55%); color: inherit; padding: 0 2px; }
+.reason-sentence { margin: 0; }
+.reason .choice { font-size: var(--fs-m); line-height: 1.5; }
+.reason-answer { font-weight: 700; }
+.reason-link { display: grid; gap: 6px; border-left: 4px solid var(--accent); padding-left: 12px; margin-top: 4px; }
+.reason-link-map { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 1.125rem; font-family: var(--font-en); }
+.reason-link-head { border-bottom: 2px solid var(--muted); }
+.reason-link-arrow { color: var(--muted); font-family: var(--font-ja); }

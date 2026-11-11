@@ -74,7 +74,7 @@
       if (!i) return;
       i.times++;
       if (a.answeredAt >= i.lastSeen) i.lastSeen = a.answeredAt;
-      if (EA.mastery.isExcluded(a, bank)) return;
+      if (EA.mastery.isExcluded(a, bank) || EA.mastery.isPending(a)) return;
       var n = needOf(a, bank, i);
       if (n === undefined) return;
       if (n !== i.need || n) i.needAt = a.answeredAt;
@@ -268,11 +268,17 @@
     var s = state.activeSession;
     if (s) {
       var label = { diagnostic: '初回診断', practice: '解説と類題', review: '復習', trial: '試作：英文の構造' }[s.type];
+      var cur = s.current && s.current.index === s.index ? s.current : null;
+      var where = !cur ? '' : cur.phase === 'reason' ? '（意味の問いの回答前）' : cur.phase === 'feedback' ? '（解説の表示中）' : '（回答の途中）';
+      // 期限を迎えた復習（いま再開する学習回がその復習なら、その項目は数えない）
+      var inThis = s.type === 'review' ? (s.reviewSkills || []) : [];
+      var dueWaiting = dueReviews(state, bank, now).filter(function (e) { return inThis.indexOf(e.skillId) < 0; }).length;
       return {
         kind: 'resume', title: label + 'の続き',
-        detail: (Math.min(s.index + 1, s.items.length)) + ' / ' + s.items.length + ' から再開します',
-        why: '前回、途中で終えました。答えた問題の記録は残っています。',
-        cta: '続きから再開'
+        detail: (Math.min(s.index + 1, s.items.length)) + ' / ' + s.items.length + ' ' + where + 'から再開します',
+        why: '途中で保存してホームへ戻りました。答えた問題と、入力の途中の内容は残っています。',
+        cta: '続きから再開',
+        dueWaiting: dueWaiting
       };
     }
     if (!u.diagnosticDoneAt) {

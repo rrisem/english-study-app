@@ -63,13 +63,21 @@
     return false;
   }
 
-  /** 理由の回答を判定に使えるか（古い版の理由は使わない） */
+  /**
+   * 理由・意味の問いの回答を判定に使えるか（古い版の設問への回答は使わない）。
+   * 設問の版は reasonVersion（答えたときの問題の版）で見る。古い記録にはないので questionVersion で見る。
+   * （問題データの更新前に始めた学習を更新後に再開し、新しい設問に答えた場合は、新しい版の回答として扱う）
+   */
   function reasonResult(a, bank) {
     if (!a.reason || typeof a.reason.correct !== 'boolean') return null;
     var q = EA.findQuestion(bank, a.questionId);
-    if (q && q.reasonValidFrom && a.questionVersion < q.reasonValidFrom) return null;
+    var v = a.reason.reasonVersion || a.questionVersion;
+    if (q && q.reasonValidFrom && v < q.reasonValidFrom) return null;
     return !!a.reason.correct;
   }
+
+  /** 意味の問いにまだ答えていない回答（途中でホームへ戻った）。答えるまで判定の根拠にしない */
+  function isPending(a) { return !!a.reasonPending; }
 
   /** 自力正解：不定詞部分が正解・ヒントなし・解き直しでない・解説後でない（自信の申告は別に見る） */
   function isIndependentCorrect(a) {
@@ -89,7 +97,7 @@
     if (a.format === 'meaning') return false;
     if (a.format === 'fill') {
       var q = EA.findQuestion(bank, a.questionId);
-      return !(q && q.showJa === 'after' && a.questionVersion >= q.version);
+      return !(q && q.showJa === 'after' && a.questionVersion >= (q.showJaAfterFrom || q.version));
     }
     return true; // 並び替え・日→英は日本語を見て答える
   }
@@ -110,7 +118,8 @@
   function analyze(skillId, attempts, bank) {
     var all = attempts.filter(function (a) { return a.skillId === skillId; })
       .sort(function (x, y) { return x.answeredAt - y.answeredAt; });
-    var counted = all.filter(function (a) { return !isExcluded(a, bank); });
+    var counted = all.filter(function (a) { return !isExcluded(a, bank) && !isPending(a); });
+    var pending = all.filter(function (a) { return !isExcluded(a, bank) && isPending(a); }).length;
 
     var c = { diagnostic: 0, retry: 0, similar: 0, followup: 0, review: 0 };
     var solidQs = {}, spaced = null;
@@ -220,8 +229,9 @@
     } else {
       evidence.push('まだ回答がありません。');
     }
-    var excluded = all.length - counted.length;
+    var excluded = all.length - counted.length - pending;
     if (excluded) evidence.push('判定から除外した回答：' + excluded + '回（問題の修正・開発用の日付など）');
+    if (pending) evidence.push('意味の問いが未回答の回答：' + pending + '回（途中の学習で答えると判定に使います）');
 
     return {
       skillId: skillId,
@@ -246,6 +256,7 @@
     ISSUE_LABEL: ISSUE_LABEL,
     RESOLVE_RULE: RESOLVE_RULE,
     isExcluded: isExcluded,
+    isPending: isPending,
     isIndependentCorrect: isIndependentCorrect,
     isSolid: isSolid,
     meaningCheck: meaningCheck,

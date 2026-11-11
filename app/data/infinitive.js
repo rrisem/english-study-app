@@ -27,15 +27,23 @@
  *   to で始まる選択肢を2つ以上入れる（「to があるものを選ぶ」だけで正解できないように）。
  *   表示の順番は毎回入れ替わります（正答の位置を覚えて答えられないように）。
  *
- * ■ 理由の質問（reason）
- *   reason: 'role' と書くと、「to＋動詞のまとまりが文にどんな意味を加えているか」を3択で聞きます。
- *   質問文に正答の語句は入れません（答えがわかってしまうため）。正解の選択肢は skill から自動で決まります。
+ * ■ 意味の問い（reason）… 空所補充・並び替えに答えたあとに出す追加の問い（出題形式の「意味の確認（meaning）」とは別）
+ *   問題ごとに、英文に即した短い質問と3つの選択肢を書きます。
+ *     target   … 聞いている部分。英文（explanation.answer）の中で太字にする。英文の中に1回だけ出てくる語句にする
+ *                （to が複数ある文でも、どこを聞いているか一目でわかるように to から始まるまとまり全体を書く）
+ *     prompt   … 短い質問。「目的」「理由」など正解の言葉を質問文に入れない
+ *     choices  … 3つ。同じ粒度の自然な日本語にそろえ、長さ・位置だけで正解を推測できないようにする。
+ *                誤答は英文の読み違いとしてあり得るものにし、feedback に「どこが違うか」を書く
+ *     answer   … 正解の選択肢ID（表示順は毎回入れ替わるので、ID で判定します）
+ *     link     … 回答後の説明。head（つながる先の語句）と text（どうつながるか）、term（文法の名前）
  *   出すのは類題・復習・確認問題で、答えが正解かつヒントなしのときだけです（診断と意味の確認問題では聞きません）。
+ *   設問を変えたら version を上げ、reasonValidFrom を新しい版にします（古い設問への回答は判定に使わない）。
  *
  * ■ 版（version）と過去の記録
  *   changes に、版を上げた理由と過去の記録の扱いを書きます。
  *   excludedVersions … その版の回答を判定に使わない
- *   reasonValidFrom  … その版より前の「理由」の回答は判定に使わない（答えの正誤は有効）
+ *   reasonValidFrom  … その版より前の設問への「意味の問い」の回答は判定に使わない（答えの正誤は有効）
+ *   showJaAfterFrom  … 英文だけで出題（showJa: 'after'）にした版。古い記録の「訳を見たか」の推定に使う
  *
  * ■ ja2en の採点
  *   入力は「大文字小文字・前後や連続する空白・文末の . ! ?・’ と '」を区別せずに比べます。
@@ -51,16 +59,12 @@
   'use strict';
   var EA = root.EA = root.EA || {};
 
-  // 理由の質問：to＋動詞のまとまりが文に加える意味（文法用語を知らなくても選べる言い方）
-  var ROLE_CHOICES = [
+  // 以前の版の意味の問い（全問共通の3択。正解は skill の ID）。過去の記録の表示だけに使う
+  var LEGACY_ROLE_CHOICES = [
     { id: 'inf-noun', text: '「何を」したい・好き・始めたのか、その中身を表す（〜すること）' },
     { id: 'inf-adj', text: 'すぐ前の言葉が「どんな〜か」を説明する（〜するための・〜すべき）' },
     { id: 'inf-adv', text: '「何のために」その行動をしたのかを表す（〜するために）' }
   ];
-  var ROLE_PROMPT = {
-    fill: 'あなたが空所に入れた語句は、この文でどんな意味を加えていますか？',
-    order: '動詞の前の to から始まるまとまりは、この文でどんな意味を加えていますか？'
-  };
 
   var bank = {
     unit: {
@@ -277,8 +281,8 @@
       /* ============ 類題・復習用 ============ */
       /* --- 〜すること（名詞的用法） --- */
       {
-        id: 'inf-p-n1', version: 3, status: 'active', reasonValidFrom: 2, excludedVersions: [1, 2],
-        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '選択肢に to で始まる誤りを加え（正答だけが to で始まらないように）、英文だけで出題し日本語訳は答えたあとに表示', oldRecords: '版2までは正答だけが to で始まり、形の手がかりだけで選べたため判定に使わない（履歴には残す）' }],
+        id: 'inf-p-n1', version: 4, status: 'active', showJaAfterFrom: 3, reasonValidFrom: 4, excludedVersions: [1, 2],
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '選択肢に to で始まる誤りを加え（正答だけが to で始まらないように）、英文だけで出題し日本語訳は答えたあとに表示', oldRecords: '版2までは正答だけが to で始まり、形の手がかりだけで選べたため判定に使わない（履歴には残す）' }, { version: 4, what: '意味の問いを、この英文に即した短い質問と3つの選択肢に変更（聞いている部分を太字で示す）', oldRecords: '答えの正誤は有効。版3以前の意味の問いの回答は設問が違うため判定に使わない（履歴には残す）' }],
         role: 'practice', skill: 'inf-noun', format: 'fill',
         checks: 'like のあとに「好きなこと」を to＋動詞 で表せるか',
         showJa: 'after',
@@ -293,7 +297,17 @@
         ],
         answer: 'd',
         hint: '「絵をかくこと」が、ミカの好きなものです。',
-        reason: 'role',
+        reason: {
+          kind: 'meaning', target: 'to draw pictures',
+          prompt: '太字の部分は、何を表していますか？',
+          choices: [
+            { id: 'a', text: 'ミカが好きなこと' },
+            { id: 'b', text: 'ミカが好きな絵', feedback: 'どんな絵かを説明しているのではありません。likes のあとで「何が好きか」を表しています。' },
+            { id: 'c', text: 'ミカが好きな理由', feedback: '「〜だから好き」という理由を表す語はありません。likes の中身を表しています。' }
+          ],
+          answer: 'a',
+          link: { head: 'likes', text: 'likes（好きだ）の中身＝「何が好きか」を to draw pictures が表しています。「絵をかくことが好き」。', term: '名詞的用法（〜すること）' }
+        },
         explanation: {
           answer: 'Mika likes to draw pictures.',
           translation: 'ミカは絵をかくことが好きです。',
@@ -333,8 +347,8 @@
         }
       },
       {
-        id: 'inf-p-n3', version: 2, status: 'active', reasonValidFrom: 2,
-        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }],
+        id: 'inf-p-n3', version: 3, status: 'active', reasonValidFrom: 3,
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '意味の問いを、この英文に即した短い質問と3つの選択肢に変更（聞いている部分を太字で示す）', oldRecords: '答えの正誤は有効。版2以前の意味の問いの回答は設問が違うため判定に使わない（履歴には残す）' }],
         role: 'practice', skill: 'inf-noun', format: 'order',
         checks: 'like to ＋動詞 の語順を作れるか',
         instruction: '日本語に合うように、語句を並べかえましょう。',
@@ -342,7 +356,17 @@
         tokens: ['I', 'like', 'to', 'speak', 'English'],
         answers: ['I like to speak English'],
         hint: '「私は好き」→「何が？」→「英語を話すこと」の順です。',
-        reason: 'role',
+        reason: {
+          kind: 'meaning', target: 'to speak English',
+          prompt: '太字の部分は、何を表していますか？',
+          choices: [
+            { id: 'a', text: '英語が好きな理由', feedback: '「〜だから」という理由を表す語はありません。like の中身を表しています。' },
+            { id: 'b', text: '私が好きなこと' },
+            { id: 'c', text: '私が話す英語', feedback: 'どんな英語かを説明しているのではありません。like のあとで「何が好きか」を表しています。' }
+          ],
+          answer: 'b',
+          link: { head: 'like', text: 'like（好きだ）の中身＝「何が好きか」を to speak English が表しています。「英語を話すことが好き」。', term: '名詞的用法（〜すること）' }
+        },
         explanation: {
           answer: 'I like to speak English.',
           translation: '私は英語を話すことが好きです。',
@@ -355,8 +379,8 @@
         }
       },
       {
-        id: 'inf-p-n4', version: 3, status: 'active', reasonValidFrom: 2, excludedVersions: [1, 2],
-        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '選択肢に to で始まる誤りを加え（正答だけが to で始まらないように）、英文だけで出題し日本語訳は答えたあとに表示', oldRecords: '版2までは正答だけが to で始まり、形の手がかりだけで選べたため判定に使わない（履歴には残す）' }],
+        id: 'inf-p-n4', version: 4, status: 'active', showJaAfterFrom: 3, reasonValidFrom: 4, excludedVersions: [1, 2],
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '選択肢に to で始まる誤りを加え（正答だけが to で始まらないように）、英文だけで出題し日本語訳は答えたあとに表示', oldRecords: '版2までは正答だけが to で始まり、形の手がかりだけで選べたため判定に使わない（履歴には残す）' }, { version: 4, what: '意味の問いを、この英文に即した短い質問と3つの選択肢に変更（聞いている部分を太字で示す）', oldRecords: '答えの正誤は有効。版3以前の意味の問いの回答は設問が違うため判定に使わない（履歴には残す）' }],
         role: 'practice', skill: 'inf-noun', format: 'fill',
         checks: 'start のあとに「始めたこと」を to＋動詞 で表せるか',
         showJa: 'after',
@@ -371,7 +395,17 @@
         ],
         answer: 'a',
         hint: '始めたのは「昼食を食べること」です。',
-        reason: 'role',
+        reason: {
+          kind: 'meaning', target: 'to eat lunch',
+          prompt: '太字の部分は、何を表していますか？',
+          choices: [
+            { id: 'a', text: '私たちが食べた昼食', feedback: 'どんな昼食かを説明しているのではありません。started のあとで「何を始めたか」を表しています。' },
+            { id: 'b', text: '私たちが始めた目的', feedback: '「〜するために始めた」ではありません。started の中身（始めたこと）を表しています。' },
+            { id: 'c', text: '私たちが始めたこと' }
+          ],
+          answer: 'c',
+          link: { head: 'started', text: 'started（始めた）の中身＝「何を始めたか」を to eat lunch が表しています。at noon は「いつ」です。', term: '名詞的用法（〜すること）' }
+        },
         explanation: {
           answer: 'We started to eat lunch at noon.',
           translation: '私たちは正午に昼食を食べ始めた。',
@@ -387,8 +421,8 @@
 
       /* --- 〜するための・〜すべき（形容詞的用法） --- */
       {
-        id: 'inf-p-a1', version: 3, status: 'active', reasonValidFrom: 2, excludedVersions: [1, 2],
-        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '選択肢に to で始まる誤りを加え（正答だけが to で始まらないように）、英文だけで出題し日本語訳は答えたあとに表示', oldRecords: '版2までは正答だけが to で始まり、形の手がかりだけで選べたため判定に使わない（履歴には残す）' }],
+        id: 'inf-p-a1', version: 4, status: 'active', showJaAfterFrom: 3, reasonValidFrom: 4, excludedVersions: [1, 2],
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '選択肢に to で始まる誤りを加え（正答だけが to で始まらないように）、英文だけで出題し日本語訳は答えたあとに表示', oldRecords: '版2までは正答だけが to で始まり、形の手がかりだけで選べたため判定に使わない（履歴には残す）' }, { version: 4, what: '意味の問いを、この英文に即した短い質問と3つの選択肢に変更（聞いている部分を太字で示す）', oldRecords: '答えの正誤は有効。版3以前の意味の問いの回答は設問が違うため判定に使わない（履歴には残す）' }],
         role: 'practice', skill: 'inf-adj', format: 'fill',
         checks: '名詞（homework）を to＋動詞 があとから説明する形を選べるか',
         showJa: 'after',
@@ -403,7 +437,17 @@
         ],
         answer: 'b',
         hint: '「宿題」→「どんな宿題？」→「今夜やるべき」。',
-        reason: 'role',
+        reason: {
+          kind: 'meaning', target: 'to do tonight',
+          prompt: '太字の部分は、何を説明していますか？',
+          choices: [
+            { id: 'a', text: '私が今夜したいこと', feedback: 'want などの「〜したい」を表す語はありません。すぐ前の homework を説明しています。' },
+            { id: 'b', text: '宿題がどんなものか' },
+            { id: 'c', text: '宿題を持っている目的', feedback: '「〜するために持っている」ではありません。すぐ前の homework を説明しています。' }
+          ],
+          answer: 'b',
+          link: { head: 'homework', text: 'to do tonight が、すぐ前の homework（宿題）を後ろから説明しています。「今夜やるべき宿題」。', term: '形容詞的用法（〜するための・〜すべき）' }
+        },
         explanation: {
           answer: 'I have a lot of homework to do tonight.',
           translation: '私には今夜やるべき宿題がたくさんある。',
@@ -444,8 +488,8 @@
         }
       },
       {
-        id: 'inf-p-a3', version: 2, status: 'active', reasonValidFrom: 2,
-        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }],
+        id: 'inf-p-a3', version: 3, status: 'active', reasonValidFrom: 3,
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '意味の問いを、この英文に即した短い質問と3つの選択肢に変更（聞いている部分を太字で示す）', oldRecords: '答えの正誤は有効。版2以前の意味の問いの回答は設問が違うため判定に使わない（履歴には残す）' }],
         role: 'practice', skill: 'inf-adj', format: 'order',
         checks: 'time を to＋動詞 があとから説明する語順を作れるか',
         instruction: '日本語に合うように、語句を並べかえましょう。',
@@ -453,7 +497,17 @@
         tokens: ["It's", 'time', 'to', 'go', 'to', 'bed'],
         answers: ["It's time to go to bed"],
         hint: '「時間です」→「どんな時間？」→「寝る（ための）」。go to bed で「寝る」。',
-        reason: 'role',
+        reason: {
+          kind: 'meaning', target: 'to go to bed',
+          prompt: '太字の部分は、何を説明していますか？',
+          choices: [
+            { id: 'a', text: '寝るのにかかる時間', feedback: '時間の長さを表す語はありません。すぐ前の time を説明しています。' },
+            { id: 'b', text: '寝るまでの時間', feedback: '「あと何分」のような残りの時間を表す語はありません。' },
+            { id: 'c', text: '今がどんな時間か' }
+          ],
+          answer: 'c',
+          link: { head: 'time', text: 'to go to bed が、すぐ前の time（時間）を後ろから説明しています。「寝る（ための）時間」。2つめの to は go to bed（寝る）の一部で、「〜へ」の to です。', term: '形容詞的用法（〜するための・〜すべき）' }
+        },
         explanation: {
           answer: "It's time to go to bed.",
           translation: 'もう寝る時間です。',
@@ -466,8 +520,8 @@
         }
       },
       {
-        id: 'inf-p-a4', version: 3, status: 'active', reasonValidFrom: 2, excludedVersions: [1, 2],
-        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '選択肢に to で始まる誤りを加え（正答だけが to で始まらないように）、英文だけで出題し日本語訳は答えたあとに表示', oldRecords: '版2までは正答だけが to で始まり、形の手がかりだけで選べたため判定に使わない（履歴には残す）' }],
+        id: 'inf-p-a4', version: 4, status: 'active', showJaAfterFrom: 3, reasonValidFrom: 4, excludedVersions: [1, 2],
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '選択肢に to で始まる誤りを加え（正答だけが to で始まらないように）、英文だけで出題し日本語訳は答えたあとに表示', oldRecords: '版2までは正答だけが to で始まり、形の手がかりだけで選べたため判定に使わない（履歴には残す）' }, { version: 4, what: '意味の問いを、この英文に即した短い質問と3つの選択肢に変更（聞いている部分を太字で示す）', oldRecords: '答えの正誤は有効。版3以前の意味の問いの回答は設問が違うため判定に使わない（履歴には残す）' }],
         role: 'practice', skill: 'inf-adj', format: 'fill',
         checks: 'something を to＋動詞 があとから説明する形を選べるか',
         showJa: 'after',
@@ -482,7 +536,17 @@
         ],
         answer: 'c',
         hint: '「何か」→「どんな何か？」→「飲むための」。',
-        reason: 'role',
+        reason: {
+          kind: 'meaning', target: 'to drink',
+          prompt: '太字の部分は、何を説明していますか？',
+          choices: [
+            { id: 'a', text: '「何か」がどんな物か' },
+            { id: 'b', text: '「何か」をもらう目的', feedback: '「〜するためにもらう」ではありません。すぐ前の something を説明しています。' },
+            { id: 'c', text: '「私」がしたいこと', feedback: 'want などの「〜したい」を表す語はありません。すぐ前の something を説明しています。' }
+          ],
+          answer: 'a',
+          link: { head: 'something', text: 'to drink が、すぐ前の something（何か）を後ろから説明しています。「飲むための何か＝飲み物」。', term: '形容詞的用法（〜するための・〜すべき）' }
+        },
         explanation: {
           answer: 'Please give me something to drink.',
           translation: '何か飲むものをください。',
@@ -498,8 +562,8 @@
 
       /* --- 〜するために（副詞的用法・目的） --- */
       {
-        id: 'inf-p-v1', version: 3, status: 'active', reasonValidFrom: 2, excludedVersions: [1, 2],
-        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '選択肢に to で始まる誤りを加え（正答だけが to で始まらないように）、英文だけで出題し日本語訳は答えたあとに表示', oldRecords: '版2までは正答だけが to で始まり、形の手がかりだけで選べたため判定に使わない（履歴には残す）' }],
+        id: 'inf-p-v1', version: 4, status: 'active', showJaAfterFrom: 3, reasonValidFrom: 4, excludedVersions: [1, 2],
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '選択肢に to で始まる誤りを加え（正答だけが to で始まらないように）、英文だけで出題し日本語訳は答えたあとに表示', oldRecords: '版2までは正答だけが to で始まり、形の手がかりだけで選べたため判定に使わない（履歴には残す）' }, { version: 4, what: '意味の問いを、この英文に即した短い質問と3つの選択肢に変更（聞いている部分を太字で示す）', oldRecords: '答えの正誤は有効。版3以前の意味の問いの回答は設問が違うため判定に使わない（履歴には残す）' }],
         role: 'practice', skill: 'inf-adv', format: 'fill',
         checks: '行動の目的を to＋動詞 で表す形を選べるか',
         showJa: 'after',
@@ -514,7 +578,17 @@
         ],
         answer: 'b',
         hint: 'トムは「何のために」早く起きたのでしょう？',
-        reason: 'role',
+        reason: {
+          kind: 'meaning', target: 'to take the first train',
+          prompt: '太字の部分は、何を説明していますか？',
+          choices: [
+            { id: 'a', text: 'トムが早く起きた時刻', feedback: '時刻を表す語はありません。early は「早く」です。' },
+            { id: 'b', text: 'トムが早く起きた目的' },
+            { id: 'c', text: 'トムが起きてすぐしたこと', feedback: '「起きて、そして乗った」なら and が必要です。乗ったかどうかはこの文からはわかりません。' }
+          ],
+          answer: 'b',
+          link: { head: 'got up early', text: 'to take the first train が、got up early（早く起きた）に「何のために」をつけ加えています。「始発電車に乗るために早く起きた」。', term: '副詞的用法（目的：〜するために）' }
+        },
         explanation: {
           answer: 'Tom got up early to take the first train.',
           translation: 'トムは始発電車に乗るために早く起きた。',
@@ -554,8 +628,8 @@
         }
       },
       {
-        id: 'inf-p-v3', version: 2, status: 'active', reasonValidFrom: 2,
-        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }],
+        id: 'inf-p-v3', version: 3, status: 'active', reasonValidFrom: 3,
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '意味の問いを、この英文に即した短い質問と3つの選択肢に変更（聞いている部分を太字で示す）', oldRecords: '答えの正誤は有効。版2以前の意味の問いの回答は設問が違うため判定に使わない（履歴には残す）' }],
         role: 'practice', skill: 'inf-adv', format: 'order',
         checks: '「場所へ行った」のあとに目的を続ける語順を作れるか',
         instruction: '日本語に合うように、語句を並べかえましょう。',
@@ -563,7 +637,17 @@
         tokens: ['I', 'went', 'to', 'Kyoto', 'to', 'take', 'pictures'],
         answers: ['I went to Kyoto to take pictures'],
         hint: 'まず「私は京都へ行った」、そのあとに「何のために」。',
-        reason: 'role',
+        reason: {
+          kind: 'meaning', target: 'to take pictures',
+          prompt: '太字の部分は、何を説明していますか？',
+          choices: [
+            { id: 'a', text: '京都で撮った写真の種類', feedback: 'pictures の種類を説明しているのではありません。went to Kyoto に「何のために」をつけ加えています。' },
+            { id: 'b', text: '京都へ行った時刻', feedback: '時刻を表す語はありません。' },
+            { id: 'c', text: '京都へ行った目的' }
+          ],
+          answer: 'c',
+          link: { head: 'went to Kyoto', text: 'to take pictures が、went to Kyoto（京都へ行った）に「何のために」をつけ加えています。1つめの to は「〜へ（場所）」、2つめの to は動詞 take の前について「〜するために」です。', term: '副詞的用法（目的：〜するために）' }
+        },
         explanation: {
           answer: 'I went to Kyoto to take pictures.',
           translation: '私は写真をとるために京都へ行った。',
@@ -576,8 +660,8 @@
         }
       },
       {
-        id: 'inf-p-v4', version: 3, status: 'active', reasonValidFrom: 2, excludedVersions: [1, 2],
-        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '選択肢に to で始まる誤りを加え（正答だけが to で始まらないように）、英文だけで出題し日本語訳は答えたあとに表示', oldRecords: '版2までは正答だけが to で始まり、形の手がかりだけで選べたため判定に使わない（履歴には残す）' }],
+        id: 'inf-p-v4', version: 4, status: 'active', showJaAfterFrom: 3, reasonValidFrom: 4, excludedVersions: [1, 2],
+        changes: [{ version: 2, what: '理由の質問を、正答がわからない形（意味の役割を選ぶ3択）に変更', oldRecords: '答えの正誤は有効。版1の理由の回答は判定に使わない' }, { version: 3, what: '選択肢に to で始まる誤りを加え（正答だけが to で始まらないように）、英文だけで出題し日本語訳は答えたあとに表示', oldRecords: '版2までは正答だけが to で始まり、形の手がかりだけで選べたため判定に使わない（履歴には残す）' }, { version: 4, what: '意味の問いを、この英文に即した短い質問と3つの選択肢に変更（聞いている部分を太字で示す）', oldRecords: '答えの正誤は有効。版3以前の意味の問いの回答は設問が違うため判定に使わない（履歴には残す）' }],
         role: 'practice', skill: 'inf-adv', format: 'fill',
         checks: '努力の目的を to＋動詞 で表す形を選べるか',
         showJa: 'after',
@@ -592,7 +676,17 @@
         ],
         answer: 'd',
         hint: '彼は「何のために」一生懸命勉強したのでしょう？',
-        reason: 'role',
+        reason: {
+          kind: 'meaning', target: 'to pass the test',
+          prompt: '太字の部分は、何を説明していますか？',
+          choices: [
+            { id: 'a', text: '彼が一生懸命勉強した結果', feedback: '「勉強して合格した」なら and が必要です。合格したかどうかはこの文からはわかりません。' },
+            { id: 'b', text: '彼が勉強したテストの種類', feedback: 'test の種類を説明しているのではありません。studied hard に「何のために」をつけ加えています。' },
+            { id: 'c', text: '彼が一生懸命勉強した目的' }
+          ],
+          answer: 'c',
+          link: { head: 'studied hard', text: 'to pass the test が、studied hard（一生懸命勉強した）に「何のために」をつけ加えています。「テストに合格するために勉強した」。', term: '副詞的用法（目的：〜するために）' }
+        },
         explanation: {
           answer: 'He studied hard to pass the test.',
           translation: '彼はテストに合格するために一生懸命勉強した。',
@@ -793,10 +887,11 @@
     ]
   };
 
+  // 意味の問いで見せる英文（正しい文）。太字にする target は、この中に1回だけ出てくる語句にする
   bank.questions.forEach(function (q) {
-    if (q.reason === 'role') {
-      q.reason = { kind: 'role', prompt: ROLE_PROMPT[q.format], choices: ROLE_CHOICES, answer: q.skill };
-    }
+    if (q.reason && !q.reason.sentence) q.reason.sentence = q.explanation.answer;
   });
+  // 以前の版（共通の3択）の意味の問いに答えた記録を表示するための文言。出題には使わない
+  bank.legacyReasonChoices = LEGACY_ROLE_CHOICES;
   EA.registerBank(bank);
 })(typeof window !== 'undefined' ? window : globalThis);

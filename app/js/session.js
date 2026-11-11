@@ -26,6 +26,13 @@
  *   2. 同じ項目の別の問題を「確認問題」として次に1問追加（1回の学習で maxFollowUpsPerSession 問まで）
  *   3. 確認問題でもつまずいたら、それ以上は追加せず「基本の説明」を表示し、次回へ引き継ぐ
  *   追加できなかったとき（上限・別の問題がない）も、理由を記録して次回へ引き継ぎ、確認済みにはしない
+ *
+ * ■ 途中で離れる（保存してホームへ）と再開
+ *   suspend で計時を止めて保存するだけ。学習回は終えず、復習予定も更新しない（finish は最後まで進んだときだけ）。
+ *   再開すると、同じ問題・同じ段階（回答入力中／意味の問いの回答前／解説表示中）から続く。
+ *   ・確定済みの回答は state.attempts にあり、再開しても二重に記録しない（submit は attemptId があれば何もしない）
+ *   ・離れていた時間は学習時間（activeMs）に数えない
+ *   ・意味の問いが未回答の回答は reasonPending: true。答えるまで確認状況・出題の根拠に使わない（mastery.js）
  */
 (function (root) {
   'use strict';
@@ -95,10 +102,72 @@
         choiceOrder: qq.choices ? shuffle(qq.choices.map(function (c) { return c.id; })) : null,
         reasonOrder: qq.reason ? shuffle(qq.reason.choices.map(function (c) { return c.id; })) : null
       };
-    } else if (s.current.phase === 'answer' && !s.current.visibleSince) {
-      s.current.visibleSince = t.real; s.current.hiddenSince = null;
+    } else {
+      var cq = q(bank, it.questionId);
+      repairOrders(s.current, cq);
+      if (s.current.phase === 'answer' && !s.current.visibleSince) {
+        s.current.visibleSince = t.real; s.current.hiddenSince = null;
+      }
     }
     return s.current;
+  }
+
+  function sameIds(order, choices) {
+    if (!order || !choices || order.length !== choices.length) return false;
+    var ids = choices.map(function (c) { return c.id; });
+    return order.every(function (id) { return ids.indexOf(id) >= 0; });
+  }
+  /**
+   * 問題データの更新前に保存された途中状態を、今の版の選択肢に合わせる。
+   * （例：意味の問いの選択肢IDが inf-noun などから a/b/c に変わった。古いIDの並びと新しい選択肢を混ぜない）
+   */
+  function repairOrders(cur, qq) {
+    if (qq.choices && !sameIds(cur.choiceOrder, qq.choices)) {
+      cur.choiceOrder = shuffle(qq.choices.map(function (c) { return c.id; }));
+      if (cur.phase === 'answer' && (qq.format === 'fill' || qq.format === 'meaning') && cur.draft &&
+          !qq.choices.some(function (c) { return c.id === cur.draft; })) cur.draft = null;
+    }
+    if (qq.reason && !sameIds(cur.reasonOrder, qq.reason.choices)) {
+      cur.reasonOrder = shuffle(qq.reason.choices.map(function (c) { return c.id; }));
+      if (cur.reasonDraft) cur.reasonDraft = null;
+    }
+    if (cur.reasonDraft && !(qq.reason && qq.reason.choices.some(function (c) { return c.id === cur.reasonDraft; }))) cur.reasonDraft = null;
+  }
+
+  /** 「保存してホームへ」：計時を止める（離れている間は学習時間に数えない）。学習回は終えない */
+  function suspend(state, real) {
+    var s = state.activeSession;
+    if (!s) return;
+    if (s.current) { pause(s.current, real); s.current.lastSeenAt = null; }
+    s.suspendedAt = real;
+  }
+
+  /**
+   * ページを開き直したとき：前回、計時中のまま閉じていたら（pagehide が届かなかったなど）、
+   * 最後に保存した時刻までを学習時間に数え、そこで止める（閉じていた時間は数えない）
+   */
+  function recover(state) {
+    var s = state.activeSession;
+    if (!s) return;
+    if (!s.unresolved) s.unresolved = [];
+    if (!s.explained) s.explained = {};
+    var cur = s.current;
+    // 更新前に、意味の問いの回答前で離れていた学習：その回答は意味の問いに答えるまで判定に使わない
+    if (cur && cur.phase === 'reason' && cur.attemptId) {
+      var pa = attemptById(state, cur.attemptId);
+      if (pa && !pa.reason) pa.reasonPending = true;
+    }
+    if (cur && cur.visibleSince) {
+      var end = cur.lastSeenAt && cur.lastSeenAt > cur.visibleSince ? cur.lastSeenAt : cur.visibleSince;
+      cur.activeMs += end - cur.visibleSince;
+      cur.visibleSince = null; cur.hiddenSince = end; cur.lastSeenAt = null;
+    }
+  }
+
+  /** 保存の直前に呼ぶ：計時中なら、いつまで画面を見ていたかを残す（recover で使う） */
+  function touch(state, real) {
+    var s = state.activeSession;
+    if (s && s.current && s.current.visibleSince) s.current.lastSeenAt = real;
   }
 
   function reasonApplicable(qq, it, a) {
@@ -177,6 +246,7 @@
     }
     if (a.reasonDecision && a.reasonDecision.ask) {
       s.reasonsAsked = (s.reasonsAsked || 0) + 1;
+      a.reasonPending = true; // 意味の問いに答えるまで、確認状況の根拠にしない
       cur.phase = 'reason';
       return { attempt: a, finished: null };
     }
@@ -189,13 +259,21 @@
     if (!s || !s.current || s.current.phase !== 'reason') return null; // 二重送信の防止
     var qq = q(bank, item(state).questionId);
     var a = attemptById(state, s.current.attemptId);
+    var chosen = null, right = null;
+    qq.reason.choices.forEach(function (c) { if (c.id === choiceId) chosen = c; if (c.id === qq.reason.answer) right = c; });
+    if (!chosen) return null; // 今の版にない選択肢ID（古い画面からの操作など）は受け付けない
     a.reason = {
-      asked: true, kind: qq.reason.kind || 'reason', prompt: qq.reason.prompt, choiceId: choiceId, correct: choiceId === qq.reason.answer,
+      asked: true, kind: qq.reason.kind || 'reason', prompt: qq.reason.prompt, target: qq.reason.target || null,
+      // 正誤は表示順ではなく選択肢IDで判定する。どの版の設問に答えたか（reasonVersion）と、当時の文言も残す
+      choiceId: choiceId, correct: choiceId === qq.reason.answer, answerId: qq.reason.answer,
+      choiceText: chosen.text, answerText: right ? right.text : null, reasonVersion: qq.version,
       choiceOrder: s.current.reasonOrder || null,
       // 日本語訳・解説・ヒントを見ずに答えた理由か（false は考え方の参考として記録）
       independent: !a.translationShown && !a.afterExplanation && !a.hintUsed,
       why: a.reasonDecision ? a.reasonDecision.why : null
     };
+    delete a.reasonPending;
+    s.current.reasonDraft = null;
     conclude(state, bank, a);
     return a;
   }
@@ -246,11 +324,13 @@
   }
 
   /**
-   * 学習回を終える（最後まで進んだとき、または「今日はここまで」）。
-   * 復習予定を更新し、まだ出していない問題・未解決の内容を記録に残す。
+   * 学習回を終える（最後まで進んだときだけ。next から呼ぶ）。
+   * 復習予定を一度だけ更新し、未解決の内容を記録に残す。
+   * opts.early は、以前の「今日はここまで」で終えた記録との互換のために残している（画面からは呼ばない）。
    */
   function finish(state, bank, t, opts) {
     var s = state.activeSession;
+    if (!s) return null;
     var early = !!(opts && opts.early);
     var attempts = s.attemptIds.map(function (id) { return attemptById(state, id); }).filter(Boolean);
     // 試作の単元は復習予定に入れない
@@ -268,7 +348,7 @@
       });
       skipped.forEach(function (x) {
         if (x.attemptType === 'followup' || x.attemptType === 'similar') {
-          s.unresolved.push({ skillId: x.skillId, questionId: x.questionId, trigger: 'stopped', why: '「今日はここまで」で終えたため、この確認は次回の復習で行います。' });
+          s.unresolved.push({ skillId: x.skillId, questionId: x.questionId, trigger: 'stopped', why: '途中で終えたため、この確認は次回の復習で行います。' });
         }
       });
     }
@@ -285,6 +365,7 @@
 
   EA.session = {
     start: start, item: item, ensureCurrent: ensureCurrent, pause: pause, resume: resume,
+    suspend: suspend, recover: recover, touch: touch, repairOrders: repairOrders,
     submit: submit, submitReason: submitReason, next: next, finish: finish,
     reasonDecision: reasonDecision, attemptById: attemptById, shuffledPool: shuffledPool
   };
