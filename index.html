@@ -367,6 +367,28 @@ h2 .skill-term { margin-left: 10px; }
 .steps li.done { background: var(--ok-soft); color: var(--ok); font-weight: 700; }
 .step-mark { width: 20px; height: 20px; border-radius: 50%; border: 2px solid currentColor; display: inline-grid; place-items: center; font-size: 0.75rem; }
 .unit-scope { font-size: var(--fs-s); color: var(--muted); }
+/* 履歴・復習：単元一覧（単元名のボタン）と単元の詳細 */
+.view-history { max-width: 820px; }
+.unit-picks { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.unit-pick { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 14px 20px; text-align: left; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); touch-action: manipulation; }
+@media (hover: hover) { .unit-pick:hover { border-color: var(--accent); } }
+.unit-pick-name { font-size: var(--fs-l); font-weight: 700; margin-right: auto; min-width: 0; overflow-wrap: anywhere; }
+.unit-pick-due { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: var(--hold-soft); color: var(--hold); font-size: var(--fs-s); font-weight: 700; white-space: nowrap; }
+.unit-pick > .icon { color: var(--muted); }
+.review-panel { display: grid; gap: 12px; }
+.review-panel .panel-head { margin-bottom: 0; }
+.review-now { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.review-count { font-weight: 700; }
+.review-count .num { font-family: var(--font-en); font-size: 2rem; margin-right: 4px; }
+.review-next { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.review-next .icon { color: var(--accent); align-self: center; }
+.review-next strong { font-size: var(--fs-l); }
+.review-skills { display: grid; gap: 12px; }
+.review-skills > .skill-panel { margin-top: 12px; box-shadow: none; }
+.skill-panel-head h3 { font-size: var(--fs-l); }
+.section-title { font-size: var(--fs-l); margin-bottom: 12px; }
+@media (max-width: 520px) { .review-now .btn-primary { width: 100%; } }
 /* 単元で扱う範囲：既存の用法ラベル（タグ）だけで示す */
 .unit-range { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; }
 .unit-range .label { margin-right: 4px; }
@@ -4338,6 +4360,7 @@ details.panel > p { margin-top: 8px; }
     var atts = rec.attemptIds.map(attemptById).filter(Boolean);
     var h = '<p class="eyebrow">' + esc(SESSION_LABEL[rec.type]) + 'のまとめ' + (rec.endedEarly ? '（今日はここまで）' : '') + '</p><h1 class="page-title">おつかれさまでした</h1>';
     if (rec.type === 'trial') return h + trialSummaryHtml(atts);
+    var RB = EA.banks[rec.unitId] || BANK; // この学習回の単元の項目だけを示す
     if (atts.length) {
       h += '<section class="panel"><div class="panel-head"><h2>今回の回答</h2></div><ul class="att-list">' + atts.map(function (a) {
         var qq = q(a.questionId);
@@ -4352,8 +4375,8 @@ details.panel > p { margin-top: 8px; }
         rec.unresolved.map(function (u) { return '<li><strong>' + esc(skill(u.skillId).label) + '</strong>：' + esc(u.why) + '</li>'; }).join('') + '</ul></section>';
     }
     h += '<section class="panel"><div class="panel-head"><h2>確認状況と次の復習</h2></div><ul class="plan-list">' +
-      BANK.skills.map(function (sk) {
-        var st = M.analyze(sk.id, state.attempts, BANK);
+      RB.skills.map(function (sk) {
+        var st = M.analyze(sk.id, state.attempts, RB);
         var sch = state.schedule[sk.id];
         var ch = (rec.scheduleChanges || []).filter(function (c) { return c.skillId === sk.id; })[0];
         return '<li><div class="plan-name"><span class="skill-label">' + esc(sk.label) + '</span><span class="skill-term">' + esc(sk.term) + '</span></div>' +
@@ -4367,24 +4390,109 @@ details.panel > p { margin-top: 8px; }
     return h;
   }
 
-  /* ================= 画面：履歴・復習一覧 ================= */
-  function renderHistory() {
-    var tab = view.params.tab || 'plan';
-    var t = now();
-    var tabs = [['plan', '復習予定と確認状況'], ['answers', '回答履歴']];
-    var h = '<h1 class="page-title">履歴・復習</h1><div class="tabs" role="tablist">' + tabs.map(function (x) {
-      return '<button type="button" role="tab" aria-selected="' + (tab === x[0]) + '" class="tab' + (tab === x[0] ? ' is-current' : '') + '" data-act="tab" data-tab="' + x[0] + '">' + x[1] + '</button>';
-    }).join('') + '</div>';
+  /* ================= 画面：履歴・復習（単元一覧 → 単元の詳細） ================= */
+  /** 問題IDから、その問題がある単元の問題集を探す */
+  function bankOfQuestion(id) {
+    for (var k in EA.banks) if (EA.findQuestion(EA.banks[k], id)) return EA.banks[k];
+    return null;
+  }
+  /** 回答の単元ID（記録の unitId。古い記録で無い場合は、問題がある単元） */
+  function attemptUnitId(a) {
+    if (a.unitId) return a.unitId;
+    var b = bankOfQuestion(a.questionId);
+    return b ? b.unit.id : null;
+  }
 
-    if (tab === 'plan') {
-      h += BANK.skills.map(function (sk) {
-        var st = M.analyze(sk.id, state.attempts, BANK);
+  /**
+   * 単元の復習の状態。既存の復習判定（planner.dueReviews / buildReviewSession）と、ホームの課題の順番
+   * （途中の学習 → 初回診断 → 解説と類題 → 復習）をそのまま使う。
+   *   ready     今すぐ始められる。count は buildReviewSession が実際に出す問題数（一覧の「復習◯問」と一致）
+   *   blocked   期限は来ているが、途中の学習・初回診断・解説と類題が先（why に理由）
+   *   scheduled 次の復習日が決まっている（next）
+   *   none      予定なし（診断前・試作の単元）
+   */
+  function reviewInfo(bank, t) {
+    if (bank.unit.trial) return { kind: 'none', trial: true };
+    var u = state.units[bank.unit.id] || {};
+    var due = P.dueReviews(state, bank, t);
+    var next = P.nextReviewDate(state, bank);
+    if (due.length) {
+      if (state.activeSession) return { kind: 'blocked', why: '途中の学習を最後まで進めると始められます。', resume: true };
+      if (!u.diagnosticDoneAt) return { kind: 'blocked', why: '初回診断のあとに始められます。' };
+      if (!u.practiceDoneAt && !u.practiceSkippedAt) return { kind: 'blocked', why: '解説と類題のあとに始められます。' };
+      var count = P.buildReviewSession(state, bank, t).items.length;
+      if (count) return { kind: 'ready', count: count };
+    }
+    return next ? { kind: 'scheduled', next: next } : { kind: 'none' };
+  }
+
+  function renderHistory() {
+    var t = now();
+    var unitId = view.params.unit;
+    var bank = unitId && EA.banks[unitId];
+    if (!bank) return historyUnitsHtml(t);
+    return historyUnitHtml(bank, t);
+  }
+
+  /** 単元一覧：単元名のボタン。今すぐ復習できる単元だけ「復習◯問」を添える */
+  function historyUnitsHtml(t) {
+    return '<h1 class="page-title">履歴・復習</h1>' +
+      '<ul class="unit-picks" aria-label="単元">' + Object.keys(EA.banks).map(function (k) {
+        var b = EA.banks[k], ri = reviewInfo(b, t);
+        return '<li><button type="button" class="unit-pick" data-act="history-unit" data-unit="' + esc(k) + '">' +
+          '<span class="unit-pick-name">' + esc(b.unit.title) + '</span>' +
+          (ri.kind === 'ready' ? '<span class="unit-pick-due">' + icon('repeat') + '復習' + ri.count + '問</span>' : '') +
+          icon('chevron') + '</button></li>';
+      }).join('') + '</ul>';
+  }
+
+  /** 単元の詳細：見出し＝単元名、上に「復習」、下に「学習履歴」（この単元の記録だけ） */
+  function historyUnitHtml(bank, t) {
+    var id = bank.unit.id, ri = reviewInfo(bank, t);
+    var h = '<button type="button" class="btn-text back" data-act="history-units">← 単元一覧に戻る</button>' +
+      '<h1 class="page-title">' + esc(bank.unit.title) + '</h1>';
+
+    // 復習
+    h += '<section class="panel review-panel" aria-labelledby="review-title"><div class="panel-head"><h2 id="review-title">復習</h2></div>';
+    if (ri.kind === 'ready') {
+      h += '<div class="review-now"><p class="review-count"><span class="num">' + ri.count + '</span>問 今すぐ復習できます</p>' +
+        '<button type="button" class="btn-primary btn-lg" data-act="task-review" data-unit="' + esc(id) + '">復習をはじめる' + icon('chevron') + '</button></div>';
+    } else if (ri.kind === 'blocked') {
+      h += '<p class="review-note">' + esc(ri.why) + '</p>' +
+        (ri.resume ? '<div class="actions-inline"><button type="button" class="btn-quiet" data-act="task-resume">続きから再開</button></div>' : '');
+    } else if (ri.kind === 'scheduled') {
+      h += '<p class="review-next">' + icon('calendar') + '<span>次の復習</span><strong>' + esc(monthDay(ri.next)) + '</strong><span class="muted">' + U.relDay(ri.next, t) + '</span></p>';
+    } else {
+      h += '<p class="muted">' + (ri.trial ? 'この単元は復習の対象外です。' : '復習の予定はまだありません。') + '</p>';
+    }
+    if (!bank.unit.trial && state.attempts.some(function (a) { return attemptUnitId(a) === id; })) {
+      h += '<details class="review-skills"' + (view.params.skill ? ' open' : '') + '><summary>項目ごとの確認状況と復習予定</summary>' + skillPanelsHtml(bank, t) + '</details>';
+    }
+    h += '</section>';
+
+    // 学習履歴（この単元の回答だけ。新しい順）
+    var list = state.attempts.filter(function (a) { return attemptUnitId(a) === id; }).reverse();
+    h += '<section aria-labelledby="log-title" class="history-log"><h2 id="log-title" class="section-title">学習履歴</h2>' +
+      (list.length ? '<ul class="att-list panel">' + list.map(function (a) {
+        var qq = q(a.questionId);
+        return '<li><button type="button" class="att-row" data-act="question" data-q="' + esc(a.questionId) + '">' +
+          '<span class="att-type">' + esc(TYPE_LABEL[a.attemptType] || a.attemptType) + '<span class="muted">' + U.fmtDateTime(a.answeredAt) + '</span></span>' +
+          '<span class="att-q">' + esc(qq ? (qq.ja || qq.sentence) : a.questionId) + '<span class="muted att-ans" lang="en">' + esc(a.responseText || '（わからない）') + '</span></span>' +
+          '<span class="att-tags">' + resultBadge(a.result) + flagsHtml(a) + '</span></button></li>';
+      }).join('') + '</ul>' : '<p class="muted">学習履歴はまだありません</p>') + '</section>';
+    return h;
+  }
+
+  /** 項目ごとの確認状況と復習予定（選んだ単元の項目・問題だけ） */
+  function skillPanelsHtml(bank, t) {
+    return bank.skills.map(function (sk) {
+        var st = M.analyze(sk.id, state.attempts, bank);
         var sch = state.schedule[sk.id];
         var open = view.params.skill === sk.id;
-        var qs = BANK.questions.filter(function (x) { return x.skill === sk.id; });
+        var qs = bank.questions.filter(function (x) { return x.skill === sk.id; });
         var meaningText = { confirmed: '訳を見ずに確認できた', recheck: '再確認が必要', reference: '訳・解説を見たあとの回答のみ（参考）', unchecked: 'まだ確認していない' }[st.meaning];
         return '<section class="panel skill-panel" id="skill-' + sk.id + '"><div class="skill-panel-head">' +
-          '<div><h2>' + esc(sk.label) + '<span class="skill-term">' + esc(sk.term) + '</span></h2><p class="muted">' + esc(sk.plain) + '</p></div>' +
+          '<div><h3>' + esc(sk.label) + '<span class="skill-term">' + esc(sk.term) + '</span></h3><p class="muted">' + esc(sk.plain) + '</p></div>' +
           '<div class="skill-panel-due">' + (sch ? '<span class="label">次の復習</span><strong>' + U.fmtDate(sch.dueAt) + '</strong><span class="muted">' + U.relDay(sch.dueAt, t) + ' ・ 間隔 ' + sch.intervalDays + '日</span>' : '<span class="muted">予定なし（診断前）</span>') + '</div></div>' +
           '<dl class="status-grid">' +
             '<dt>いまの状態</dt><dd class="tone-text-' + st.tone + '">' + esc(st.headline) + '</dd>' +
@@ -4406,17 +4514,6 @@ details.panel > p { margin-top: 8px; }
               '<span class="att-tags">' + (last ? resultBadge(last.result) : '<span class="muted">未回答</span>') + '<span class="muted">' + n.length + '回</span></span></button></li>';
           }).join('') + '</ul></details></section>';
       }).join('');
-    } else {
-      var list = state.attempts.slice().reverse();
-      h += list.length ? '<ul class="att-list panel">' + list.map(function (a) {
-        var qq = q(a.questionId);
-        return '<li><button type="button" class="att-row" data-act="question" data-q="' + a.questionId + '">' +
-          '<span class="att-type">' + esc(TYPE_LABEL[a.attemptType] || a.attemptType) + '<span class="muted">' + U.fmtDateTime(a.answeredAt) + '</span></span>' +
-          '<span class="att-q">' + esc(qq ? (qq.ja || qq.sentence) : a.questionId) + '<span class="muted att-ans" lang="en">' + esc(a.responseText || '（わからない）') + '</span></span>' +
-          '<span class="att-tags">' + resultBadge(a.result) + flagsHtml(a) + '</span></button></li>';
-      }).join('') + '</ul>' : '<p class="muted">まだ回答がありません。ホームから初回診断をはじめましょう。</p>';
-    }
-    return h;
   }
 
   /* ================= 画面：問題の詳細 ================= */
@@ -4424,7 +4521,8 @@ details.panel > p { margin-top: 8px; }
     var qq = q(view.params.q);
     if (!qq) return renderHistory();
     var atts = state.attempts.filter(function (a) { return a.questionId === qq.id; }).reverse();
-    return '<button type="button" class="btn-text back" data-act="back-history" data-skill="' + qq.skill + '">← 履歴・復習へ</button>' +
+    var qb = bankOfQuestion(qq.id) || BANK;
+    return '<button type="button" class="btn-text back" data-act="back-history" data-unit="' + esc(qb.unit.id) + '" data-skill="' + qq.skill + '">← ' + esc(qb.unit.title) + 'の履歴・復習へ</button>' +
       '<p class="eyebrow">' + esc(skill(qq.skill).label) + ' ・ ' + esc(FORMAT_LABEL[qq.format]) + ' ・ ' + esc(qq.id) + '（版 ' + qq.version + '）</p>' +
       '<section class="sheet">' + questionPromptHtml(qq, null) +
       '<p class="muted">確認すること：' + esc(qq.checks) + '</p>' + explanationHtml(qq) +
@@ -4433,7 +4531,7 @@ details.panel > p { margin-top: 8px; }
       '<section class="panel"><div class="panel-head"><h2>過去の回答（' + atts.length + '回）</h2><p class="panel-note">解答時間は参考情報です。画面を離れていた時間は含めていません。</p></div>' +
       (atts.length ? '<div class="table-wrap"><table class="att-table"><thead><tr><th>日時</th><th>種類</th><th>答え</th><th>結果</th><th>時間</th></tr></thead><tbody>' + atts.map(function (a) {
         return '<tr><td class="num">' + U.fmtDateTime(a.answeredAt) + '<span class="muted">版' + a.questionVersion + '</span></td><td>' + esc(TYPE_LABEL[a.attemptType] || a.attemptType) + '</td><td lang="en">' + esc(a.responseText || '（わからない）') + '</td>' +
-          '<td>' + resultBadge(a.result) + flagsHtml(a) + (M.isExcluded(a, BANK) ? '<span class="flag">判定から除外</span>' : '') + '</td>' +
+          '<td>' + resultBadge(a.result) + flagsHtml(a) + (M.isExcluded(a, qb) ? '<span class="flag">判定から除外</span>' : '') + '</td>' +
           '<td class="num">' + U.fmtDuration(a.activeMs) + (a.awayMs > 1000 ? '<span class="muted">（離席 ' + U.fmtDuration(a.awayMs) + '）</span>' : '') + '</td></tr>';
       }).join('') + '</tbody></table></div>' : '<p class="muted">まだ回答していません。</p>') + '</section>';
   }
@@ -4532,7 +4630,12 @@ details.panel > p { margin-top: 8px; }
       case 'task-resume': go('session'); break;
       case 'task-diagnostic': startSession(P.buildDiagnosticSession(BANK, t.app)); break;
       case 'task-practice': startSession(P.buildPracticeSession(state, BANK, t.app)); break;
-      case 'task-review': startSession(P.buildReviewSession(state, BANK, t.app)); break;
+      case 'task-review': {
+        // ホームの課題からは不定詞、履歴・復習の単元の詳細からは選んだ単元（data-unit）の復習を始める
+        var rb = EA.banks[el.getAttribute('data-unit')] || BANK;
+        if (state.activeSession) { go('session'); break; }
+        startSession(P.buildReviewSession(state, rb, t.app)); break;
+      }
       case 'skip-practice-later': notice = '診断の結果は記録しました。解説と類題はホームから始められます。'; go('home'); break;
       case 'skip-practice': P.unitState(state, BANK.unit.id).practiceSkippedAt = t.app; persist(); go('home'); break;
       case 'save-home': saveAndGoHome(); break;
@@ -4564,10 +4667,11 @@ details.panel > p { margin-top: 8px; }
         tapGuardUntil = Date.now() + TAP_GUARD_MS;
         afterProgress(r); break;
       }
-      case 'skill': go('history', { tab: 'plan', skill: el.getAttribute('data-skill') }); scrollToSkill(el.getAttribute('data-skill')); break;
+      case 'skill': go('history', { unit: BANK.unit.id, skill: el.getAttribute('data-skill') }); scrollToSkill(el.getAttribute('data-skill')); break;
       case 'question': go('question', { q: el.getAttribute('data-q') }); break;
-      case 'back-history': go('history', { tab: 'plan', skill: el.getAttribute('data-skill') }); scrollToSkill(el.getAttribute('data-skill')); break;
-      case 'tab': go('history', { tab: el.getAttribute('data-tab') }); break;
+      case 'back-history': go('history', { unit: el.getAttribute('data-unit'), skill: el.getAttribute('data-skill') }); scrollToSkill(el.getAttribute('data-skill')); break;
+      case 'history-unit': go('history', { unit: el.getAttribute('data-unit') }); break;
+      case 'history-units': go('history'); break;
       case 'goal': state.settings.dailyGoalMinutes = +el.getAttribute('data-min'); persist(); render(); break;
       case 'goal-edit': view.params.editGoal = !view.params.editGoal; render(); var ge = appEl.querySelector('[data-act="goal-edit"]'); if (ge) ge.focus({ preventScroll: true }); break;
       case 'dev-add':
