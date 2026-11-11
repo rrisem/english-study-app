@@ -282,10 +282,13 @@
       };
     }
     if (!u.diagnosticDoneAt) {
+      // ホームでは「何を・何分・どこを押す」だけを示す。説明は「初回診断とは？」を押したときだけ開く
+      var n = activeQuestions(bank).filter(function (q) { return q.role === 'diagnostic'; }).length;
       return {
         kind: 'diagnostic', title: '不定詞の初回診断',
-        detail: '6問・目安10分。結果と解説は全問に答えたあとに出ます。',
-        why: 'まず今の状態を確かめて、そのあとの課題を決めます。',
+        detail: n + '問・約' + (bank.unit.diagnosticMinutes || 10) + '分', detailKind: 'size',
+        why: '',
+        help: { label: '初回診断とは？', text: '答えに応じて、次に取り組む問題が決まります。結果と解説は、全問に答えたあとに表示されます。' },
         cta: '診断をはじめる'
       };
     }

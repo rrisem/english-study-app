@@ -31,4 +31,5 @@
 ```
 node tests/logic.test.cjs       # 学習の進行・保存・意味の問い・旧データの読み込み（ブラウザ不要）
 node tests/browser.check.cjs    # 画面での確認（Playwright が必要）。スクリーンショットは tests/out/
+node tests/home.check.cjs       # ホームの4つの状態を iPad 横・縦・スマホ幅で確認
 ```

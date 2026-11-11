@@ -9,4 +9,4 @@
 - zip は `app/` を固めたもの（`app/tests/out/` は含めない）。リポジトリ直下に置き、コミットする。
 
 ## 確認
-- `node app/tests/logic.test.cjs` と `node app/tests/browser.check.cjs` を実行してから送る。
+- `node app/tests/logic.test.cjs` と `node app/tests/browser.check.cjs`、`node app/tests/home.check.cjs` を実行してから送る。

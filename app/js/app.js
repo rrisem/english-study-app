@@ -281,6 +281,7 @@
       pct: Math.min(100, Math.round(totalMs / 60000 / goal * 100)), streak: streak };
   }
 
+  function monthDay(ms) { var d = new Date(ms); return (d.getMonth() + 1) + '月' + d.getDate() + '日'; }
   function shortDate(ms) { var d = new Date(ms); return (d.getMonth() + 1) + '/' + d.getDate() + '（' + '日月火水木金土'.charAt(d.getDay()) + '）'; }
 
   /** 確認実績の3段階（mastery.js の ACHIEVEMENTS と同じ定義を、短いことばで） */
@@ -313,18 +314,29 @@
       '<path class="hill-1" d="M260 200 C360 170 430 120 520 110 C560 105 585 115 600 112 L600 200Z"/></svg></header>';
 
     // 1. 次にやること ｜ 単元 ｜ 今日の学習時間（1枚のカード）
-    var reviewText;
-    if (due.length) reviewText = '今日 <strong class="num">' + due.length + '</strong>件';
-    else if (next) reviewText = U.fmtDate(next) + '（' + U.relDay(next, t) + '）';
-    else reviewText = '初回診断のあとに決まります';
+    // 復習の予定は、日付が決まってから出す（初回診断の前は出さない）。期限を迎えたら件数と、復習を始められるときはボタン
+    var reviewFact = '';
+    if (due.length && task.kind === 'resume') {
+      reviewFact = ''; // 「続きから再開」の下の案内（期限を迎えた復習が◯件）と重ねない
+    } else if (due.length) {
+      reviewFact = '<div class="dash-fact is-due">' + icon('calendar') + '<span>次の復習<strong class="fact-date">今日</strong><span class="fact-sub">' + due.length + '件</span></span>' +
+        (task.kind === 'review' ? '' : '<span class="fact-note">解説と類題のあとに始められます</span>') + '</div>';
+    } else if (next) {
+      reviewFact = '<p class="dash-fact">' + icon('calendar') + '<span>次の復習<strong class="fact-date">' + esc(monthDay(next)) + '</strong><span class="fact-sub">' + U.relDay(next, t) + '</span></span></p>';
+    }
 
     h += '<section class="dash" aria-label="今日の学習">';
     h += '<div class="dash-col hero hero-' + task.kind + '">' +
       '<p class="dash-head"><span class="dash-icon">' + icon(task.kind === 'done' ? 'check' : task.kind === 'review' ? 'repeat' : 'play') + '</span>' +
         (task.kind === 'done' ? '今日の課題' : '次にやること') + '</p>' +
-      '<h1 class="hero-title" id="hero-title">' + esc(task.title) + '</h1>' +
-      (task.detail ? '<p class="hero-detail">' + esc(task.detail) + '</p>' : '') +
-      '<p class="hero-why">' + esc(task.why) + '</p>' +
+      '<div class="hero-title-row"><h1 class="hero-title" id="hero-title">' + esc(task.title) + '</h1>' +
+        (task.help ? '<button type="button" class="btn-help" data-act="toggle-help" aria-expanded="false" aria-controls="hero-help">' +
+          '<span class="help-mark" aria-hidden="true">?</span>' + esc(task.help.label) + '</button>' : '') + '</div>' +
+      (task.help ? '<div class="collapse" id="hero-help"><div class="collapse-inner"><p class="hero-help-text">' + esc(task.help.text) + '</p></div></div>' : '') +
+      (task.detail ? (task.detailKind === 'size'
+        ? '<p class="hero-size">' + icon('clock') + '<span>' + esc(task.detail) + '</span></p>'
+        : '<p class="hero-detail">' + esc(task.detail) + '</p>') : '') +
+      (task.why ? '<p class="hero-why">' + esc(task.why) + '</p>' : '') +
       '<div class="hero-actions">' +
       (task.cta ? '<button type="button" class="btn-primary btn-lg hero-cta" data-act="task-' + task.kind + '">' + esc(task.cta) + icon('chevron') + '</button>'
         : '<button type="button" class="btn-quiet hero-cta" data-go="history">' + icon('book') + '解説と回答を見返す</button>') +
@@ -341,14 +353,14 @@
           '<div class="bar" role="progressbar" aria-label="単元の流れで済んだステップ" aria-valuemin="0" aria-valuemax="3" aria-valuenow="' + us.done + '"><span style="width:' + Math.round(us.done / 3 * 100) + '%"></span></div>') +
       '</div>' +
       (isTrialResume ? '' : unitPath(us)) +
-      '<p class="dash-fact">' + icon('calendar') + '<span>復習の予定：' + reviewText + '</span></p>' +
+      reviewFact +
       '</div>';
 
     h += '<div class="dash-col time-col">' +
       '<p class="dash-head"><span class="dash-icon">' + icon('clock') + '</span>今日の学習時間</p>' +
       '<p class="time-big"><span class="num">' + studyMin + '</span><span class="time-unit">分</span><span class="time-of">／ 目標 ' + goal + '分</span></p>' +
       '<div class="bar bar-lg" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="目標に対する今日の学習時間"><span style="width:' + pct + '%"></span></div>' +
-      '<p class="time-left">' + icon('target') + '<span>' + (studyMin >= goal ? '目標を達成しました' : '目標まであと <strong class="num">' + (goal - studyMin) + '</strong>分') + '</span>' +
+      '<p class="time-left">' + (studyMin >= goal ? '<span class="time-reached">' + icon('check') + '目標を達成しました</span>' : '') +
         '<button type="button" class="btn-text" data-go="settings">目標を変更</button></p>' +
       '</div>';
     h += '</section>';
@@ -453,8 +465,11 @@
       trial: '試作の問題です（確認状況・復習予定には反映しません）。'
     }[item.attemptType];
 
+    // 初回診断の1問目だけ、結果と解説がいつ出るかを短く案内する（閉じなくてもそのまま答えられる）
+    var firstDiag = s.type === 'diagnostic' && s.index === 0 && cur.phase === 'answer';
     var body = '<section class="sheet" aria-live="polite">' +
-      '<p class="eyebrow">' + esc(TYPE_LABEL[item.attemptType]) + ' ・ ' + esc(FORMAT_LABEL[qq2.format]) + '<span class="eyebrow-note">' + esc(typeNote) + '</span></p>';
+      '<p class="eyebrow">' + esc(TYPE_LABEL[item.attemptType]) + ' ・ ' + esc(FORMAT_LABEL[qq2.format]) + (firstDiag ? '' : '<span class="eyebrow-note">' + esc(typeNote) + '</span>') + '</p>' +
+      (firstDiag ? '<p class="first-note" role="note">' + icon('clock') + '<span>結果と解説は全問回答後に表示されます</span></p>' : '');
 
     if (cur.phase === 'answer') {
       body += questionPromptHtml(qq2, cur.draft, { hideJa: qq2.showJa === 'after' }) + '<div class="answer-area" id="answer-area">' + answerControlHtml(qq2, cur) + '</div>';
@@ -757,6 +772,14 @@
     body.classList.toggle('is-open', open);
   }
 
+  /** 「初回診断とは？」の開閉（表示だけ。保存しない）。解説と同じ開閉の部品（.collapse）を使う */
+  function toggleHelp(btn) {
+    var body = document.getElementById(btn.getAttribute('aria-controls'));
+    var open = btn.getAttribute('aria-expanded') !== 'true';
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    body.classList.toggle('is-open', open);
+  }
+
   /** 進捗バー：直前の値から新しい値へ動かす（表示だけ。記録はすでに保存済み） */
   function animateProgress() {
     var fill = appEl.querySelector('.q-bar-fill');
@@ -1014,6 +1037,7 @@
       case 'save-home': saveAndGoHome(); break;
       case 'choose': selectChoice(el.getAttribute('data-choice')); break;
       case 'toggle-explain': toggleExplanation(el); break;
+      case 'toggle-help': toggleHelp(el); break;
       case 'task-trial': startSession(P.buildTrialSession(EA.banks[el.getAttribute('data-unit')], t.app)); break;
       case 'sx-toggle': case 'sx-prev': case 'sx-next': case 'sx-restart': case 'sx-trans': structureAction(act); break;
       case 'unsure': s.current.unsure = !s.current.unsure; persist(); render(); break;
