@@ -45,6 +45,8 @@
   --flame: #e0663f;
   --shadow: 0 12px 32px rgba(28, 72, 140, 0.08), 0 1px 3px rgba(28, 72, 140, 0.06);
   --glow: 0 8px 20px rgba(28, 92, 192, 0.28);
+  --cta: #154a9f;       /* その状態でいちばん優先する操作のボタン（ホームで最も濃い青） */
+  --cta-ink: #ffffff;
 
   --font-ja: "BIZ UDPGothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
   --font-en: "Atkinson Hyperlegible", "Helvetica Neue", Arial, var(--font-ja);
@@ -70,6 +72,7 @@
     --chip-1: #3e78c8; --chip-2: #b85a40; --chip-3: #5a6c84; --chip-ink: #ffffff;
     --hill-1: #1c2b42; --hill-2: #172437; --hill-3: #131e2e; --flame: #f08a63;
     --shadow: 0 12px 32px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.3); --glow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    --cta: #8fbcf7; --cta-ink: #0b1626;
     color-scheme: dark;
   }
 }
@@ -81,6 +84,7 @@
   --chip-1: #3e78c8; --chip-2: #b85a40; --chip-3: #5a6c84; --chip-ink: #ffffff;
   --hill-1: #1c2b42; --hill-2: #172437; --hill-3: #131e2e; --flame: #f08a63;
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.3); --glow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  --cta: #8fbcf7; --cta-ink: #0b1626;
   color-scheme: dark;
 }
 
@@ -185,14 +189,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .home h1, .home h2, .greet-title { font-feature-settings: "palt"; }
 
 /* あいさつ＋背景の丘（飾り） */
-.greet { position: relative; padding: clamp(16px, 4vw, 40px) 0 clamp(8px, 2vw, 20px); min-height: 120px; }
-.greet > p { position: relative; z-index: 1; }
-.greet-sub { color: var(--muted); font-size: var(--fs-s); letter-spacing: 0.12em; }
-.greet-title { font-size: clamp(1.375rem, 1rem + 1.6vw, 2rem); font-weight: 700; letter-spacing: 0.04em; margin-top: 4px; max-width: 24em; }
-.greet-title::after { content: ""; display: block; width: 56px; height: 3px; border-radius: 2px; background: var(--accent); margin-top: 14px; }
-.greet-art { position: absolute; right: -16px; bottom: -110px; width: min(62%, 640px); height: 260px; z-index: 0; pointer-events: none;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 40%); mask-image: linear-gradient(90deg, transparent 0, #000 40%); }
-.greet-art .hill-1 { fill: var(--hill-1); } .greet-art .hill-2 { fill: var(--hill-2); } .greet-art .hill-3 { fill: var(--hill-3); }
+.greet-line { color: var(--muted); font-size: var(--fs-s); letter-spacing: 0.08em; margin: 0 0 -8px; }
 
 /* 共通の小物 */
 .bar { height: 8px; border-radius: 99px; background: var(--track); overflow: hidden; }
@@ -317,19 +314,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .wb.is-future .wb-fill { background: transparent; border: 1.5px dashed var(--line); }
 .wb-name { font-size: var(--fs-xs); color: var(--muted); }
 .wb.is-today .wb-name { color: var(--accent); font-weight: 700; }
-@media (min-width: 1000px) {
-  .week { grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.7fr) minmax(0, 1.6fr) minmax(0, 0.9fr) minmax(0, 0.6fr); gap: 0; }
-  .week > * { padding-inline: clamp(14px, 1.8vw, 24px); }
-  .week > :first-child { padding-left: 0; }
-  .week > :last-child { padding-right: 0; }
-  .week > * + * { border-left: 1px solid var(--line); }
-  .week-title, .week-bars { grid-column: auto; }
-  .week-bars { border-left: 0 !important; }
 }
 @media (max-width: 600px) {
   .view-home { padding-top: 0; gap: 20px; }
-  .greet { min-height: 0; padding-top: 12px; }
-  .greet-art { width: 75%; height: 170px; bottom: -80px; opacity: 0.85; }
   .hero .btn-primary { width: 100%; }
   .unit-col { grid-template-columns: 72px minmax(0, 1fr); }
   .unit-tile { width: 72px; height: 72px; border-radius: 14px; }
@@ -707,6 +694,85 @@ details.panel > p { margin-top: 8px; }
 .time-left { justify-content: space-between; min-height: 40px; }
 .time-reached { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-weight: 700; }
 .time-reached .icon { color: var(--ok); }
+
+/* ---------- ホーム：視線の順番（課題名 → 必要な情報 → 開始ボタン → 単元の現在地 → 項目 → 今週） ----------
+ * 面積：次にやること 約6割 ｜ 単元 約4割（十分な幅のとき）。狭い幅は課題名と開始ボタンが先の縦並び。
+ * 色の濃さ：最も濃い青（--cta）は、その状態で優先する操作のボタンだけ。補助の操作は枠・文字色で控えめに。
+ */
+@media (min-width: 900px) {
+  .dash { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+}
+.hero { gap: 14px; }
+.hero .dash-head { font-size: var(--fs-s); color: var(--muted); }
+.hero .dash-icon { width: 30px; height: 30px; }
+.hero-title { font-size: clamp(1.75rem, 1.15rem + 2.2vw, 2.625rem); font-weight: 700; line-height: 1.25; letter-spacing: 0.01em; }
+.hero-size { font-size: var(--fs-l); }
+.hero .btn-primary { background: var(--cta); color: var(--cta-ink); }
+@media (hover: hover) { .hero .btn-primary:hover:not(:disabled) { filter: brightness(1.12); } }
+.btn-help { background: transparent; border: 1px solid var(--line); color: var(--accent); font-weight: 400; padding: 6px 14px 6px 10px; }
+@media (hover: hover) { .btn-help:hover { border-color: var(--accent); } }
+.btn-help[aria-expanded="true"] { box-shadow: none; border-color: var(--accent); background: var(--accent-soft); }
+.help-mark { width: 20px; height: 20px; font-size: 0.75rem; }
+.hero-due { background: var(--surface-2); }
+.hero-due .icon { color: var(--accent); }
+.home .btn-link { font-weight: 400; text-decoration: underline; text-underline-offset: 3px; }
+.home .section-head h2 { font-size: var(--fs-m); letter-spacing: 0.04em; }
+/* 単元：タイルは淡く、現在地は3段階の表示1つで示す */
+.unit-col { grid-template-columns: 64px minmax(0, 1fr); }
+.unit-tile { width: 64px; height: 64px; border-radius: 14px; background: var(--accent-soft); color: var(--accent); box-shadow: none; }
+.unit-tile [lang="en"] { font-size: 1.5rem; }
+.unit-tile-plus { font-size: 0.6875rem; }
+.unit-name { font-size: 1.1875rem; }
+.path { font-size: var(--fs-s); margin-top: 8px; }
+.path-step { gap: 6px; }
+.path-step + .path-step::before { top: 15px; right: calc(50% + 22px); width: calc(100% - 44px); height: 2px; }
+.path-step.is-done + .path-step::before, .path-step.is-skipped + .path-step::before { background: var(--accent-2); }
+.path-mark { width: 30px; height: 30px; border-width: 2px; font-size: 0.875rem; }
+.path-mark .icon { width: 16px; height: 16px; }
+.path-label { color: var(--ink); line-height: 1.35; }
+.path-state { font-size: var(--fs-xs); color: var(--muted); line-height: 1.2; }
+.path-step.is-done .path-mark { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.path-step.is-skipped .path-mark { background: var(--surface-2); border: 2px dashed var(--muted); color: var(--muted); }
+.path-step.is-now .path-label { color: var(--accent); font-weight: 700; }
+.path-step.is-now .path-state { color: var(--accent); font-weight: 700; }
+.path-step.is-now .path-mark { box-shadow: 0 0 0 4px var(--accent-soft); }
+.path-step.is-todo .path-mark { color: var(--muted); }
+/* 項目ごとの確認状況：1項目1行（狭い幅では自然に折り返す） */
+.skill-lines { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.skill-lines li + li { border-top: 1px solid var(--line); }
+.skill-line { width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; min-height: 56px; padding: 12px 16px; background: none; border: 0; text-align: left; cursor: pointer; touch-action: manipulation; font-size: var(--fs-s); }
+@media (hover: hover) { .skill-line:hover { background: var(--surface-2); } }
+.skill-lines li:first-child .skill-line { border-radius: var(--r) var(--r) 0 0; }
+.skill-lines li:last-child .skill-line { border-radius: 0 0 var(--r) var(--r); }
+.skill-line-term { flex: 1 1 11em; font-weight: 700; font-size: var(--fs-m); min-width: 0; }
+.skill-line-status { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; white-space: nowrap; }
+.skill-line-status.st-recheck { color: var(--ng); }
+.skill-line-status.st-unsure { color: var(--hold); }
+.skill-line-status.st-ok { color: var(--ok); }
+.skill-line-status.st-none, .skill-line-status.st-wip { color: var(--muted); }
+.skill-line-ach { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); white-space: nowrap; }
+.skill-line-ach .meter-seg { width: 10px; height: 10px; border-width: 1.5px; }
+.skill-line-due { color: var(--muted); white-space: nowrap; min-width: 7em; }
+.skill-line-due.is-today { color: var(--ink); font-weight: 700; }
+.skill-line > .icon { color: var(--muted); margin-left: auto; }
+.skills-note { margin-top: 8px; }
+/* 今週：ホームでは1行。押すと「学習時間」 */
+.week-line { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); cursor: pointer; text-align: left; font-size: var(--fs-s); color: var(--ink); touch-action: manipulation; }
+@media (hover: hover) { .week-line:hover { border-color: var(--accent); } }
+.week-line > .icon:first-child { color: var(--accent); }
+.week-line .num { font-family: var(--font-en); font-size: 1.125rem; font-weight: 700; }
+.week-line-goal { color: var(--muted); }
+.week-line > .icon:last-child { margin-left: auto; color: var(--muted); }
+/* 学習時間画面の今週 */
+.view-time .week { gap: 20px 24px; }
+.view-time .week h2 { font-size: var(--fs-l); }
+@media (max-width: 600px) {
+  .view-home { gap: 16px; }
+  .unit-col { grid-template-columns: 56px minmax(0, 1fr); }
+  .unit-tile { width: 56px; height: 56px; }
+  .unit-tile [lang="en"] { font-size: 1.3rem; }
+  .path { font-size: var(--fs-xs); }
+}
 </style>
 <div id="app"><p style="padding:24px">読み込み中…（表示されない場合は、ページを再読み込みしてください）</p></div>
 <script>
@@ -2817,7 +2883,8 @@ details.panel > p { margin-top: 8px; }
       var dueWaiting = dueReviews(state, bank, now).filter(function (e) { return inThis.indexOf(e.skillId) < 0; }).length;
       return {
         kind: 'resume', title: label + 'の続き',
-        detail: (Math.min(s.index + 1, s.items.length)) + ' / ' + s.items.length + ' ' + where + 'から再開します',
+        // 再開位置（何番目の、どの段階から）。待っている復習は dueWaiting があるときだけ画面に出す
+        detail: (Math.min(s.index + 1, s.items.length)) + ' / ' + s.items.length + 'から再開' + where, detailKind: 'size', detailIcon: 'arrow',
         why: '', // 保存できたことは「途中経過を保存しました」の一時表示で伝える（ホームに定型文を残さない）
         cta: '続きから再開',
         dueWaiting: dueWaiting
@@ -2836,24 +2903,27 @@ details.panel > p { margin-top: 8px; }
     }
     if (!u.practiceDoneAt && !u.practiceSkippedAt) {
       var anyFlag = state.attempts.some(function (a) { return a.sessionId === u.diagnosticSessionId && needsFollowUp(a); });
+      // 量の目安：これから始める「解説と類題」の中身（buildPracticeSession と同じ）
+      var pItems = buildPracticeSession(state, bank, now).items;
+      var nExplain = pItems.filter(function (x) { return x.kind === 'explain'; }).length;
+      var nQ = pItems.length - nExplain;
       return {
         kind: 'practice', title: anyFlag ? '診断の解説と類題' : '別の問題で確認（任意）',
-        detail: anyFlag ? '間違えた問題・自信がなかった問題の解説を読み、別の問題で確かめます。'
-          : '診断は全問自力で正解でした。別の問題でも解けるか、3問で確かめます。',
-        why: '解説を読むだけで終わらせず、答えを見ずにもう一度解きます。',
+        detail: anyFlag ? '解説' + nExplain + '問・問題' + nQ + '問' : '問題' + nQ + '問', detailKind: 'size', detailIcon: 'book',
+        why: anyFlag ? '' : '診断は全問自力で正解でした。別の問題でも解けるか確かめます。',
         cta: '解説と類題へ'
       };
     }
     var due = dueReviews(state, bank, now);
     if (due.length) {
       var take = Math.min(due.length, EA.config.maxReviewSkillsPerSession);
-      var names = due.slice(0, take).map(function (e) { return '「' + EA.findSkill(bank, e.skillId).label + '」'; }).join('');
-      var recheck = due.slice(0, take).filter(function (e) { return EA.mastery.analyze(e.skillId, state.attempts, bank).needsRecheck; }).length;
+      // 範囲（用法名）と量（buildReviewSession が実際に出す問題数。間違えたときの確認問題で増えることがあるので「約」）
+      var terms = due.slice(0, take).map(function (e) { return EA.findSkill(bank, e.skillId).term; }).join('、');
+      var nReview = buildReviewSession(state, bank, now).items.length;
       return {
         kind: 'review', title: '今日の復習',
-        detail: names + ' ／ ' + (take * EA.config.questionsPerReviewSkill) + '問ほど',
-        why: (recheck ? '前回つまずいた内容を、別の問題で確かめます。' : '復習予定日になりました。答えを見ずに思い出せるか確かめます。') +
-          (due.length > take ? '（ほかに' + (due.length - take) + '件。一度に増やしすぎないよう、次回にまわします）' : ''),
+        detail: terms + '・約' + nReview + '問', detailKind: 'size', detailIcon: 'repeat',
+        why: due.length > take ? 'ほかの' + (due.length - take) + '件は次回にまわします' : '',
         cta: '復習をはじめる', dueCount: due.length
       };
     }
@@ -3736,14 +3806,49 @@ details.panel > p { margin-top: 8px; }
     ];
     return { steps: steps, cur: cur, done: steps.filter(function (x) { return x.done; }).length };
   }
+  /**
+   * 単元の現在地（3段階を1つの表示で）。色だけでなく、記号と文字でも見分けられる：
+   *   いまここ … 番号＋太字＋「いまここ」／ 済み … ✓＋「済み」／ 見送り … －（破線の丸）＋「見送り」／ まだ … 番号＋「まだ」
+   */
   function unitPath(us) {
     return '<ol class="path" aria-label="この単元の流れ">' + us.steps.map(function (st, i) {
       var now_ = i === us.cur;
-      var state_ = now_ ? 'いまここ' : st.done ? '済み' : st.skipped ? '見送り' : 'まだ';
-      return '<li class="path-step' + (now_ ? ' is-now' : st.done ? ' is-done' : '') + '"' + (now_ ? ' aria-current="step"' : '') + '>' +
-        '<span class="path-mark" aria-hidden="true">' + (st.done && !now_ ? icon('check') : '<span class="num">' + (i + 1) + '</span>') + '</span>' +
-        '<span class="path-label">' + st.label + '</span><span class="sr">（' + state_ + '）</span></li>';
+      var kind = now_ ? 'now' : st.done ? 'done' : st.skipped ? 'skipped' : 'todo';
+      var label = { now: 'いまここ', done: '済み', skipped: '見送り', todo: 'まだ' }[kind];
+      var mark = kind === 'done' ? icon('check') : kind === 'skipped' ? '－' : '<span class="num">' + (i + 1) + '</span>';
+      return '<li class="path-step is-' + kind + '"' + (now_ ? ' aria-current="step"' : '') + '>' +
+        '<span class="path-mark" aria-hidden="true">' + mark + '</span>' +
+        '<span class="path-label">' + st.label + '</span><span class="path-state">' + label + '</span></li>';
     }).join('') + '</ol>';
+  }
+
+  /** ホームの項目の一行：いまの状態（既存の判定 mastery.analyze から短いことばに） */
+  function skillLineStatus(st) {
+    if (!st.attemptCount) return { cls: 'none', text: '未回答', mark: '—' };
+    if (st.needsRecheck) return { cls: 'recheck', text: '要確認', mark: '！' };
+    if (st.unsure) return { cls: 'unsure', text: '自信なし', mark: '△' };
+    if (st.achievement > 0) return { cls: 'ok', text: '順調', mark: '✓' };
+    return { cls: 'wip', text: '確認中', mark: '…' };
+  }
+  /** 今週（月〜日）の学習。学習時間画面に置く（曜日別・合計と目標・達成率・連続日数） */
+  function weekHtml(wk) {
+    var goal = state.settings.dailyGoalMinutes;
+    var maxMin = Math.max(goal, Math.max.apply(null, wk.days.map(function (d) { return d.min; })));
+    return '<section class="week" aria-labelledby="week-title">' +
+      '<div class="week-cell week-title"><h2 id="week-title">' + icon('chart') + '今週の学習</h2>' +
+        '<p class="muted num">' + shortDate(wk.monday) + ' – ' + shortDate(wk.sunday) + '</p></div>' +
+      '<div class="week-cell"><p class="dash-label">学習時間</p><p class="week-big"><span class="num">' + wk.totalMin + '</span>分</p><p class="muted">／ 目標 ' + wk.goal + '分</p></div>' +
+      '<ol class="week-bars" aria-label="曜日ごとの学習時間">' + wk.days.map(function (d) {
+        var hgt = d.min ? Math.max(8, Math.round(d.min / maxMin * 100)) : 4;
+        return '<li class="wb' + (d.isToday ? ' is-today' : '') + (d.future ? ' is-future' : '') + (d.min ? ' has' : '') + '">' +
+          '<span class="wb-track"><span class="wb-fill" style="height:' + hgt + '%"></span></span>' +
+          '<span class="wb-name" aria-hidden="true">' + d.name + '</span>' +
+          '<span class="sr">' + d.name + '曜日' + (d.isToday ? '（今日）' : '') + '：' + (d.future ? 'これから' : d.min + '分') + '</span></li>';
+      }).join('') + '</ol>' +
+      '<div class="week-cell"><p class="dash-label">今週の達成度</p><p class="week-big"><span class="num">' + wk.pct + '</span>%</p>' +
+        '<div class="bar" role="progressbar" aria-label="今週の目標に対する学習時間" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + wk.pct + '"><span style="width:' + wk.pct + '%"></span></div></div>' +
+      '<div class="week-cell week-streak"><p class="dash-label">' + icon('flame') + '連続して学習</p><p class="week-big"><span class="num">' + wk.streak + '</span>日</p></div>' +
+      '</section>';
   }
 
   /**
@@ -3789,13 +3894,8 @@ details.panel > p { margin-top: 8px; }
 
     var h = '<div class="home">';
 
-    // あいさつ（背景の丘は飾り）
-    h += '<header class="greet"><p class="greet-sub">' + (state.attempts.length ? 'おかえりなさい' : 'ようこそ') + '</p>' +
-      '<p class="greet-title">今日も、to＋動詞を1問ずつ。</p>' +
-      '<svg class="greet-art" viewBox="0 0 600 200" preserveAspectRatio="xMaxYMax slice" aria-hidden="true" focusable="false">' +
-      '<path class="hill-3" d="M0 200 C120 150 220 120 330 135 C430 150 520 90 600 70 L600 200Z"/>' +
-      '<path class="hill-2" d="M140 200 C250 140 330 70 430 40 C480 25 540 45 600 30 L600 200Z"/>' +
-      '<path class="hill-1" d="M260 200 C360 170 430 120 520 110 C560 105 585 115 600 112 L600 200Z"/></svg></header>';
+    // あいさつは小さな一行だけ（課題名がホームで最も大きい見出し）
+    h += '<p class="greet-line">' + (state.attempts.length ? 'おかえりなさい' : 'ようこそ') + '</p>';
 
     // 1. 次にやること ｜ 単元の進み具合（1枚のカード。今日の学習時間は「学習時間」画面）
     // 復習の予定は、日付が決まってから出す（予定がない間は行ごと省く）。期限を迎えたら件数と、復習を始められるときは「次にやること」のボタン
@@ -3818,7 +3918,7 @@ details.panel > p { margin-top: 8px; }
           '<span class="help-mark" aria-hidden="true">?</span>' + esc(task.help.label) + '</button>' : '') + '</div>' +
       (task.help ? '<div class="collapse" id="hero-help"><div class="collapse-inner"><p class="hero-help-text">' + esc(task.help.text) + '</p></div></div>' : '') +
       (task.detail ? (task.detailKind === 'size'
-        ? '<p class="hero-size">' + icon('clock') + '<span>' + esc(task.detail) + '</span></p>'
+        ? '<p class="hero-size">' + icon(task.detailIcon || 'clock') + '<span>' + esc(task.detail) + '</span></p>'
         : '<p class="hero-detail">' + esc(task.detail) + '</p>') : '') +
       (task.why ? '<p class="hero-why">' + esc(task.why) + '</p>' : '') +
       '<div class="hero-actions">' +
@@ -3826,15 +3926,13 @@ details.panel > p { margin-top: 8px; }
         : '<button type="button" class="btn-quiet hero-cta" data-go="history">' + icon('book') + '解説と回答を見返す</button>') +
       '</div>' +
       (task.kind === 'resume' && task.dueWaiting ? '<p class="hero-due" role="note">' + icon('calendar') +
-        '<span>期限を迎えた復習が <strong class="num">' + task.dueWaiting + '</strong>件あります。この学習を最後まで進めると始められます。</span></p>' : '') +
+        '<span>復習 <strong class="num">' + task.dueWaiting + '</strong>件が待っています（この学習のあとに始められます）</span></p>' : '') +
       '</div>';
 
     h += '<div class="dash-col unit-col">' +
       '<div class="unit-tile" aria-hidden="true"><span lang="en">to</span><span class="unit-tile-plus">＋動詞</span></div>' +
       '<div class="unit-info"><p class="dash-label">単元</p><p class="unit-name">' + esc(unit.title) + '</p>' +
-      (isTrialResume ? '<p class="unit-sub">試作（確認状況・復習予定には反映しません）</p>'
-        : '<p class="unit-sub">ステップ ' + Math.min(us.done + (us.cur >= 0 && !us.steps[us.cur].done ? 1 : 0), 3) + ' / 3</p>' +
-          '<div class="bar" role="progressbar" aria-label="単元の流れで済んだステップ" aria-valuemin="0" aria-valuemax="3" aria-valuenow="' + us.done + '"><span style="width:' + Math.round(us.done / 3 * 100) + '%"></span></div>') +
+      (isTrialResume ? '<p class="unit-sub">試作（確認状況・復習予定には反映しません）</p>' : '') +
       '</div>' +
       (isTrialResume ? '' : unitPath(us)) +
       reviewFact +
@@ -3842,44 +3940,26 @@ details.panel > p { margin-top: 8px; }
 
     h += '</section>';
 
-    // 2. 項目ごとの確認状況（3つの使い方を横に並べる）
+    // 2. 項目ごとの確認状況：1項目1行（用法名｜いまの状態｜これまでの実績｜次の復習）。押すと「履歴・復習」の項目へ
+    var today0 = U.startOfDay(t);
     h += '<section class="skills-panel" aria-labelledby="skills-title"><div class="section-head"><h2 id="skills-title">項目ごとの確認状況</h2>' +
-      (recheckN ? '<p class="skills-alert">再確認 ' + recheckN + '項目</p>' : '') +
       '<button type="button" class="btn-link" data-go="history">履歴・復習を見る' + icon('chevron') + '</button></div>' +
-      '<ul class="skill-cols">' + BANK.skills.map(function (sk, i) {
-        var st = statuses[i], sch = state.schedule[sk.id];
-        return '<li class="skill-col">' +
-          '<span class="tag tag-' + (i + 1) + '">' + esc(sk.term) + '</span>' +
-          '<button type="button" class="skill-open" data-act="skill" data-skill="' + sk.id + '"><span class="skill-label">' + esc(sk.label) + '</span>' + icon('chevron') + '</button>' +
-          '<p class="skill-plain">' + esc(sk.plain) + '</p>' +
-          '<ul class="ach-list" aria-label="これまでの確認実績">' + ACH_SHORT.map(function (label, j) {
-            var on = st.achievement >= j + 1;
-            return '<li class="' + (on ? 'is-on' : '') + '"><span>' + label + '</span><span class="ach-dot" aria-hidden="true">' + (on ? icon('check') : '') + '</span>' +
-              '<span class="sr">' + (on ? '（確認済み）' : '（まだ）') + '</span></li>';
-          }).join('') + '</ul>' +
-          '<p class="skill-foot"><span class="status-text tone-text-' + st.tone + '">' + (st.tone === 'recheck' ? '<span aria-hidden="true">！ </span>' : '') + esc(st.headline) + '</span>' +
-            '<span class="skill-due">' + (sch ? '復習 ' + U.relDay(sch.dueAt, t) : '復習 —') + '</span></p>' +
-          '</li>';
+      '<ul class="skill-lines">' + BANK.skills.map(function (sk, i) {
+        var st = statuses[i], sch = state.schedule[sk.id], ls = skillLineStatus(st);
+        var dueToday = sch && sch.dueAt <= today0;
+        var dueText = !sch ? '復習は未定' : dueToday ? '復習は今日' : '復習は' + U.relDay(sch.dueAt, t);
+        return '<li><button type="button" class="skill-line" data-act="skill" data-skill="' + sk.id + '" aria-label="' + esc(sk.term + '：' + ls.text + '・これまでの実績 ' + st.achievement + ' / 3・' + dueText + '（詳しく見る）') + '">' +
+          '<span class="skill-line-term">' + esc(sk.term) + '</span>' +
+          '<span class="skill-line-status st-' + ls.cls + '"><span aria-hidden="true">' + ls.mark + '</span>' + ls.text + '</span>' +
+          '<span class="skill-line-ach">' + achievementMeter(st.achievement) + '実績 ' + st.achievement + '/3</span>' +
+          '<span class="skill-line-due' + (dueToday ? ' is-today' : '') + '">' + dueText + '</span>' +
+          icon('chevron') + '</button></li>';
       }).join('') + '</ul>' +
-      '<p class="panel-note skills-note">✓ ＝ これまでの確認実績（アプリ内の記録で、習得の保証ではありません）。</p></section>';
+      '<p class="panel-note skills-note">実績 ＝ これまでの確認（アプリ内の記録で、習得の保証ではありません）。項目を押すと詳しい実績を確認できます。</p></section>';
 
-    // 3. 今週の学習
-    var maxMin = Math.max(goal, Math.max.apply(null, wk.days.map(function (d) { return d.min; })));
-    h += '<section class="week" aria-labelledby="week-title">' +
-      '<div class="week-cell week-title"><h2 id="week-title">' + icon('chart') + '今週の学習</h2>' +
-        '<p class="muted num">' + shortDate(wk.monday) + ' – ' + shortDate(wk.sunday) + '</p></div>' +
-      '<div class="week-cell"><p class="dash-label">学習時間</p><p class="week-big"><span class="num">' + wk.totalMin + '</span>分</p><p class="muted">／ 目標 ' + wk.goal + '分</p></div>' +
-      '<ol class="week-bars" aria-label="曜日ごとの学習時間">' + wk.days.map(function (d) {
-        var hgt = d.min ? Math.max(8, Math.round(d.min / maxMin * 100)) : 4;
-        return '<li class="wb' + (d.isToday ? ' is-today' : '') + (d.future ? ' is-future' : '') + (d.min ? ' has' : '') + '">' +
-          '<span class="wb-track"><span class="wb-fill" style="height:' + hgt + '%"></span></span>' +
-          '<span class="wb-name" aria-hidden="true">' + d.name + '</span>' +
-          '<span class="sr">' + d.name + '曜日' + (d.isToday ? '（今日）' : '') + '：' + (d.future ? 'これから' : d.min + '分') + '</span></li>';
-      }).join('') + '</ol>' +
-      '<div class="week-cell"><p class="dash-label">今週の達成度</p><p class="week-big"><span class="num">' + wk.pct + '</span>%</p>' +
-        '<div class="bar" role="progressbar" aria-label="今週の目標に対する学習時間" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + wk.pct + '"><span style="width:' + wk.pct + '%"></span></div></div>' +
-      '<div class="week-cell week-streak"><p class="dash-label">' + icon('flame') + '連続して学習</p><p class="week-big"><span class="num">' + wk.streak + '</span>日</p></div>' +
-      '</section>';
+    // 3. 今週の学習は一行だけ（曜日別・達成率・連続日数は「学習時間」画面）
+    h += '<button type="button" class="week-line" data-go="time">' + icon('chart') +
+      '<span>今週 <span class="num">' + wk.totalMin + '</span>分<span class="week-line-goal">／目標' + wk.goal + '分</span></span>' + icon('chevron') + '</button>';
     return h + '</div>';
   }
 
@@ -3909,7 +3989,7 @@ details.panel > p { margin-top: 8px; }
         '<button type="button" class="btn-text" data-act="goal-edit" aria-expanded="' + editing + '" aria-controls="goal-edit">' + (editing ? '閉じる' : '目標を変更') + '</button></p>' +
       '<div class="time-goal-edit" id="goal-edit"' + (editing ? '' : ' hidden') + '><p class="field-label">毎日の目標</p>' + goalSegHtml(goal) +
         '<p class="field-note">問題に答えていた時間を数えます（画面を離れていた時間は含めません）。</p></div>' +
-      '</section>';
+      '</section>' + weekHtml(weekData(now()));
   }
 
   /* ================= 画面：単元一覧 ================= */
@@ -4465,7 +4545,7 @@ details.panel > p { margin-top: 8px; }
     } else {
       h += '<p class="muted">' + (ri.trial ? 'この単元は復習の対象外です。' : '復習の予定はまだありません。') + '</p>';
     }
-    if (!bank.unit.trial && state.attempts.some(function (a) { return attemptUnitId(a) === id; })) {
+    if (!bank.unit.trial && (view.params.skill || state.attempts.some(function (a) { return attemptUnitId(a) === id; }))) {
       h += '<details class="review-skills"' + (view.params.skill ? ' open' : '') + '><summary>項目ごとの確認状況と復習予定</summary>' + skillPanelsHtml(bank, t) + '</details>';
     }
     h += '</section>';
@@ -4499,6 +4579,12 @@ details.panel > p { margin-top: 8px; }
             '<dt>これまでの確認実績</dt><dd>' + achievementMeter(st.achievement) + ' ' + esc(st.achievementLabel) + '</dd>' +
             '<dt>意味の確認</dt><dd>' + esc(meaningText) + '</dd>' +
           '</dl>' +
+          // 詳しい実績（ホームの一行では「実績 n/3」だけを示す）
+          '<ul class="ach-list" aria-label="これまでの確認実績">' + ACH_SHORT.map(function (label, j) {
+            var on = st.achievement >= j + 1;
+            return '<li class="' + (on ? 'is-on' : '') + '"><span>' + label + '</span><span class="ach-dot" aria-hidden="true">' + (on ? icon('check') : '') + '</span>' +
+              '<span class="sr">' + (on ? '（確認済み）' : '（まだ）') + '</span></li>';
+          }).join('') + '</ul>' +
           (st.issues.length ? '<ul class="issue-list">' + st.issues.map(function (i) {
             return '<li><strong>' + esc(i.label) + '</strong>（' + U.fmtDate(i.since) + '〜）<span class="muted">' + esc(i.rule) + '</span></li>';
           }).join('') + (st.teacherCandidate ? '<li><strong>講師に相談する候補</strong><span class="muted">同じ内容で2回以上つまずいています。</span></li>' : '') + '</ul>' : '') +
