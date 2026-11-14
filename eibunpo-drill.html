@@ -790,6 +790,8 @@ details.panel > p { margin-top: 8px; }
 .view-teacher-time .att-table td .muted { display: block; }
 .view-teacher-time .att-table tr.is-today td { font-weight: 700; }
 .view-teacher-time .att-table td, .view-teacher-time .att-table th { white-space: nowrap; }
+/* 文・日本語の選択肢は1列（1つの選択肢に1行） */
+.choices.choices-1col { grid-template-columns: minmax(0, 1fr); }
 /* 不定詞 Lv1：太字の強調・基準文・固定の語 */
 .q-em { font-weight: 700; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.18em; text-decoration-color: var(--accent); }
 .q-base { display: grid; gap: 4px; border-left: 4px solid var(--accent); padding-left: 14px; }
@@ -4645,7 +4647,7 @@ details.panel > p { margin-top: 8px; }
    */
   function resultChoicesHtml(qq, a, cur) {
     var chosen = a.gaveUp ? null : a.response;
-    return '<ul class="choices choices-result" aria-label="採点結果">' + ordered(qq.choices, cur.choiceOrder).map(function (c) {
+    return '<ul class="choices choices-result' + choiceCols(qq) + '" aria-label="採点結果">' + ordered(qq.choices, cur.choiceOrder).map(function (c) {
       var isAns = c.id === qq.answer, isMine = c.id === chosen;
       var cls = isAns ? 'is-correct' : (isMine ? 'is-wrong' : 'is-other');
       var tag = isAns && isMine ? '✓ 正解・あなたの答え' : isAns ? '✓ 正解' : isMine ? '× あなたの答え' : '';
@@ -4769,6 +4771,12 @@ details.panel > p { margin-top: 8px; }
     return out.length === choices.length ? out : choices;
   }
 
+  /**
+   * 選択肢の並べ方。空所補充（to play などの短い語句）は2列。
+   * 文や日本語の選択肢は、狭い列に詰めて2行に折り返さないよう、1つの選択肢に1行を使う（1列）。
+   */
+  function choiceCols(qq) { return qq.format === 'fill' ? '' : ' choices-1col'; }
+
   function hasDraft(qq, cur) {
     if (qq.format === 'order') return !!(cur.draft && cur.draft.length === qq.tokens.length);
     if (qq.format === 'ja2en') return !!(cur.draft && cur.draft.trim());
@@ -4777,7 +4785,7 @@ details.panel > p { margin-top: 8px; }
 
   function answerControlHtml(qq, cur) {
     if (qq.format === 'fill' || qq.format === 'meaning') {
-      return '<div class="choices" role="radiogroup" aria-label="選択肢">' + ordered(qq.choices, cur.choiceOrder).map(function (c) {
+      return '<div class="choices' + choiceCols(qq) + '" role="radiogroup" aria-label="選択肢">' + ordered(qq.choices, cur.choiceOrder).map(function (c) {
         var on = cur.draft === c.id;
         return '<button type="button" role="radio" aria-checked="' + on + '" class="choice' + (on ? ' is-selected' : '') + '" data-act="choose" data-choice="' + c.id + '"' + (qq.format === 'fill' || qq.choicesLang === 'en' ? ' lang="en"' : '') + '>' +
           '<span class="choice-dot" aria-hidden="true"></span><span class="choice-text">' + rich(c.text) + '</span></button>';
