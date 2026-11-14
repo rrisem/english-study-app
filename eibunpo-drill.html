@@ -2163,6 +2163,254 @@ details.panel > p { margin-top: 8px; }
   });
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- data/infinitive-lv1-retry.js ---- */
+/*
+ * infinitive-lv1-retry.js — 不定詞 Lv1 の解き直し用の別問題（各問4つ・計32問）
+ *
+ * ■ 講師の方へ
+ *   - Lv1 の問題を間違えた（「解説をみる」を含む）とき、retryFor が同じ問題の中から、その練習でまだ出していない1問をすぐ次に出します。
+ *     しばらく解いていない問題を優先します。解き直しでもつまずいた場合は、それ以上追加しません。
+ *   - role: 'lv1-retry' の問題は「Lv1を練習する（8問）」の8問には入りません。
+ *   - 文中の **…** は太字で表示します。
+ */
+(function (root) {
+  'use strict';
+  var EA = root.EA = root.EA || {};
+  var bank = EA.banks['infinitive-lv1'];
+  if (!bank) return;
+  var USAGE_Q = '基準文の太字部分と同じ用法で不定詞が使われている例文を選びなさい。';
+  var FACT_Q = '英文だけから確実に分かることを選びなさい。';
+  var TERM = {
+    'lv1-noun': '名詞的用法（〜すること）', 'lv1-adj': '形容詞的用法（〜するための・〜する）',
+    'lv1-adv': '副詞的用法（目的：〜するために）', 'lv1-it': 'It is ～ for A to do（形式主語の It）'
+  };
+  var HINT = {
+    'inf-lv1-01': '基準文の太字部分が、文の中で「何（の中身）」を表しているか考えましょう。',
+    'inf-lv1-02': '動詞＋to ～ が表している内容だけを考えましょう。書かれていない結果は選びません。',
+    'inf-lv1-03': '基準文の太字部分が、すぐ前のどの語を説明しているか考えましょう。最後の前置詞まで読みます。',
+    'inf-lv1-04': 'to ～ がどの名詞を説明しているか、その動作をするのはだれかを考えましょう。',
+    'inf-lv1-05': '基準文の太字部分が「何のために」その行動をしたのかを表しているか考えましょう。',
+    'inf-lv1-06': 'to ～ が行動に何をつけ加えているか考えましょう。結果は書かれていません。',
+    'inf-lv1-07': 'It is ＋形容詞 のあとに、「だれにとって」→「何をすることが」の順に続けます。',
+    'inf-lv1-08': 'for A は、to ～ の動作をする人を表しています。'
+  };
+  // choices: [[text, feedback or null(=正解)], ...]（ID は a, b, c の順）
+  function choices(list) {
+    var ans = null;
+    var out = list.map(function (c, i) {
+      var id = 'abc'.charAt(i);
+      if (c[1] == null) { ans = id; return { id: id, text: c[0] }; }
+      return { id: id, text: c[0], feedback: c[1] };
+    });
+    return { choices: out, answer: ans };
+  }
+  function usage(id, retryFor, skill, d) {
+    var c = choices(d.choices);
+    return { id: id, version: 1, status: 'active', role: 'lv1-retry', retryFor: retryFor, skill: skill,
+      format: 'meaning', formatLabel: '同じ用法を選ぶ', baseLabel: '基準文', choicesLang: 'en', question: USAGE_Q, instruction: USAGE_Q,
+      checks: d.checks, sentence: d.base, choices: c.choices, answer: c.answer, hint: HINT[retryFor],
+      explanation: { answer: d.base.replace(/\*\*/g, ''), translation: d.ja, also: d.also, chunks: d.chunks, point: d.point, term: TERM[skill] } };
+  }
+  function fact(id, retryFor, skill, d) {
+    var c = choices(d.choices);
+    return { id: id, version: 1, status: 'active', role: 'lv1-retry', retryFor: retryFor, skill: skill,
+      format: 'meaning', formatLabel: '英文から分かることを選ぶ', question: FACT_Q, instruction: FACT_Q,
+      checks: d.checks, sentence: d.en, choices: c.choices, answer: c.answer, hint: HINT[retryFor],
+      explanation: { answer: d.en, translation: d.ja, chunks: d.chunks, point: d.point, term: TERM[skill] } };
+  }
+  function order(id, d) {
+    return { id: id, version: 1, status: 'active', role: 'lv1-retry', retryFor: 'inf-lv1-07', skill: 'lv1-it',
+      format: 'order', formatLabel: '語句を並べ替える', instruction: '日本語に合うように、語句を並べ替えましょう（文頭の It は固定です）。',
+      checks: 'It is ＋形容詞＋for A＋to do の語順を組み立てられるか', ja: d.ja, fixedStart: 'It', tokens: d.tokens, answers: [d.answer.replace(/\.$/, '')],
+      hint: HINT['inf-lv1-07'],
+      explanation: { answer: d.answer, translation: d.ja, chunks: d.chunks,
+        point: 'It is に形容詞 ' + d.adj + ' が続き、' + d.forA + ' は' + d.who + 'を、' + d.toDo + ' は何をすることが' + d.eval + 'かを示す。', term: TERM['lv1-it'] } };
+  }
+  var NOUN_ADV = '目的を表しています（副詞的用法）。', NOUN_ADJ = 'を後ろから説明しています（形容詞的用法）。';
+
+  [
+    /* ===== 第1問の型｜同じ用法を選ぶ（名詞的用法） ===== */
+    usage('inf-lv1-01-r1', 'inf-lv1-01', 'lv1-noun', {
+      checks: '補語の to＋動詞 と同じ名詞的用法の例文を選べるか', base: 'My dream is **to become a pilot**.', ja: '私の夢はパイロットになることです。',
+      choices: [['He wants **to become a pilot**.', null], ['She trained hard **to become a pilot**.', 'この to become a pilot は、一生懸命訓練した' + NOUN_ADV], ['This is the best way **to become a pilot**.', 'この to become a pilot は、the best way' + NOUN_ADJ]],
+      also: '正解の例文：He wants to become a pilot.（彼はパイロットになりたい。）',
+      chunks: [{ en: 'My dream is', ja: '私の夢は〜です（何？）' }, { en: 'to become a pilot', ja: 'パイロットになること', mark: true }],
+      point: '基準文では夢の中身（補語）、Aでは wants の中身を表す。役割は違うが、どちらも名詞的用法。' }),
+    usage('inf-lv1-01-r2', 'inf-lv1-01', 'lv1-noun', {
+      checks: '補語の to＋動詞 と同じ名詞的用法の例文を選べるか', base: 'His plan is **to visit Kyoto**.', ja: '彼の計画は京都を訪れることです。',
+      choices: [['We have no time **to visit Kyoto**.', 'この to visit Kyoto は、time' + NOUN_ADJ], ['They decided **to visit Kyoto**.', null], ['She saved money **to visit Kyoto**.', 'この to visit Kyoto は、お金をためた' + NOUN_ADV]],
+      also: '正解の例文：They decided to visit Kyoto.（彼らは京都を訪れることに決めた。）',
+      chunks: [{ en: 'His plan is', ja: '彼の計画は〜です（何？）' }, { en: 'to visit Kyoto', ja: '京都を訪れること', mark: true }],
+      point: '基準文では計画の中身、Bでは decided（決めた）の中身を表す。どちらも名詞的用法。' }),
+    usage('inf-lv1-01-r3', 'inf-lv1-01', 'lv1-noun', {
+      checks: '補語の to＋動詞 と同じ名詞的用法の例文を選べるか', base: 'Our job is **to clean the classroom**.', ja: '私たちの仕事は教室を掃除することです。',
+      choices: [['We stayed after school **to clean the classroom**.', 'この to clean the classroom は、放課後に残った' + NOUN_ADV], ['Ken offered **to clean the classroom**.', null], ["It's your turn **to clean the classroom**.", 'この to clean the classroom は、your turn' + NOUN_ADJ]],
+      also: '正解の例文：Ken offered to clean the classroom.（ケンは教室を掃除すると申し出た。）',
+      chunks: [{ en: 'Our job is', ja: '私たちの仕事は〜です（何？）' }, { en: 'to clean the classroom', ja: '教室を掃除すること', mark: true }],
+      point: '基準文では仕事の中身、Bでは offered（申し出た）の中身を表す。どちらも名詞的用法。' }),
+    usage('inf-lv1-01-r4', 'inf-lv1-01', 'lv1-noun', {
+      checks: '主語の to＋動詞 と同じ名詞的用法の例文を選べるか', base: '**To learn a new language** takes time.', ja: '新しい言語を学ぶことには時間がかかる。',
+      choices: [['She moved to Spain **to learn a new language**.', 'この to learn a new language は、スペインへ引っ越した' + NOUN_ADV], ['She started **to learn a new language**.', null], ['Now is a good time **to learn a new language**.', 'この to learn a new language は、a good time' + NOUN_ADJ]],
+      also: '正解の例文：She started to learn a new language.（彼女は新しい言語を学び始めた。）',
+      chunks: [{ en: 'To learn a new language', ja: '新しい言語を学ぶこと（は）', mark: true }, { en: 'takes time', ja: '時間がかかる' }],
+      point: '基準文では文の主語（〜すること）、Bでは started の中身を表す。どちらも名詞的用法。' }),
+
+    /* ===== 第2問の型｜英文から確実に分かることを選ぶ（動詞＋to do） ===== */
+    fact('inf-lv1-02-r1', 'inf-lv1-02', 'lv1-noun', {
+      checks: 'planned to ～ から分かることと、分からないこと（結果）を区別できるか', en: 'She planned to visit her grandmother.', ja: '彼女は祖母を訪ねる計画を立てていた。',
+      choices: [['彼女は祖母を訪ねる計画を立てていた。', null], ['彼女は祖母を訪ねる計画を立て、実際に訪ねた。', '実際に訪ねたかどうかは、この文だけでは分かりません。'], ['彼女は祖母を訪ねる計画だったが、行けなかった。', '行けなかったかどうかも、この文だけでは分かりません。']],
+      chunks: [{ en: 'She planned', ja: '彼女は計画した（何を？）' }, { en: 'to visit her grandmother', ja: '祖母を訪ねること', mark: true }],
+      point: 'planned to visit は「訪ねる計画を立てた」。実際に訪ねたかどうかはこの文だけでは分からない。' }),
+    fact('inf-lv1-02-r2', 'inf-lv1-02', 'lv1-noun', {
+      checks: 'forgot to ～（〜するのを忘れた）の意味を読み取れるか', en: 'Tom forgot to lock the door.', ja: 'トムはドアに鍵をかけるのを忘れた。',
+      choices: [['トムはドアに鍵をかけるのを忘れた。', null], ['トムはドアに鍵をかけたことを忘れた。', '「かけたことを忘れた」は forgot locking の意味です。forgot to lock は「（これから）かけるのを忘れた」です。'], ['トムはドアに鍵をかけようとしたが、かからなかった。', '鍵をかけようとしたことは書かれていません。']],
+      chunks: [{ en: 'Tom forgot', ja: 'トムは忘れた（何を？）' }, { en: 'to lock the door', ja: 'ドアに鍵をかけること', mark: true }],
+      point: 'forget to do は「〜するのを忘れる」。この文では、鍵はかけていない。「かけたことを忘れた」は forgot locking。' }),
+    fact('inf-lv1-02-r3', 'inf-lv1-02', 'lv1-noun', {
+      checks: 'promised to ～ で、するのはだれか・実際にしたかを区別できるか', en: 'Mina promised to call me tonight.', ja: 'ミナは今夜私に電話すると約束した。',
+      choices: [['ミナは今夜私に電話すると約束した。', null], ['ミナは今夜私に電話してきた。', '実際に電話してきたかどうかは、この文だけでは分かりません。'], ['ミナは今夜私に電話してほしいと頼んだ。', '電話するのはミナです。私に電話を頼んだのではありません。']],
+      chunks: [{ en: 'Mina promised', ja: 'ミナは約束した（何を？）' }, { en: 'to call me tonight', ja: '今夜私に電話すること', mark: true }],
+      point: 'promised to call は「電話すると約束した」。電話するのはミナ。実際に電話したかは分からない。' }),
+    fact('inf-lv1-02-r4', 'inf-lv1-02', 'lv1-noun', {
+      checks: 'hoped to ～ から分かることと、分からないこと（結果）を区別できるか', en: 'He hoped to win the race.', ja: '彼はそのレースに勝ちたいと思っていた。',
+      choices: [['彼はそのレースに勝ちたいと思っていた。', null], ['彼はそのレースに勝ちたいと思い、実際に勝った。', '実際に勝ったかどうかは、この文だけでは分かりません。'], ['彼はそのレースに勝てるとは思っていなかった。', 'hoped（願っていた）とは逆の意味です。']],
+      chunks: [{ en: 'He hoped', ja: '彼は願っていた（何を？）' }, { en: 'to win the race', ja: 'そのレースに勝つこと', mark: true }],
+      point: 'hoped to win は「勝ちたいと願っていた」。勝ったかどうかはこの文だけでは分からない。' }),
+
+    /* ===== 第3問の型｜同じ用法を選ぶ（形容詞的用法・前置詞で終わる） ===== */
+    usage('inf-lv1-03-r1', 'inf-lv1-03', 'lv1-adj', {
+      checks: '名詞を後ろから説明する to＋動詞（前置詞まで）と同じ働きの例文を選べるか', base: 'She needs a chair **to sit on**.', ja: '彼女には座るためのいすが必要だ。',
+      choices: [['He looked for a bench **to sit on**.', null], ['We went to the park **to sit on the grass**.', 'この to sit on the grass は、公園へ行った' + NOUN_ADV], ['The children like **to sit on the floor**.', 'この to sit on the floor は、like の中身を表しています（名詞的用法）。']],
+      also: '正解の例文：He looked for a bench to sit on.（彼は座るためのベンチを探した。）',
+      chunks: [{ en: 'She needs', ja: '彼女は必要だ' }, { en: 'a chair', ja: 'いす（どんな？）' }, { en: 'to sit on', ja: '（その上に）座るための', mark: true }],
+      point: '基準文では a chair、Aでは a bench を後ろから説明する。on まで読むと「その上に座る」という関係が分かる。' }),
+    usage('inf-lv1-03-r2', 'inf-lv1-03', 'lv1-adj', {
+      checks: '名詞を後ろから説明する to＋動詞（前置詞まで）と同じ働きの例文を選べるか', base: 'We need a friend **to talk to**.', ja: '私たちには話しかける友だちが必要だ。',
+      choices: [['I called my uncle **to talk to him about school**.', 'この to talk to him about school は、おじに電話した' + NOUN_ADV], ['She has no one **to talk to**.', null], ['He wants **to talk to the teacher**.', 'この to talk to the teacher は、wants の中身を表しています（名詞的用法）。']],
+      also: '正解の例文：She has no one to talk to.（彼女には話しかける相手がいない。）',
+      chunks: [{ en: 'We need', ja: '私たちは必要だ' }, { en: 'a friend', ja: '友だち（どんな？）' }, { en: 'to talk to', ja: '話しかける（相手の）', mark: true }],
+      point: '基準文では a friend、Bでは no one を後ろから説明する。to まで読むと「話しかける相手」という関係が分かる。' }),
+    usage('inf-lv1-03-r3', 'inf-lv1-03', 'lv1-adj', {
+      checks: '名詞を後ろから説明する to＋動詞（前置詞まで）と同じ働きの例文を選べるか', base: "I'm looking for a house **to live in**.", ja: '私は住むための家を探している。',
+      choices: [['They moved to Osaka **to live in a big city**.', 'この to live in a big city は、大阪へ引っ越した' + NOUN_ADV], ['My parents want **to live in the countryside**.', 'この to live in the countryside は、want の中身を表しています（名詞的用法）。'], ['This is a nice town **to live in**.', null]],
+      also: '正解の例文：This is a nice town to live in.（ここは住むのによい町だ。）',
+      chunks: [{ en: "I'm looking for", ja: '私は探している' }, { en: 'a house', ja: '家（どんな？）' }, { en: 'to live in', ja: '（その中に）住むための', mark: true }],
+      point: '基準文では a house、Cでは a nice town を後ろから説明する。in まで読むと「その中に住む」という関係が分かる。' }),
+    usage('inf-lv1-03-r4', 'inf-lv1-03', 'lv1-adj', {
+      checks: '名詞を後ろから説明する to＋動詞（前置詞まで）と同じ働きの例文を選べるか', base: 'He bought a box **to put his books in**.', ja: '彼は本を入れるための箱を買った。',
+      choices: [['She opened the box **to put her books in it**.', 'この to put her books in it は、箱を開けた' + NOUN_ADV], ['I need a bag **to put my books in**.', null], ['He forgot **to put his books in his bag**.', 'この to put his books in his bag は、forgot の中身を表しています（名詞的用法）。']],
+      also: '正解の例文：I need a bag to put my books in.（私には本を入れるためのかばんが必要だ。）',
+      chunks: [{ en: 'He bought', ja: '彼は買った' }, { en: 'a box', ja: '箱（どんな？）' }, { en: 'to put his books in', ja: '（その中に）本を入れるための', mark: true }],
+      point: '基準文では a box、Bでは a bag を後ろから説明する。in まで読むと「その中に本を入れる」という関係が分かる。' }),
+
+    /* ===== 第4問の型｜英文から確実に分かることを選ぶ（名詞＋to do） ===== */
+    fact('inf-lv1-04-r1', 'inf-lv1-04', 'lv1-adj', {
+      checks: 'letters to write（書くべき手紙）から、まだ書いていないことを読み取れるか', en: 'Aya has a lot of letters to write.', ja: 'アヤには、書かなければならない手紙がたくさんある。',
+      choices: [['アヤには、書かなければならない手紙がたくさんある。', null], ['アヤは、たくさんの手紙をすでに書き終えた。', 'to write は「これから書く（べき）」です。書き終えたとは書かれていません。'], ['アヤは、たくさんの手紙を受け取った。', '手紙を受け取ったことは書かれていません。']],
+      chunks: [{ en: 'Aya has a lot of letters', ja: 'アヤにはたくさんの手紙がある（どんな？）' }, { en: 'to write', ja: '書く（べき）', mark: true }],
+      point: 'to write が letters を説明し、「書くべき手紙」。まだ書き終えていない。' }),
+    fact('inf-lv1-04-r2', 'inf-lv1-04', 'lv1-adj', {
+      checks: 'a song to sing で、歌うのがだれか・歌ったかを読み取れるか', en: 'The teacher gave us a song to sing at the festival.', ja: '先生は、私たちが文化祭で歌う歌を教えてくれた。',
+      choices: [['先生は、私たちが文化祭で歌う歌を教えてくれた。', null], ['先生は、文化祭で私たちのために歌を歌った。', '歌うのは歌をもらった私たちです。先生が歌ったのではありません。'], ['私たちは、文化祭でその歌をすでに歌った。', '実際に歌ったかどうかは、この文だけでは分かりません。']],
+      chunks: [{ en: 'The teacher gave us', ja: '先生は私たちにくれた' }, { en: 'a song', ja: '歌（どんな？）' }, { en: 'to sing at the festival', ja: '文化祭で歌う', mark: true }],
+      point: 'to sing at the festival が a song を説明する。歌うのは歌をもらった私たち。歌ったかどうかは分からない。' }),
+    fact('inf-lv1-04-r3', 'inf-lv1-04', 'lv1-adj', {
+      checks: 'a partner to practice with で、相手との関係・見つかったかを読み取れるか', en: 'Sora is looking for a partner to practice with.', ja: 'ソラは、一緒に練習する相手を探している。',
+      choices: [['ソラは、一緒に練習する相手を探している。', null], ['ソラは、自分が練習を教えてあげる相手を探している。', 'with は「〜と一緒に」です。練習を教えてあげる相手ではありません。'], ['ソラは、一緒に練習する相手をすでに見つけた。', 'is looking for は「探している」です。見つけたかどうかは分かりません。']],
+      chunks: [{ en: 'Sora is looking for', ja: 'ソラは探している' }, { en: 'a partner', ja: '相手（どんな？）' }, { en: 'to practice with', ja: '一緒に練習する', mark: true }],
+      point: 'to practice with が a partner を説明し、「一緒に練習する相手」。まだ探している。' }),
+    fact('inf-lv1-04-r4', 'inf-lv1-04', 'lv1-adj', {
+      checks: 'someone to help him で、手伝うのがだれかを読み取れるか', en: 'Kenji needs someone to help him with his homework.', ja: 'ケンジは、宿題を手伝ってくれる人を必要としている。',
+      choices: [['ケンジは、宿題を手伝ってくれる人を必要としている。', null], ['ケンジは、宿題を手伝ってあげる相手を探している。', '手伝うのは someone で、手伝ってもらうのはケンジです。'], ['ケンジは、宿題を手伝ってもらった。', 'needs は「必要としている」です。手伝ってもらったとは書かれていません。']],
+      chunks: [{ en: 'Kenji needs', ja: 'ケンジは必要としている' }, { en: 'someone', ja: '人（どんな？）' }, { en: 'to help him with his homework', ja: '宿題を手伝ってくれる', mark: true }],
+      point: 'to help him が someone を説明する。手伝うのは someone で、手伝ってもらうのはケンジ。' }),
+
+    /* ===== 第5問の型｜同じ用法を選ぶ（副詞的用法・目的） ===== */
+    usage('inf-lv1-05-r1', 'inf-lv1-05', 'lv1-adv', {
+      checks: '行動の目的を表す to＋動詞 と同じ働きの例文を選べるか', base: 'She got up early **to catch the first bus**.', ja: '彼女は始発のバスに乗るために早く起きた。',
+      choices: [['He ran **to catch the bus**.', null], ['There was no time **to catch the bus**.', 'この to catch the bus は、time' + NOUN_ADJ], ['I tried **to catch the bus**.', 'この to catch the bus は、tried の中身を表しています（名詞的用法）。']],
+      also: '正解の例文：He ran to catch the bus.（彼はバスに乗るために走った。）',
+      chunks: [{ en: 'She got up early', ja: '彼女は早く起きた（何のために？）' }, { en: 'to catch the first bus', ja: '始発のバスに乗るために', mark: true }],
+      point: '基準文は早起きした目的、Aは走った目的を表す。どちらも副詞的用法。' }),
+    usage('inf-lv1-05-r2', 'inf-lv1-05', 'lv1-adv', {
+      checks: '行動の目的を表す to＋動詞 と同じ働きの例文を選べるか', base: 'We turned off the lights **to save energy**.', ja: '私たちはエネルギーを節約するために明かりを消した。',
+      choices: [['Our goal is **to save energy**.', 'この to save energy は、目標の中身を表しています（名詞的用法）。'], ['Here are some ways **to save energy**.', 'この to save energy は、some ways' + NOUN_ADJ], ['They use bikes **to save energy**.', null]],
+      also: '正解の例文：They use bikes to save energy.（彼らはエネルギーを節約するために自転車を使う。）',
+      chunks: [{ en: 'We turned off the lights', ja: '私たちは明かりを消した（何のために？）' }, { en: 'to save energy', ja: 'エネルギーを節約するために', mark: true }],
+      point: '基準文は明かりを消した目的、Cは自転車を使う目的を表す。どちらも副詞的用法。' }),
+    usage('inf-lv1-05-r3', 'inf-lv1-05', 'lv1-adv', {
+      checks: '行動の目的を表す to＋動詞 と同じ働きの例文を選べるか', base: 'I went to the library **to borrow some books**.', ja: '私は本を借りるために図書館へ行った。',
+      choices: [['She asked **to borrow my notebook**.', 'この to borrow my notebook は、asked の中身を表しています（名詞的用法）。'], ['He came to my house **to borrow my bike**.', null], ['She found a way **to borrow books online**.', 'この to borrow books online は、a way' + NOUN_ADJ]],
+      also: '正解の例文：He came to my house to borrow my bike.（彼は私の自転車を借りるために家に来た。）',
+      chunks: [{ en: 'I went to the library', ja: '私は図書館へ行った（何のために？）' }, { en: 'to borrow some books', ja: '本を借りるために', mark: true }],
+      point: '基準文は図書館へ行った目的、Bは家に来た目的を表す。どちらも副詞的用法。' }),
+    usage('inf-lv1-05-r4', 'inf-lv1-05', 'lv1-adv', {
+      checks: '行動の目的を表す to＋動詞 と同じ働きの例文を選べるか', base: 'Mai saved money **to buy a new bike**.', ja: 'マイは新しい自転車を買うためにお金をためた。',
+      choices: [['Mai decided **to buy a new bike**.', 'この to buy a new bike は、decided の中身を表しています（名詞的用法）。'], ['Mai worked part-time **to buy a new bike**.', null], ['Mai is looking for a chance **to buy a new bike**.', 'この to buy a new bike は、a chance' + NOUN_ADJ]],
+      also: '正解の例文：Mai worked part-time to buy a new bike.（マイは新しい自転車を買うためにアルバイトをした。）',
+      chunks: [{ en: 'Mai saved money', ja: 'マイはお金をためた（何のために？）' }, { en: 'to buy a new bike', ja: '新しい自転車を買うために', mark: true }],
+      point: '基準文はお金をためた目的、Bはアルバイトをした目的を表す。どちらも副詞的用法。' }),
+
+    /* ===== 第6問の型｜英文から確実に分かることを選ぶ（目的の to do） ===== */
+    fact('inf-lv1-06-r1', 'inf-lv1-06', 'lv1-adv', {
+      checks: '目的を表す to meet から、結果（会えたか）までは分からないと読み取れるか', en: 'Ken went to the station to meet his aunt.', ja: 'ケンは、おばに会うために駅へ行った。',
+      choices: [['ケンは、おばに会うために駅へ行った。', null], ['ケンは駅へ行き、おばに会った。', '実際に会えたかどうかは、この文だけでは分かりません。'], ['ケンは、駅でおばを長い時間待っていた。', '長い時間待っていたことは書かれていません。']],
+      chunks: [{ en: 'Ken went to the station', ja: 'ケンは駅へ行った（何のために？）' }, { en: 'to meet his aunt', ja: 'おばに会うために', mark: true }],
+      point: 'to meet は駅へ行った目的。実際に会えたかはこの文だけでは分からない。' }),
+    fact('inf-lv1-06-r2', 'inf-lv1-06', 'lv1-adv', {
+      checks: '目的を表す to win から、結果（優勝したか）までは分からないと読み取れるか', en: 'Yui practiced every day to win the contest.', ja: 'ユイは、コンテストで優勝するために毎日練習した。',
+      choices: [['ユイは、コンテストで優勝するために毎日練習した。', null], ['ユイは毎日練習し、コンテストで優勝した。', '優勝したかどうかは、この文だけでは分かりません。'], ['ユイはコンテストで優勝したので、毎日練習した。', 'to win は「優勝するために（目的）」です。優勝した理由ではありません。']],
+      chunks: [{ en: 'Yui practiced every day', ja: 'ユイは毎日練習した（何のために？）' }, { en: 'to win the contest', ja: 'コンテストで優勝するために', mark: true }],
+      point: 'to win は練習した目的。優勝できたかはこの文だけでは分からない。' }),
+    fact('inf-lv1-06-r3', 'inf-lv1-06', 'lv1-adv', {
+      checks: '目的を表す to explain で、説明するのがだれか・結果は分からないことを読み取れるか', en: 'The coach called the players to explain the new rules.', ja: 'コーチは、新しいルールを説明するために選手たちを呼んだ。',
+      choices: [['コーチは選手たちに新しいルールを説明し、選手たちは理解した。', '選手たちが理解したかどうかは、この文だけでは分かりません。'], ['コーチは、新しいルールを説明するために選手たちを呼んだ。', null], ['選手たちが、新しいルールを説明するためにコーチを呼んだ。', '呼んだのも説明するのもコーチです。']],
+      chunks: [{ en: 'The coach called the players', ja: 'コーチは選手たちを呼んだ（何のために？）' }, { en: 'to explain the new rules', ja: '新しいルールを説明するために', mark: true }],
+      point: 'to explain は選手を呼んだ目的。説明するのはコーチ。選手が理解したかは分からない。' }),
+    fact('inf-lv1-06-r4', 'inf-lv1-06', 'lv1-adv', {
+      checks: '目的を表す to let in と、理由・結果を区別できるか', en: 'Rina opened the window to let in some fresh air.', ja: 'リナは、新鮮な空気を入れるために窓を開けた。',
+      choices: [['リナは、新鮮な空気を入れるために窓を開けた。', null], ['リナが窓を開けたので、部屋の空気がきれいになった。', '空気がきれいになったという結果は書かれていません。'], ['新鮮な空気が入ってきたので、リナは窓を開けた。', 'to let in は窓を開けた目的です。窓を開けた理由（空気が入ってきたから）ではありません。']],
+      chunks: [{ en: 'Rina opened the window', ja: 'リナは窓を開けた（何のために？）' }, { en: 'to let in some fresh air', ja: '新鮮な空気を入れるために', mark: true }],
+      point: 'to let in some fresh air は窓を開けた目的。空気がきれいになったかは分からない。' }),
+
+    /* ===== 第7問の型｜語句を並べ替える（It is ～ for A to do） ===== */
+    order('inf-lv1-07-r1', { ja: '子どもたちが自分の部屋を掃除することは大切です。', tokens: ['is', 'important', 'for', 'children', 'to', 'clean', 'their rooms'],
+      answer: 'It is important for children to clean their rooms.', adj: 'important', forA: 'for children', who: '掃除する人', toDo: 'to clean their rooms', eval: '大切',
+      chunks: [{ en: 'It is important', ja: '大切だ（何が？）' }, { en: 'for children', ja: '子どもたちにとって（掃除する人）' }, { en: 'to clean their rooms', ja: '自分の部屋を掃除すること', mark: true }] }),
+    order('inf-lv1-07-r2', { ja: '私にとって、この質問に答えるのは簡単です。', tokens: ['is', 'easy', 'for', 'me', 'to', 'answer', 'this question'],
+      answer: 'It is easy for me to answer this question.', adj: 'easy', forA: 'for me', who: '答える人', toDo: 'to answer this question', eval: '簡単',
+      chunks: [{ en: 'It is easy', ja: '簡単だ（何が？）' }, { en: 'for me', ja: '私にとって（答える人）' }, { en: 'to answer this question', ja: 'この質問に答えること', mark: true }] }),
+    order('inf-lv1-07-r3', { ja: '子どもがこの川で泳ぐのは危険です。', tokens: ['is', 'dangerous', 'for', 'children', 'to', 'swim', 'in this river'],
+      answer: 'It is dangerous for children to swim in this river.', adj: 'dangerous', forA: 'for children', who: '泳ぐ人', toDo: 'to swim in this river', eval: '危険',
+      chunks: [{ en: 'It is dangerous', ja: '危険だ（何が？）' }, { en: 'for children', ja: '子どもにとって（泳ぐ人）' }, { en: 'to swim in this river', ja: 'この川で泳ぐこと', mark: true }] }),
+    order('inf-lv1-07-r4', { ja: '私たちが毎日練習することは必要です。', tokens: ['is', 'necessary', 'for', 'us', 'to', 'practice', 'every day'],
+      answer: 'It is necessary for us to practice every day.', adj: 'necessary', forA: 'for us', who: '練習する人', toDo: 'to practice every day', eval: '必要',
+      chunks: [{ en: 'It is necessary', ja: '必要だ（何が？）' }, { en: 'for us', ja: '私たちにとって（練習する人）' }, { en: 'to practice every day', ja: '毎日練習すること', mark: true }] }),
+
+    /* ===== 第8問の型｜英文から確実に分かることを選ぶ（It is ～ for A to do） ===== */
+    fact('inf-lv1-08-r1', 'inf-lv1-08', 'lv1-it', {
+      checks: 'It is ～ for A to do で、するのがだれか・評価なのか事実なのかを読み取れるか', en: 'It is important for students to get enough sleep.', ja: '生徒が十分に眠ることは大切だ。',
+      choices: [['生徒が十分に眠ることは大切だ。', null], ['先生が生徒を十分に眠らせることは大切だ。', 'for students から、眠るのは生徒です。先生が眠らせるのではありません。'], ['生徒はすでに十分に眠っている。', 'important は「大切だ」という評価です。すでに眠っているという事実は書かれていません。']],
+      chunks: [{ en: 'It is important', ja: '大切だ（何が？）' }, { en: 'for students', ja: '生徒にとって（眠る人）' }, { en: 'to get enough sleep', ja: '十分に眠ること', mark: true }],
+      point: 'for students から、眠るのは生徒。important は眠ることが大切だという評価。' }),
+    fact('inf-lv1-08-r2', 'inf-lv1-08', 'lv1-it', {
+      checks: 'It was difficult for A to do で、するのがだれか・結果は分からないことを読み取れるか', en: 'It was difficult for Ken to finish the report on time.', ja: 'ケンが報告書を期限までに仕上げるのは難しかった。',
+      choices: [['ケンが報告書を期限までに仕上げるのは難しかった。', null], ['ケンは報告書を期限までに仕上げられなかった。', 'difficult は「難しかった」という評価です。仕上げられたかどうかは分かりません。'], ['ほかの人が報告書を仕上げるのは、ケンには難しそうに見えた。', 'for Ken から、仕上げるのはケンです。']],
+      chunks: [{ en: 'It was difficult', ja: '難しかった（何が？）' }, { en: 'for Ken', ja: 'ケンにとって（仕上げる人）' }, { en: 'to finish the report on time', ja: '報告書を期限までに仕上げること', mark: true }],
+      point: 'for Ken から、仕上げるのはケン。difficult は難しかったという評価で、仕上げられたかどうかは分からない。' }),
+    fact('inf-lv1-08-r3', 'inf-lv1-08', 'lv1-it', {
+      checks: 'It is ～ for A to do で、するのがだれか・一般的な評価であることを読み取れるか', en: 'It is fun for us to play soccer after school.', ja: '私たちが放課後にサッカーをするのは楽しい。',
+      choices: [['私たちが放課後にサッカーをするのは楽しい。', null], ['放課後、ほかの人がサッカーをするのを見るのは楽しい。', 'for us から、サッカーをするのは私たちです。見るのではありません。'], ['私たちは今日の放課後、サッカーをした。', 'fun は「楽しい」という評価です。今日サッカーをしたとは書かれていません。']],
+      chunks: [{ en: 'It is fun', ja: '楽しい（何が？）' }, { en: 'for us', ja: '私たちにとって（サッカーをする人）' }, { en: 'to play soccer after school', ja: '放課後にサッカーをすること', mark: true }],
+      point: 'for us から、サッカーをするのは私たち。fun はそれが楽しいという評価。' }),
+    fact('inf-lv1-08-r4', 'inf-lv1-08', 'lv1-it', {
+      checks: 'It is not easy for A to do が「できない」とまでは言っていないと読み取れるか', en: 'It is not easy for beginners to read English newspapers.', ja: '初心者が英字新聞を読むのは簡単ではない。',
+      choices: [['初心者が英字新聞を読むのは簡単ではない。', null], ['初心者は英字新聞をまったく読めない。', 'not easy は「簡単ではない」です。「まったく読めない」とまでは言っていません。'], ['初心者向けの英字新聞は読みやすくない。', 'for beginners は「初心者にとって（読む人）」です。初心者向けの新聞のことではありません。']],
+      chunks: [{ en: 'It is not easy', ja: '簡単ではない（何が？）' }, { en: 'for beginners', ja: '初心者にとって（読む人）' }, { en: 'to read English newspapers', ja: '英字新聞を読むこと', mark: true }],
+      point: 'for beginners から、読むのは初心者。not easy は簡単ではないという評価で、読めないとまでは言っていない。' })
+  ].forEach(function (q) { bank.questions.push(q); });
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* ---- js/grading.js ---- */
 /*
  * grading.js — 採点（ルールのみ。AIは使いません）
@@ -3052,7 +3300,8 @@ details.panel > p { margin-top: 8px; }
    * 進行・採点・保存・結果画面は「もう一度練習する」と同じ（type: 'self'）で、6問の抽出は使わない。
    */
   function buildFixedSetSession(bank, setId, label, now) {
-    var items = activeQuestions(bank).map(function (q) { return { kind: 'question', questionId: q.id, attemptType: 'self' }; });
+    var items = activeQuestions(bank).filter(function (q) { return !q.retryFor; }) // 解き直し用の問題は、間違えたときだけ出す
+      .map(function (q) { return { kind: 'question', questionId: q.id, attemptType: 'self' }; });
     return newSession('self', bank.unit.id, items, now, { range: setId, rangeLabel: label, selfStarted: true, practiceSet: setId });
   }
 
@@ -3547,6 +3796,7 @@ details.panel > p { margin-top: 8px; }
     };
     if (state.mode === 'demo') a.demo = true;
     if (s.practiceSet) a.practiceSet = s.practiceSet; // 決まった問題の練習（例：lv1）
+    if (it.retryOf) a.retryOf = it.retryOf;            // 間違えた問題の解き直し（別の問題）
     if (s.type !== 'diagnostic') a.reasonDecision = reasonDecision(state, bank, s, qq, it, a);
     state.attempts.push(a);
     s.attemptIds.push(a.id);
@@ -3599,7 +3849,35 @@ details.panel > p { margin-top: 8px; }
     planFollowUp(state, bank, s, a);
   }
 
+  /**
+   * 決まった問題の練習（不定詞 Lv1 など）で間違えた（「解説をみる」を含む）とき、
+   * 同じ型の解き直し用の問題（retryFor が同じ）から、この練習でまだ出していない1問をすぐ次に出す。
+   * しばらく解いていない問題を優先する。解き直しでもつまずいたときは、それ以上追加しない。
+   */
+  function planSetRetry(state, bank, s, a) {
+    var it = s.items[s.index];
+    if (!G.isSkillWrong(a.result)) return;
+    if (it.retryOf) {
+      a.followUp = { added: null, trigger: 'error', kind: 'retry', basics: false,
+        why: '解き直しの問題でもつまずいたため、ここでは追加しません。解説をもう一度読んでから次へ進みましょう。' };
+      return;
+    }
+    var used = {};
+    s.items.forEach(function (x) { used[x.questionId] = true; });
+    var last = {};
+    state.attempts.forEach(function (x) { if (!(last[x.questionId] >= x.answeredAt)) last[x.questionId] = x.answeredAt; });
+    var cands = bank.questions.filter(function (x) { return x.status !== 'excluded' && x.retryFor === a.questionId && !used[x.id]; });
+    if (!cands.length) {
+      a.followUp = { added: null, trigger: 'error', kind: 'retry', basics: false, why: 'この問題の解き直し用の問題は、この練習ですべて出しました。解説をもう一度読んでから次へ進みましょう。' };
+      return;
+    }
+    var fq = shuffle(cands).sort(function (x, y) { return (last[x.id] || 0) - (last[y.id] || 0); })[0];
+    s.items.splice(s.index + 1, 0, { kind: 'question', questionId: fq.id, attemptType: 'self', retryOf: a.questionId });
+    a.followUp = { added: fq.id, trigger: 'error', kind: 'retry' };
+  }
+
   function planFollowUp(state, bank, s, a) {
+    if (s.practiceSet && a.attemptType === 'self') return planSetRetry(state, bank, s, a);
     if (['similar', 'review', 'followup'].indexOf(a.attemptType) < 0) return;
     var wrong = G.isSkillWrong(a.result);
     var meaningNg = !!(a.reason && a.reason.correct === false);
@@ -3939,7 +4217,7 @@ details.panel > p { margin-top: 8px; }
   /** 問題の形式名（問題ごとに formatLabel があればそれ。用法の分類名は出さない） */
   function fmtLabel(qq) { return (qq && (qq.formatLabel || FORMAT_LABEL[qq.format])) || ''; }
   /** 回答の種類の表示名（決まった問題の練習は、その名前） */
-  function typeLabelOf(a) { return a.practiceSet === 'lv1' ? 'Lv1練習' : (TYPE_LABEL[a.attemptType] || a.attemptType); }
+  function typeLabelOf(a) { return a.practiceSet === 'lv1' ? (a.retryOf ? 'Lv1練習・解き直し' : 'Lv1練習') : (TYPE_LABEL[a.attemptType] || a.attemptType); }
   var plain = U.plain, rich = U.rich;
 
   function syncClock() { EA.clock.offsetDays = state.mode === 'demo' && state.demo ? state.demo.dayOffset : 0; }
@@ -4065,9 +4343,19 @@ details.panel > p { margin-top: 8px; }
       '<p class="ex-translation">' + esc(e.translation) + '</p>' +
       (e.also ? '<p class="ex-also">' + esc(e.also) + '</p>' : '') +
       '<ol class="ex-map" aria-label="どの部分が、どの意味につながるか">' + rows + '</ol>' +
-      '<p class="ex-point">' + esc(e.point) + '</p>' +
+      '<p class="ex-point">' + esc(pointText(qq)) + '</p>' +
       '<p class="ex-term"><span class="label">文法の名前</span>' + esc(e.term) + '</p>' +
       '</div>';
+  }
+
+  /**
+   * 解説の文。選択肢はシャッフルして記号なしで表示するので、「Bでは」「Bは」のように正解の記号で書いた部分は
+   * 「正解の例文では」「正解の例文は」と表示する（問題データの文はそのまま）。
+   */
+  function pointText(qq) {
+    var t = qq.explanation.point;
+    if (qq.choices && qq.answer && qq.baseLabel) t = t.replace(new RegExp(qq.answer.toUpperCase() + '(では|は)', 'g'), '正解の例文$1');
+    return t;
   }
 
   function basicsHtml(sk) {
@@ -4337,15 +4625,18 @@ details.panel > p { margin-top: 8px; }
       '</div>';
   }
 
-  function lv1Count() { return LV1 ? LV1.questions.filter(function (x) { return x.status !== 'excluded'; }).length : 0; }
+  function lv1Count() { return LV1 ? LV1.questions.filter(function (x) { return x.status !== 'excluded' && !x.retryFor; }).length : 0; }
 
   function selfSummaryHtml(rec, atts) {
-    var ok = atts.filter(function (a) { return G.isSkillCorrect(a.result); }).length;
-    return '<p class="lead">範囲：' + esc(rec.rangeLabel || '全範囲') + ' ・ ' + atts.length + '問中 ' + ok + '問正解。自分で始めた練習として履歴に残しました。確認状況と復習予定は変わりません。</p>' +
+    var main = atts.filter(function (a) { return !a.retryOf; }), re = atts.filter(function (a) { return a.retryOf; });
+    var ok = main.filter(function (a) { return G.isSkillCorrect(a.result); }).length;
+    var reOk = re.filter(function (a) { return G.isSkillCorrect(a.result); }).length;
+    return '<p class="lead">範囲：' + esc(rec.rangeLabel || '全範囲') + ' ・ ' + main.length + '問中 ' + ok + '問正解' +
+      (re.length ? '（解き直し ' + re.length + '問中 ' + reOk + '問正解）' : '') + '。自分で始めた練習として履歴に残しました。確認状況と復習予定は変わりません。</p>' +
       '<section class="panel"><div class="panel-head"><h2>今回の回答</h2></div><ul class="att-list">' + atts.map(function (a) {
         var qq = q(a.questionId);
         return '<li><button type="button" class="att-row" data-act="question" data-q="' + qq.id + '">' +
-          '<span class="att-type">' + esc(skill(qq.skill).term) + '</span>' +
+          '<span class="att-type">' + esc(skill(qq.skill).term) + (a.retryOf ? '<span class="muted">解き直し</span>' : '') + '</span>' +
           '<span class="att-q">' + esc(plain(qq.ja || qq.sentence)) + '</span>' +
           '<span class="att-tags">' + resultBadge(a.result) + '</span></button></li>';
       }).join('') + '</ul></section>' +
@@ -4391,10 +4682,10 @@ details.panel > p { margin-top: 8px; }
       similar: '単語や場面を変えた類題です。',
       review: '復習です。答えを見ずに思い出してみましょう。',
       trial: '試作の問題です（確認状況・復習予定には反映しません）。',
-      self: '自分で始めた練習です（範囲：' + (s.rangeLabel || '全範囲') + '）。確認状況・復習予定には反映しません。'
+      self: item.retryOf ? '間違えた問題と同じ形式・同じ用法の、別の問題です。' : '自分で始めた練習です（範囲：' + (s.rangeLabel || '全範囲') + '）。確認状況・復習予定には反映しません。'
     }[item.attemptType] || '';
     // 確認問題は、問題画面の見出しでは「類題」と短く示す（記録・履歴の種類は「確認問題」のまま）
-    var typeLabel = s.practiceSet === 'lv1' ? 'Lv1練習' : item.attemptType === 'followup' ? '類題' : TYPE_LABEL[item.attemptType];
+    var typeLabel = s.practiceSet === 'lv1' ? (item.retryOf ? 'Lv1練習・解き直し' : 'Lv1練習') : item.attemptType === 'followup' ? '類題' : TYPE_LABEL[item.attemptType];
 
     // 初回診断の1問目を初めて開いたときだけ、結果と解説がいつ出るかを短く案内する（そのまま答えられる位置）。
     // 診断を始めた直後だけ firstNoteFor が立つ。途中から再開したとき・再読み込みしたとき・2問目以降では出さない
@@ -4429,7 +4720,7 @@ details.panel > p { margin-top: 8px; }
         if (a.reason) body += reasonResultHtml(qq2, a);
         if (a.followUp) {
           body += '<div class="next-note" role="note">' + (a.followUp.added
-            ? '<strong>このあと、単語や場面を変えた問題でもう一度確かめます。</strong>'
+            ? '<strong>' + (a.followUp.kind === 'retry' ? 'このあと、同じ形式・同じ用法の別の問題で解き直します。' : 'このあと、単語や場面を変えた問題でもう一度確かめます。') + '</strong>'
             : esc(a.followUp.why)) + '</div>';
           if (a.followUp.basics) body += basicsHtml(skill(a.skillId));
         }
