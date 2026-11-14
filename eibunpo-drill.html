@@ -806,6 +806,25 @@ details.panel > p { margin-top: 8px; }
 .self-practice .field-label, .self-practice .field-note { margin: 0; }
 .self-practice .actions-inline { margin-top: 2px; }
 @media (max-width: 520px) { .unit-btns > *, .self-practice .actions-inline .btn-primary { flex: 1 1 100%; } }
+/* 不定詞 Lv2：並べ替え（余分な語・不足語）・○×判断 */
+.q-rule { display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 8px 14px; border-radius: var(--r-s); background: var(--hold-soft); color: var(--ink); font-size: var(--fs-s); font-weight: 700; }
+.q-rule::before { content: "！"; color: var(--hold); }
+.chip-added { border-style: dashed; border-width: 2px; border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+.order-answer .chip-added { border-style: dashed; }
+.add-word { display: grid; gap: 8px; margin-bottom: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--surface-2); }
+.add-word .field-label, .add-word .field-note { margin: 0; }
+.add-word-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.add-word-row .text-input { flex: 1 1 10rem; max-width: 16rem; min-height: 48px; font-family: var(--font-en); }
+.add-word-msg { margin: 0; }
+.order-info { display: grid; gap: 4px; margin: 0; font-size: var(--fs-s); }
+.tf-sentence { display: grid; gap: 6px; border-left: 4px solid var(--accent); padding-left: 14px; }
+.tf-sentence .q-ja { font-size: var(--fs-m, 1rem); font-weight: 400; }
+.choices-tf .choice { justify-content: center; font-size: 1.5rem; font-weight: 700; }
+.choices-tf .choice .choice-text { flex: none; }
+.tf-correction { display: grid; gap: 6px; padding: 12px 16px; border-radius: var(--r-s); background: var(--surface-2); border-left: 4px solid var(--hold); }
+.tf-correction p { margin: 0; }
+.tf-correction .label { margin: 0; }
+.lv2-practice .seg-item { min-width: 0; }
 /* 学習時間画面の今週 */
 .view-time .week { gap: 20px 24px; }
 .view-time .week h2 { font-size: var(--fs-l); }
@@ -2466,6 +2485,222 @@ details.panel > p { margin-top: 8px; }
   bank.questions.forEach(function (q) { if (RETIRE[q.id]) { q.retired = true; q.retiredReason = RETIRE[q.id]; } });
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- data/infinitive-lv2-source.js ---- */
+/*
+ * 不定詞 Lv2 の原本（問題文・選択肢・正答・解説）。書き方は下の infinitive-lv2.js の説明を参照。
+ * 項目：gi（動名詞 or 不定詞）/ not（not to do）/ enough（enough to do）/ inorder（in order to do）/ wh（疑問詞＋不定詞）
+ * 形式：ord（並べ替え）/ fact（英文から確実に分かること）/ wo（正しい語順を選ぶ）/ tf（○×判断。gi のみ）
+ */
+(function (root) {
+  'use strict';
+  var EA = root.EA = root.EA || {};
+  EA.lv2Source = EA.lv2Source || {
+    /* LV2-SOURCE-BEGIN */
+    /* LV2-SOURCE-END */
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ---- data/infinitive-lv2.js ---- */
+/*
+ * infinitive-lv2.js — 不定詞 Lv2 の問題バンク（5項目 × 形式・計128問）
+ *
+ * ■ 講師の方へ
+ *   - 単元タブの「Lv2を練習する」だけで出題します。初回診断・類題・確認問題・自動復習・Lv1・もう一度練習には出ません
+ *     （不定詞（基本）とは別の問題集 'infinitive-lv2' として登録し、履歴は親の単元「不定詞」にまとめて表示します）。
+ *   - 回答は「自分で始めた練習」（attemptType: 'self'）として履歴と学習時間に残し、確認状況・復習予定には使いません（既存の自主練習と同じ）。
+ *   - 問題は下の LV2 に、項目（gi / not / enough / inorder / wh）× 形式（ord / fact / wo / tf）ごとに、原本の問題番号の順で書きます。
+ *     ID は自動で付きます：inf-lv2-<項目>-<形式>-<2桁の番号>（例：inf-lv2-enough-ord-08）。番号を変えると別の問題として記録されます。
+ *   - 問題を直したら、その問題に version: 2 のように書き、changes に理由を残してください。
+ *
+ * ■ 形式と書き方
+ *   ord  並べ替え。第1〜6問は通常、第7問は余分な語が1つ、第8問は不足語を1つ補う。
+ *        { ja, fixedStart, fixedEnd, tokens: [動かせる語句], answer: '固定部分を含む英文全体', extra: '余分な語句', missing: '不足語', explain }
+ *        原本で一まとまりの語句（this app など）は tokens の1要素にします。採点は固定部分を含む英文全体で行います。
+ *   fact 英文から確実に分かること。{ en, choices: [[日本語, 誤答の説明 or null(=正解)], …], explain }（回答前に全文の和訳は出しません）
+ *   wo   正しい語順を選ぶ。{ ja, choices: [[英文, 誤答の説明 or null(=正解)], …], explain }（日本語の意味まで含めて選ぶ）
+ *   tf   ○×判断。{ en, ja, answer: 'o' | 'x', correction: '訂正例（×のとき）', wrong: 'grammar' | 'meaning' | 'both', explain }
+ *   explain … { point: 判断の根拠, translation: 和訳（解説で表示）, term: 文法の名前（任意）, chunks: 任意 }
+ *   hint    … 任意。書いた問題だけ「ヒントを見る」を表示します（項目名は書かない）。
+ *   選択肢の ID は書いた順に a, b, c, d。表示順は毎回入れ替わり、採点は ID で行います（○×は ○ → × の順で固定）。
+ */
+(function (root) {
+  'use strict';
+  var EA = root.EA = root.EA || {};
+
+  var ITEMS = [
+    { key: 'gi', label: '動名詞 or 不定詞', term: '動名詞 or 不定詞', plain: '動詞のあとに続くのが to do か doing かを見分ける' },
+    { key: 'not', label: 'not to do', term: 'not to do', plain: '不定詞を否定するときは not を to の直前に置く' },
+    { key: 'enough', label: 'enough to do', term: 'enough to do', plain: '形容詞・副詞 ＋ enough ＋ to do（〜するのに十分…）' },
+    { key: 'inorder', label: 'in order to do', term: 'in order to do', plain: '目的をはっきり示す in order to do / in order not to do' },
+    { key: 'wh', label: '疑問詞＋不定詞', term: '疑問詞＋不定詞', plain: 'what / how / where / when / which ＋ to do（何を・どう〜すればよいか）' }
+  ];
+  // 項目 × 形式ごとの収録数（原本の範囲表）。検査（EA.lv2.check）で使います
+  var PLAN = { ord: 8, fact: 8, wo: 8, tf: { gi: 8 } };
+
+  var FORMAT = {
+    ord: { label: '並べ替え', group: 'ord' },
+    'ord-extra': { label: '並べ替え（余分な語あり）', group: 'ord' },
+    'ord-missing': { label: '並べ替え（不足語を補う）', group: 'ord' },
+    fact: { label: '英文から確実に分かること', group: 'fact' },
+    wo: { label: '正しい語順を選ぶ', group: 'wo' },
+    tf: { label: '○×判断', group: 'tf' }
+  };
+  var INSTR = {
+    ord: '日本語に合うように、語句を並べ替えましょう。',
+    fact: '英文だけから確実に分かることを選びなさい。',
+    wo: '日本語の意味を正しく表し、語順も正しい英文を選びなさい（語順だけでなく、日本語の意味まで含めて選びます）。',
+    tf: '英文が文法的に正しく、日本語の意味も表していれば○、そうでなければ×を選びなさい。'
+  };
+  var WRONG = { grammar: '文法', meaning: '意味', both: '文法と意味' };
+
+  /*
+   * 原本の問題（項目 → 形式 → 問題番号順）。
+   * ※ 原本の問題セットの取り込み待ち。ここに LV2.gi.ord = [ {…第1問}, … {…第8問} ] のように追加します。
+   */
+  var LV2 = EA.lv2Source || {};
+
+  function choices(list) {
+    var ans = null;
+    var out = list.map(function (c, i) {
+      var id = 'abcdef'.charAt(i);
+      if (c[1] == null) { if (ans === null) ans = id; else ans = 'MULTIPLE'; return { id: id, text: c[0] }; }
+      return { id: id, text: c[0], feedback: c[1] };
+    });
+    return { choices: out, answer: ans };
+  }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+  function build(item, fmt, d, no) {
+    var id = 'inf-lv2-' + item.key + '-' + fmt + '-' + pad(no);
+    var q = { id: id, version: d.version || 1, status: d.status || 'active', role: 'lv2', set: 'lv2', skill: 'lv2-' + item.key,
+      no: no, lv2Format: fmt, checks: d.checks || (item.label + '・' + FORMAT[fmt].label + ' 第' + no + '問'), hint: d.hint || null,
+      changes: d.changes || [], source: d.source || null };
+    var ex = d.explain || {};
+    if (fmt === 'ord') {
+      var kind = d.missing ? 'ord-missing' : d.extra ? 'ord-extra' : 'ord';
+      q.format = 'order'; q.orderKind = kind === 'ord' ? 'normal' : kind === 'ord-extra' ? 'extra' : 'missing';
+      q.formatLabel = FORMAT[kind].label; q.formatGroup = 'ord';
+      q.instruction = INSTR.ord; q.ja = d.ja; q.showJa = 'prompt';
+      if (d.fixedStart) q.fixedStart = d.fixedStart;
+      if (d.fixedEnd) q.fixedEnd = d.fixedEnd;
+      q.tokens = d.tokens.slice();
+      q.answers = [d.answer].concat(d.alsoAccept || []);
+      if (d.extra) q.extraToken = d.extra;
+      if (d.missing) q.missingWord = d.missing;
+      q.explanation = { answer: d.answer, translation: ex.translation || d.ja, chunks: ex.chunks || null, point: ex.point || '', term: ex.term || item.term };
+    } else if (fmt === 'fact' || fmt === 'wo') {
+      var c = choices(d.choices);
+      q.format = 'meaning'; q.formatLabel = FORMAT[fmt].label; q.formatGroup = fmt;
+      q.instruction = INSTR[fmt]; q.question = INSTR[fmt];
+      q.choices = c.choices; q.answer = c.answer;
+      if (fmt === 'fact') {
+        q.sentence = d.en;
+        q.explanation = { answer: d.en, translation: ex.translation || '', chunks: ex.chunks || null, point: ex.point || '', term: ex.term || item.term };
+      } else {
+        q.ja = d.ja; q.jaShown = true; q.choicesLang = 'en';
+        var right = c.choices.filter(function (x) { return x.id === c.answer; })[0];
+        q.explanation = { answer: right ? right.text : '', translation: d.ja, chunks: ex.chunks || null, point: ex.point || '', term: ex.term || item.term };
+      }
+    } else if (fmt === 'tf') {
+      q.format = 'judge'; q.formatLabel = FORMAT.tf.label; q.formatGroup = 'tf';
+      q.instruction = INSTR.tf; q.sentence = d.en; q.ja = d.ja; q.jaShown = true;
+      q.choices = [{ id: 'o', text: '○' }, { id: 'x', text: '×' }]; q.fixedChoiceOrder = true;
+      q.answer = d.answer;
+      if (d.answer === 'x') { q.correction = d.correction; q.wrong = d.wrong; q.wrongLabel = WRONG[d.wrong] || ''; }
+      q.explanation = { answer: d.answer === 'x' ? d.correction : d.en, translation: ex.translation || d.ja, chunks: ex.chunks || null,
+        point: ex.point || '', term: ex.term || item.term };
+    }
+    return q;
+  }
+
+  var bank = {
+    unit: {
+      id: 'infinitive-lv2', parent: 'infinitive', practiceSet: 'lv2', practiceLabel: '不定詞Lv2の練習',
+      title: '不定詞 Lv2', description: '動名詞 or 不定詞・not to do・enough to do・in order to do・疑問詞＋不定詞',
+      scopeNote: '単元タブの「Lv2を練習する」だけで出題します。確認状況・復習予定には反映しません。'
+    },
+    skills: ITEMS.map(function (it) { return { id: 'lv2-' + it.key, label: it.label, term: it.term, plain: it.plain }; }),
+    questions: []
+  };
+  ITEMS.forEach(function (item) {
+    ['ord', 'fact', 'wo', 'tf'].forEach(function (fmt) {
+      ((LV2[item.key] || {})[fmt] || []).forEach(function (d, i) { bank.questions.push(build(item, fmt, d, i + 1)); });
+    });
+  });
+
+  /* ---- 取り込みの検査（収録数・ID・正答の参照先・並べ替えの語句と正答の一致）。問題があれば一覧を返す ---- */
+  function words(s) { return EA.grading.normalize(s).replace(/[,.!?;:]/g, ' ').split(/\s+/).filter(Boolean); }
+  function canBuild(tokens, target) {
+    // tokens（語句のまとまり）をすべて使って target（語の列）を作れるか
+    var tw = tokens.map(words), used = tokens.map(function () { return false; });
+    function rec(pos) {
+      if (pos === target.length) return used.every(Boolean);
+      for (var i = 0; i < tw.length; i++) {
+        if (used[i] || !tw[i].length) continue;
+        var ok = true;
+        for (var k = 0; k < tw[i].length; k++) if (target[pos + k] !== tw[i][k]) { ok = false; break; }
+        if (!ok) continue;
+        used[i] = true;
+        if (rec(pos + tw[i].length)) return true;
+        used[i] = false;
+      }
+      return false;
+    }
+    return rec(0);
+  }
+  function check(b) {
+    b = b || bank;
+    var errs = [], ids = {}, counts = {};
+    b.questions.forEach(function (q) {
+      if (ids[q.id]) errs.push(q.id + '：ID が重複しています'); ids[q.id] = true;
+      var k = q.skill + '/' + q.lv2Format; counts[k] = (counts[k] || 0) + 1;
+      if (q.choices) {
+        var cids = q.choices.map(function (c) { return c.id; });
+        if (q.answer === 'MULTIPLE') errs.push(q.id + '：正解が2つ以上あります');
+        else if (cids.indexOf(q.answer) < 0) errs.push(q.id + '：正答の ID（' + q.answer + '）が選択肢にありません');
+        var texts = q.choices.map(function (c) { return EA.grading.normalize(EA.util.plain(c.text)); });
+        if (texts.some(function (t, i) { return texts.indexOf(t) !== i; })) errs.push(q.id + '：同じ文の選択肢があります');
+        if (q.format === 'meaning' && q.choices.length < 3) errs.push(q.id + '：選択肢が3つ未満です');
+      }
+      if (q.format === 'judge') {
+        if (q.answer === 'x' && (!q.correction || !WRONG[q.wrong])) errs.push(q.id + '：×の問題に訂正例か「文法・意味」の区別がありません');
+        if (q.answer === 'x' && q.correction && EA.grading.normalize(q.correction) === EA.grading.normalize(q.sentence)) errs.push(q.id + '：訂正例が問題文と同じです');
+      }
+      if (q.format === 'order') {
+        var full = words(q.answers[0]);
+        var core = full.slice(q.fixedStart ? words(q.fixedStart).length : 0, full.length - (q.fixedEnd ? words(q.fixedEnd).length : 0));
+        if (q.fixedStart && words(q.fixedStart).join(' ') !== full.slice(0, words(q.fixedStart).length).join(' ')) errs.push(q.id + '：文頭の固定部分が正答と一致しません');
+        if (q.fixedEnd && words(q.fixedEnd).join(' ') !== full.slice(full.length - words(q.fixedEnd).length).join(' ')) errs.push(q.id + '：文末の固定部分が正答と一致しません');
+        var toks = q.tokens.slice();
+        if (q.orderKind === 'extra') {
+          var xi = toks.map(function (t) { return EA.grading.normalize(t); }).indexOf(EA.grading.normalize(q.extraToken || ''));
+          if (xi < 0) errs.push(q.id + '：余分な語（' + q.extraToken + '）が語句にありません'); else toks.splice(xi, 1);
+        }
+        if (q.orderKind === 'missing') {
+          if (!q.missingWord) errs.push(q.id + '：不足語がありません');
+          else if (toks.some(function (t) { return EA.grading.normalize(t) === EA.grading.normalize(q.missingWord); })) errs.push(q.id + '：不足語（' + q.missingWord + '）が語句の中にあります');
+          toks.push(q.missingWord || '');
+        }
+        if (!canBuild(toks, core)) errs.push(q.id + '：語句を並べても正答（' + q.answers[0] + '）になりません');
+        if (q.orderKind !== 'normal' && q.no !== (q.orderKind === 'extra' ? 7 : 8)) errs.push(q.id + '：余分な語は第7問、不足語は第8問の想定です');
+        if (q.orderKind === 'normal' && q.no > 6) errs.push(q.id + '：第' + q.no + '問に余分な語・不足語の指定がありません');
+      }
+    });
+    ITEMS.forEach(function (it) {
+      ['ord', 'fact', 'wo', 'tf'].forEach(function (f) {
+        var want = typeof PLAN[f] === 'number' ? PLAN[f] : (PLAN[f][it.key] || 0);
+        var have = counts['lv2-' + it.key + '/' + f] || 0;
+        if (have !== want) errs.push(it.label + ' / ' + FORMAT[f].label + '：' + have + '問（予定 ' + want + '問）');
+      });
+    });
+    var total = b.questions.length;
+    return { ok: !errs.length, errors: errs, total: total, counts: counts };
+  }
+
+  EA.lv2 = { check: check, items: ITEMS, formats: FORMAT, canBuild: canBuild, words: words };
+  EA.registerBank(bank);
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* ---- js/grading.js ---- */
 /*
  * grading.js — 採点（ルールのみ。AIは使いません）
@@ -2527,15 +2762,15 @@ details.panel > p { margin-top: 8px; }
     if (response == null || response === '' || (Array.isArray(response) && response.length === 0)) {
       return { result: 'gaveup', feedback: '' };
     }
-    if (q.format === 'fill' || q.format === 'meaning') {
+    if (q.format === 'fill' || q.format === 'meaning' || q.format === 'judge') {
       if (response === q.answer) return { result: 'correct', feedback: '' };
       var c = findChoice(q, response);
       return { result: 'incorrect', feedback: (c && c.feedback) || '' };
     }
 
     if (q.format === 'order') {
-      // 先頭を固定表示する問題（例：It）は、固定の語を含む英文全体で採点する
-      var joined = normalize((q.fixedStart ? q.fixedStart + ' ' : '') + response.join(' '));
+      // 先頭・末尾を固定表示する問題（例：It）は、固定の語を含む英文全体で採点する
+      var joined = normalize(orderText(q, response));
       for (var i = 0; i < q.answers.length; i++) {
         if (normalize(q.answers[i]) === joined) return { result: 'correct', feedback: '', normalized: joined };
       }
@@ -2573,14 +2808,35 @@ details.panel > p { margin-top: 8px; }
     throw new Error('未対応の形式: ' + q.format);
   }
 
+  /** 並べ替えの英文全体（文頭・文末の固定部分を含む）。採点・回答履歴の両方に使う */
+  function orderText(q, response) {
+    return [q.fixedStart || '', response.join(' '), q.fixedEnd || ''].filter(function (x) { return x; }).join(' ');
+  }
+  /** 並べ替えの正答から固定部分を除いた、動かせる語句の部分（正解と同じ並びで出さないために使う） */
+  function orderCore(q, answer) {
+    var a = String(answer);
+    if (q.fixedStart && a.slice(0, q.fixedStart.length) === q.fixedStart) a = a.slice(q.fixedStart.length);
+    if (q.fixedEnd) {
+      var end = q.fixedEnd.replace(/[.!?]$/, ''), b = a.replace(/[.!?]$/, '').trim();
+      if (b.slice(-end.length) === end) a = b.slice(0, b.length - end.length);
+    }
+    return a.trim();
+  }
+  /** 補った語（不足語）の入力を整える：全角→半角（NFKC）・前後と連続の空白を整理。比較は normalize で行う */
+  function cleanWord(text) {
+    var s = String(text == null ? '' : text);
+    if (s.normalize) s = s.normalize('NFKC');
+    return s.replace(/[‘’ʼ`´]/g, "'").replace(/\s+/g, ' ').trim();
+  }
+
   /** 画面表示用の回答テキスト */
   function responseText(q, response) {
     if (response == null) return '';
-    if (q.format === 'fill' || q.format === 'meaning') {
+    if (q.format === 'fill' || q.format === 'meaning' || q.format === 'judge') {
       var c = findChoice(q, response);
       return c ? EA.util.plain(c.text) : String(response);
     }
-    if (Array.isArray(response)) return (q.fixedStart ? q.fixedStart + ' ' : '') + response.join(' ');
+    if (Array.isArray(response)) return orderText(q, response);
     return String(response);
   }
 
@@ -2604,6 +2860,9 @@ details.panel > p { margin-top: 8px; }
 
   EA.grading = {
     normalize: normalize,
+    orderText: orderText,
+    orderCore: orderCore,
+    cleanWord: cleanWord,
     grade: grade,
     responseText: responseText,
     RESULT_INFO: RESULT_INFO,
@@ -3364,6 +3623,66 @@ details.panel > p { margin-top: 8px; }
     return newSession('self', bank.unit.id, items, now, { range: setId, rangeLabel: label, selfStarted: true, practiceSet: setId });
   }
 
+  /**
+   * 範囲を選んで始める問題バンクの練習（不定詞 Lv2）。
+   *   範囲：'all'（全範囲）と、問題集の項目（skill）ごと。名前は項目名そのまま。
+   *   問題数：既存の自主練習の設定（selfPracticeQuestions）。問題が足りないときはある分だけ。
+   *   全範囲：各項目から1問ずつ選んでから、残りの枠を全項目の中から埋める。
+   *   項目別：その項目の形式（並べ替え・英文から分かること・語順・○×）を順番に回して選ぶ（複数の形式を混ぜる）。
+   *   どちらも、しばらく解いていない問題（この問題を最後に答えた日時が古い・未回答）を優先し、同じ回に同じ問題は出さない。出す順番は混ぜる。
+   */
+  function practiceSetRanges(bank) {
+    return [{ id: 'all', label: '全範囲' }].concat(bank.skills.map(function (sk) { return { id: sk.id, label: sk.label }; }));
+  }
+  function practiceSetCount(bank, rangeId) {
+    var n = (EA.config && EA.config.selfPracticeQuestions) || 6;
+    var pool = activeQuestions(bank).filter(function (q) { return rangeId === 'all' || q.skill === rangeId; });
+    return Math.min(n, pool.length);
+  }
+  function practiceSetQuestions(state, bank, rangeId) {
+    var n = practiceSetCount(bank, rangeId);
+    var last = {};
+    state.attempts.forEach(function (a) { if (!(last[a.questionId] >= a.answeredAt)) last[a.questionId] = a.answeredAt; });
+    var pool = activeQuestions(bank).filter(function (q) { return rangeId === 'all' || q.skill === rangeId; });
+    function byOldest(list) { return shuffle(list).sort(function (a, b) { return (last[a.id] || 0) - (last[b.id] || 0); }); }
+    var picks = [], used = {};
+    function take(q) { if (q && !used[q.id] && picks.length < n) { used[q.id] = true; picks.push(q); } }
+    // 1回目に回すまとまり：全範囲は項目、項目別は形式
+    var keyOf = rangeId === 'all' ? function (q) { return q.skill; } : function (q) { return q.formatGroup || q.format; };
+    var groups = {}, keys = [];
+    pool.forEach(function (q) { var k = keyOf(q); if (!groups[k]) { groups[k] = []; keys.push(k); } groups[k].push(q); });
+    // 全範囲で枠が項目数より少ないときは、しばらく解いていない項目を優先する
+    keys = shuffle(keys).sort(function (a, b) {
+      var la = Math.min.apply(null, groups[a].map(function (q) { return last[q.id] || 0; }));
+      var lb = Math.min.apply(null, groups[b].map(function (q) { return last[q.id] || 0; }));
+      return la - lb;
+    });
+    var lists = keys.map(function (k) { return byOldest(groups[k]); });
+    if (rangeId === 'all') {
+      lists.forEach(function (l) { take(l[0]); });                 // 各項目から1問ずつ
+      byOldest(pool.filter(function (q) { return !used[q.id]; })).forEach(take); // 残りの枠
+    } else {
+      while (picks.length < n && lists.some(function (l) { return l.length; })) {
+        lists.forEach(function (l) { take(l.shift()); });          // 形式を順番に回す
+      }
+    }
+    return shuffle(picks);
+  }
+  function buildPracticeSetSession(state, bank, rangeId, now) {
+    var ranges = practiceSetRanges(bank);
+    var range = ranges.filter(function (r) { return r.id === rangeId; })[0] || ranges[0];
+    var items = practiceSetQuestions(state, bank, range.id).map(function (q) { return { kind: 'question', questionId: q.id, attemptType: 'self' }; });
+    return newSession('self', bank.unit.id, items, now, { range: range.id, rangeLabel: range.label, selfStarted: true,
+      practiceSet: bank.unit.practiceSet, noRetry: true });
+  }
+  /** 決まった問題の練習の表示名（例：不定詞Lv1の練習）。どれでもなければ null */
+  function practiceSetLabel(setId) {
+    if (!setId) return null;
+    if (setId === 'lv1') return '不定詞Lv1の練習';
+    for (var k in EA.banks) if (EA.banks[k].unit.practiceSet === setId) return EA.banks[k].unit.practiceLabel || null;
+    return null;
+  }
+
   /** 解説を見るべき回答か（誤り・採点保留・指定の形と違う・ヒント・自信がない・小さな直し） */
   function needsFollowUp(a) {
     return !EA.mastery.isSolid(a) || a.result === 'minor';
@@ -3540,7 +3859,7 @@ details.panel > p { margin-top: 8px; }
     var u = unitState(state, bank.unit.id);
     var s = state.activeSession;
     if (s) {
-      var label = s.practiceSet === 'lv1' ? '不定詞Lv1の練習' : { diagnostic: '初回診断', practice: '類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習' }[s.type];
+      var label = practiceSetLabel(s.practiceSet) || { diagnostic: '初回診断', practice: '類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習' }[s.type];
       var cur = s.current && s.current.index === s.index ? s.current : null;
       var where = !cur ? '' : cur.phase === 'reason' ? '（意味の問いの回答前）' : cur.phase === 'feedback' ? '（解説の表示中）' : '（回答の途中）';
       // 期限を迎えた復習（いま再開する学習回がその復習なら、その項目は数えない）
@@ -3606,6 +3925,11 @@ details.panel > p { margin-top: 8px; }
     buildTrialSession: buildTrialSession,
     buildSelfPracticeSession: buildSelfPracticeSession,
     buildFixedSetSession: buildFixedSetSession,
+    practiceSetRanges: practiceSetRanges,
+    practiceSetCount: practiceSetCount,
+    practiceSetQuestions: practiceSetQuestions,
+    buildPracticeSetSession: buildPracticeSetSession,
+    practiceSetLabel: practiceSetLabel,
     selfPracticeRanges: selfPracticeRanges,
     selfPracticeQuestions: selfPracticeQuestions,
     buildPracticeSession: buildPracticeSession,
@@ -3723,9 +4047,11 @@ details.panel > p { margin-top: 8px; }
       s.current = {
         index: s.index, startedAt: t.app, activeMs: 0, awayMs: 0, visibleSince: t.real, hiddenSince: null,
         hintUsed: false, unsure: false, draft: null, phase: 'answer', attemptId: null,
-        pool: qq.format === 'order' ? shuffledPool(qq.tokens, qq.fixedStart ? qq.answers.map(function (x) { return x.slice(qq.fixedStart.length).trim(); }) : qq.answers) : null,
-        // 選択肢の表示順は問題ごとに入れ替える（正答の位置を覚えて答えられないように）
-        choiceOrder: qq.choices ? shuffle(qq.choices.map(function (c) { return c.id; })) : null,
+        pool: qq.format === 'order' ? shuffledPool(qq.tokens, qq.answers.map(function (x) { return G.orderCore(qq, x); })) : null,
+        // 不足語を補う並べ替え：補った語（added）と入力欄の途中（addedInput）。解答欄では語句の番号 tokens.length で表す
+        added: null, addedInput: '',
+        // 選択肢の表示順は問題ごとに入れ替える（正答の位置を覚えて答えられないように）。○×は ○ → × の順で固定
+        choiceOrder: qq.choices ? (qq.fixedChoiceOrder ? qq.choices.map(function (c) { return c.id; }) : shuffle(qq.choices.map(function (c) { return c.id; }))) : null,
         reasonOrder: qq.reason ? shuffle(qq.reason.choices.map(function (c) { return c.id; })) : null
       };
     } else {
@@ -3836,7 +4162,12 @@ details.panel > p { margin-top: 8px; }
     var cur = s.current, it = item(state), qq = q(bank, it.questionId);
     pause(cur, t.real);
     var response = gaveUp ? null : cur.draft;
-    if (qq.format === 'order' && response) response = response.map(function (i) { return qq.tokens[i]; });
+    var orderInfo = null;
+    if (qq.format === 'order' && response) {
+      // 補った語は語句の番号 tokens.length で置いている（不足語を補う並べ替え）
+      orderInfo = orderDetail(qq, response, cur);
+      response = response.map(function (i) { return i === qq.tokens.length ? G.cleanWord(cur.added) : qq.tokens[i]; });
+    }
     var g = gaveUp ? { result: 'gaveup', feedback: '' } : G.grade(qq, response);
     var a = {
       id: EA.util.uid('a'),
@@ -3849,7 +4180,7 @@ details.panel > p { margin-top: 8px; }
       hintUsed: !!cur.hintUsed, gaveUp: !!gaveUp,
       afterExplanation: it.attemptType === 'retry' || !!s.explained[qq.skill],
       // 答える前にこの英文の日本語訳を見ていたか（日本語が問題文の形式・解き直し）
-      translationShown: qq.format === 'ja2en' || qq.format === 'order' || (qq.format === 'fill' && qq.showJa !== 'after') || it.attemptType === 'retry',
+      translationShown: qq.format === 'ja2en' || qq.format === 'order' || qq.format === 'judge' || !!qq.jaShown || (qq.format === 'fill' && qq.showJa !== 'after') || it.attemptType === 'retry',
       choiceOrder: cur.choiceOrder || null,
       // 復習でこの問題を選んだ理由（planner.reviewPicks の why）。復習以外は null
       pickWhy: it.pickWhy || null,
@@ -3860,7 +4191,8 @@ details.panel > p { margin-top: 8px; }
       activeMs: cur.activeMs, awayMs: cur.awayMs, elapsedMs: t.app - cur.startedAt
     };
     if (state.mode === 'demo') a.demo = true;
-    if (s.practiceSet) a.practiceSet = s.practiceSet; // 決まった問題の練習（例：lv1）
+    if (orderInfo) a.orderInfo = orderInfo;            // 余分な語として残した語句・補った語とその位置
+    if (s.practiceSet) a.practiceSet = s.practiceSet; // 決まった問題の練習（例：lv1, lv2）
     if (it.retryOf) a.retryOf = it.retryOf;            // 間違えた問題の解き直し（別の問題）
     if (s.type !== 'diagnostic') a.reasonDecision = reasonDecision(state, bank, s, qq, it, a);
     state.attempts.push(a);
@@ -3877,6 +4209,22 @@ details.panel > p { margin-top: 8px; }
     }
     conclude(state, bank, a);
     return { attempt: a, finished: null };
+  }
+
+  /**
+   * 並べ替えの回答の補足：使わなかった語句（余分な語がある問題）と、補った語とその位置（不足語を補う問題）。
+   * 位置は「固定部分を除いた、動かせる部分の何番目（1から）」。
+   */
+  function orderDetail(qq, placed, cur) {
+    var info = {};
+    if (qq.orderKind === 'extra') {
+      info.unused = qq.tokens.filter(function (_, i) { return placed.indexOf(i) < 0; });
+    }
+    if (qq.orderKind === 'missing') {
+      info.added = G.cleanWord(cur.added);
+      info.addedPos = placed.indexOf(qq.tokens.length) + 1;
+    }
+    return Object.keys(info).length ? info : null;
   }
 
   function submitReason(state, bank, choiceId) {
@@ -3939,6 +4287,7 @@ details.panel > p { margin-top: 8px; }
   }
 
   function planFollowUp(state, bank, s, a) {
+    if (s.noRetry) return; // 解き直しを追加しない練習（不定詞 Lv2）
     if (s.practiceSet && a.attemptType === 'self') return planSetRetry(state, bank, s, a);
     if (['similar', 'review', 'followup'].indexOf(a.attemptType) < 0) return;
     var wrong = G.isSkillWrong(a.result);
@@ -4022,7 +4371,7 @@ details.panel > p { margin-top: 8px; }
     start: start, item: item, ensureCurrent: ensureCurrent, pause: pause, resume: resume,
     suspend: suspend, recover: recover, touch: touch, repairOrders: repairOrders,
     submit: submit, submitReason: submitReason, next: next, finish: finish,
-    reasonDecision: reasonDecision, attemptById: attemptById, shuffledPool: shuffledPool
+    reasonDecision: reasonDecision, attemptById: attemptById, shuffledPool: shuffledPool, orderDetail: orderDetail
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -4137,10 +4486,17 @@ details.panel > p { margin-top: 8px; }
    * onChange(newPlaced) が呼ばれる
    */
   function mount(container, tokens, pool, placed, onChange, opts) {
-    var fixed = opts && opts.fixed ? '<span class="chip chip-fixed" lang="en" aria-label="' + esc(opts.fixed) + '（文頭に固定）">' + esc(opts.fixed) + '</span>' : '';
+    opts = opts || {};
+    // 固定部分（動かせない語句）は灰色の枠で、解答欄の先頭・末尾に置く。opts.fixed は以前の呼び方（文頭だけ）
+    var fs = opts.fixedStart || opts.fixed || null, fe = opts.fixedEnd || null;
+    function fixedChip(text, where) { return '<span class="chip chip-fixed" lang="en" aria-label="' + esc(text) + '（' + where + 'に固定）">' + esc(text) + '</span>'; }
+    var fixed = fs ? fixedChip(fs, '文頭') : '';
+    var fixedEnd = fe ? fixedChip(fe, '文末') : '';
+    var addedIdx = opts.addedIndex != null ? opts.addedIndex : -1; // 生徒が補った語（点線の枠）
     function chip(i, where, pos) {
-      return '<button type="button" class="chip" data-tok="' + i + '" data-where="' + where + '"' +
-        (pos != null ? ' data-pos="' + pos + '"' : '') + ' aria-label="' + esc(tokens[i]) +
+      var isAdded = i === addedIdx;
+      return '<button type="button" class="chip' + (isAdded ? ' chip-added' : '') + '" data-tok="' + i + '" data-where="' + where + '"' +
+        (pos != null ? ' data-pos="' + pos + '"' : '') + ' aria-label="' + esc(tokens[i]) + (isAdded ? '（補った語）' : '') +
         (where === 'answer' ? '（タップで戻す）' : '（タップで追加）') + '">' + esc(tokens[i]) + '</button>';
     }
     function draw() {
@@ -4149,7 +4505,7 @@ details.panel > p { margin-top: 8px; }
       container.innerHTML =
         '<div class="order-answer" data-zone="answer" aria-label="解答欄">' +
           fixed + (placed.length ? placed.map(function (i, p) { return chip(i, 'answer', p); }).join('') :
-            '<span class="order-placeholder">下の語句をタップして、ここに並べます</span>') +
+            '<span class="order-placeholder">下の語句をタップして、ここに並べます</span>') + fixedEnd +
         '</div>' +
         '<div class="order-pool" data-zone="pool" aria-label="語句">' +
           pool.map(function (i) {
@@ -4276,10 +4632,14 @@ details.panel > p { margin-top: 8px; }
   var SESSION_LABEL = { diagnostic: '初回診断', practice: '類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習' };
   var FORMAT_LABEL = { fill: '空所補充', order: '並び替え', ja2en: '日本語→英語', meaning: '意味の確認' };
   var LV1 = EA.banks.infinitive; // 不定詞 Lv1 の8問は、不定詞（基本）の問題集の set: 'lv1'
+  var LV2 = EA.banks['infinitive-lv2']; // 不定詞 Lv2 は別の問題集（範囲を選んで練習する。親の単元は不定詞）
+  var SET_SHORT = { lv1: 'Lv1練習', lv2: 'Lv2練習' };
   /** 問題の形式名（問題ごとに formatLabel があればそれ。用法の分類名は出さない） */
   function fmtLabel(qq) { return (qq && (qq.formatLabel || FORMAT_LABEL[qq.format])) || ''; }
   /** 回答の種類の表示名（決まった問題の練習は、その名前） */
-  function typeLabelOf(a) { return a.practiceSet === 'lv1' ? (a.retryOf ? 'Lv1練習・解き直し' : 'Lv1練習') : (TYPE_LABEL[a.attemptType] || a.attemptType); }
+  function typeLabelOf(a) { return SET_SHORT[a.practiceSet] ? SET_SHORT[a.practiceSet] + (a.retryOf ? '・解き直し' : '') : (TYPE_LABEL[a.attemptType] || a.attemptType); }
+  /** 学習回の表示名（決まった問題の練習は、その名前） */
+  function sessionLabelOf(s) { return P.practiceSetLabel(s.practiceSet) || SESSION_LABEL[s.type]; }
   var plain = U.plain, rich = U.rich;
 
   function syncClock() { EA.clock.offsetDays = state.mode === 'demo' && state.demo ? state.demo.dayOffset : 0; }
@@ -4393,20 +4753,22 @@ details.panel > p { margin-top: 8px; }
   function explanationHtml(qq, opts) {
     var e = qq.explanation;
     opts = opts || {};
-    var sentence = e.chunks.map(function (c) { return c.mark ? '<mark>' + esc(c.en) + '</mark>' : esc(c.en); }).join(' ');
+    var chunks = e.chunks || [];
+    // まとまりごとの対応（chunks）がない問題（不定詞 Lv2 など）は、英文をそのまま出す
+    var sentence = chunks.length ? chunks.map(function (c) { return c.mark ? '<mark>' + esc(c.en) + '</mark>' : esc(c.en); }).join(' ') : rich(e.answer).replace(/[.?!]$/, '');
     var lastPunct = /[.?!]$/.test(e.answer) ? e.answer.slice(-1) : '';
-    var rows = e.chunks.map(function (c) {
+    var rows = chunks.map(function (c) {
       return '<li class="' + (c.mark ? 'is-mark' : '') + '"><span class="ex-en" lang="en">' + esc(c.en) + '</span>' +
         '<span class="ex-arrow" aria-hidden="true">→</span><span class="ex-ja">' + esc(c.ja) + '</span></li>';
     }).join('');
     return '<div class="explain' + (opts.bare ? ' explain-bare' : '') + '">' +
       (opts.bare ? '' : '<p class="eyebrow">解説</p>') +
       '<p class="ex-answer" lang="en">' + sentence + esc(lastPunct) + '</p>' +
-      '<p class="ex-translation">' + esc(e.translation) + '</p>' +
+      (e.translation ? '<p class="ex-translation">' + esc(e.translation) + '</p>' : '') +
       (e.also ? '<p class="ex-also">' + esc(e.also) + '</p>' : '') +
-      '<ol class="ex-map" aria-label="どの部分が、どの意味につながるか">' + rows + '</ol>' +
-      '<p class="ex-point">' + esc(pointText(qq)) + '</p>' +
-      '<p class="ex-term"><span class="label">文法の名前</span>' + esc(e.term) + '</p>' +
+      (rows ? '<ol class="ex-map" aria-label="どの部分が、どの意味につながるか">' + rows + '</ol>' : '') +
+      (e.point ? '<p class="ex-point">' + esc(pointText(qq)) + '</p>' : '') +
+      (e.term ? '<p class="ex-term"><span class="label">文法の名前</span>' + esc(e.term) + '</p>' : '') +
       '</div>';
   }
 
@@ -4433,9 +4795,19 @@ details.panel > p { margin-top: 8px; }
    */
   function questionPromptHtml(qq, draftChoice, opts) {
     opts = opts || {};
-    var h = opts.noInstruction || !needsInstruction(qq) ? '' : '<p class="q-instruction">' + esc(qq.instruction) + '</p>';
+    var h = opts.noInstruction || !needsInstruction(qq) ? '' : '<p class="q-instruction">' + esc(qq.instruction) + fixedNote(qq) + '</p>';
+    if (qq.format === 'judge') {
+      // ○×判断：判断の基準（文法と意味の両方）→ 英文と日本語
+      h += '<p class="q-ja q-question">' + esc(qq.instruction) + '</p>';
+      h += '<div class="tf-sentence"><p class="q-sentence" lang="en">' + rich(qq.sentence) + '</p><p class="q-ja">' + esc(qq.ja) + '</p></div>';
+      return h;
+    }
     if (qq.format === 'meaning') {
-      if (qq.baseLabel) {
+      if (qq.jaShown && !qq.sentence) {
+        // 正しい語順を選ぶ：日本語 → 設問（日本語の意味まで含めて選ぶ）
+        h += '<p class="q-ja">' + esc(qq.ja) + '</p>';
+        h += '<p class="q-ja q-question">' + esc(qq.question) + '</p>';
+      } else if (qq.baseLabel) {
         // 同じ用法を選ぶ問題：設問 → 基準文（太字の部分つき）の順に出す
         h += '<p class="q-ja q-question">' + esc(qq.question) + '</p>';
         h += '<div class="q-base"><span class="label">' + esc(qq.baseLabel) + '</span><p class="q-sentence" lang="en">' + rich(qq.sentence) + '</p></div>';
@@ -4445,6 +4817,8 @@ details.panel > p { margin-top: 8px; }
       }
     } else {
       if (!opts.hideJa) h += '<p class="q-ja">' + esc(qq.ja) + '</p>';
+      if (qq.format === 'order' && qq.orderKind === 'extra') h += '<p class="q-rule">余分な語が1つあります</p>';
+      if (qq.format === 'order' && qq.orderKind === 'missing') h += '<p class="q-rule">不足している語を1つ補ってください</p>';
       if (qq.format === 'fill') {
         var chosen = null;
         (qq.choices || []).forEach(function (c) { if (c.id === draftChoice) chosen = c.text; });
@@ -4462,8 +4836,18 @@ details.panel > p { margin-top: 8px; }
    * 空所補充（選ぶ）・並び替え・日本語→英語（to＋動詞の原形を使う条件）は、答えるために必要なので残す。
    */
   function needsInstruction(qq) {
-    return !!qq.instruction && qq.format !== 'meaning';
+    return !!qq.instruction && qq.format !== 'meaning' && qq.format !== 'judge';
   }
+  /** 並べ替えの固定部分の案内（Lv2。Lv1 は指示文に書いてある） */
+  function fixedNote(qq) {
+    if (qq.format !== 'order' || qq.set !== 'lv2' || (!qq.fixedStart && !qq.fixedEnd)) return '';
+    var p = [];
+    if (qq.fixedStart) p.push('文頭の「' + qq.fixedStart + '」');
+    if (qq.fixedEnd) p.push('文末の「' + qq.fixedEnd + '」');
+    return '（' + p.join('と') + 'は固定です）';
+  }
+  /** 一覧に出す問題の文（○×は英文、日本語がある問題は日本語） */
+  function promptTextOf(qq) { return plain(qq.format === 'judge' ? qq.sentence : (qq.ja || qq.sentence)); }
 
   function topbar() {
     var inSession = view.name === 'session' && state.activeSession;
@@ -4646,15 +5030,18 @@ details.panel > p { margin-top: 8px; }
     ];
     var canSelf = !!u.diagnosticDoneAt; // 初回の学習（初回診断）を終えた単元だけ
     var selfOpen = canSelf && !!view.params.selfOpen;
+    var lv2Open = !!LV2 && !!view.params.lv2Open; // Lv2 は初回診断の前でも開ける
     return '<h1 class="page-title">単元</h1>' +
       '<section class="panel unit-card"><div class="unit-head"><div><p class="eyebrow">利用できます</p><h2>' + esc(BANK.unit.title) + '</h2>' +
       '<p>' + esc(BANK.unit.description) + '</p></div>' +
       '<div class="unit-btns"><button type="button" class="btn-primary" data-go="home">ホームの課題へ</button>' +
       (LV1 ? '<button type="button" class="btn-quiet" data-act="lv1-start"' + (state.activeSession ? ' disabled aria-describedby="lv1-busy"' : '') + '>' + icon('play') + 'Lv1を練習する（' + lv1Count() + '問）</button>' : '') +
+      (LV2 ? '<button type="button" class="btn-quiet" data-act="lv2-open" aria-expanded="' + lv2Open + '" aria-controls="lv2-practice">' + icon('play') + 'Lv2を練習する</button>' : '') +
       (canSelf ? '<button type="button" class="btn-quiet" data-act="self-open" aria-expanded="' + selfOpen + '" aria-controls="self-practice">' + icon('repeat') + 'もう一度練習する</button>' : '') +
       '</div></div>' +
       (LV1 && state.activeSession ? '<div class="lv1-busy" id="lv1-busy"><p class="unit-scope">途中の学習が保存されているため、Lv1の練習はいま始められません（途中の学習を上書きしないため）。続きを最後まで進めてから始めてください。</p>' +
         '<div class="actions-inline"><button type="button" class="btn-primary" data-act="task-resume">途中の学習を再開</button></div></div>' : '') +
+      (lv2Open ? lv2PracticeHtml() : '') +
       (selfOpen ? selfPracticeHtml(BANK) : '') +
       '<ol class="steps">' + steps.map(function (s) { return '<li class="' + (s[1] ? 'done' : '') + '"><span class="step-mark" aria-hidden="true">' + (s[1] ? '✓' : '') + '</span>' + s[0] + '<span class="sr">' + (s[1] ? '（済み）' : '（まだ）') + '</span></li>'; }).join('') + '</ol>' +
       // 扱う範囲は既存の用法ラベルで示す（詳しい範囲の説明 scopeNote は問題集に残し、出題範囲は変えない）
@@ -4687,19 +5074,56 @@ details.panel > p { margin-top: 8px; }
       '</div>';
   }
 
+  /**
+   * 「Lv2を練習する」：範囲（全範囲＋5項目）を選んで始める。問題数は既存の自主練習の設定で、始める前に実際の出題数を示す。
+   * 途中の学習が保存されているときは、上書きしないよう始められない（再開へ案内する）。
+   */
+  function lv2PracticeHtml() {
+    var ranges = P.practiceSetRanges(LV2);
+    var sel = view.params.lv2Range || 'all';
+    if (!ranges.some(function (r) { return r.id === sel; })) sel = 'all';
+    var n = P.practiceSetCount(LV2, sel);
+    var label = ranges.filter(function (r) { return r.id === sel; })[0].label;
+    var busy = !!state.activeSession;
+    return '<div class="self-practice lv2-practice" id="lv2-practice">' +
+      '<p class="field-label" id="lv2-range-label">Lv2：練習する範囲</p>' +
+      '<div class="seg" role="radiogroup" aria-labelledby="lv2-range-label">' + ranges.map(function (r) {
+        var on = r.id === sel;
+        return '<button type="button" role="radio" aria-checked="' + on + '" class="seg-item' + (on ? ' is-current' : '') + '" data-act="lv2-range" data-range="' + esc(r.id) + '">' + esc(r.label) + '</button>';
+      }).join('') + '</div>' +
+      '<p class="field-note" id="lv2-count">' + esc(label) + '：<strong class="num">' + n + '</strong>問を出題します。' +
+        (sel === 'all' ? '各項目から1問ずつ選び、残りをしばらく解いていない問題から選びます。' : 'この項目の形式を混ぜて、しばらく解いていない問題から選びます。') +
+        '自分で始めた練習として履歴に残し、確認状況・復習予定は変えません。</p>' +
+      (busy ? '<p class="toast toast-error" role="note">途中の学習が保存されているため、いまは始められません（途中の学習を上書きしないため）。続きを最後まで進めてから始めてください。</p>' +
+        '<div class="actions-inline"><button type="button" class="btn-primary" data-act="task-resume">途中の学習を再開</button></div>'
+        : '<div class="actions-inline"><button type="button" class="btn-primary" data-act="lv2-start"' + (n ? '' : ' disabled') + '>Lv2の練習をはじめる（' + n + '問）' + icon('chevron') + '</button></div>') +
+      '</div>';
+  }
+
   function lv1Count() { return LV1 ? LV1.questions.filter(function (x) { return x.set === 'lv1' && x.status !== 'excluded' && !x.retryFor; }).length : 0; }
 
   function selfSummaryHtml(rec, atts) {
     var main = atts.filter(function (a) { return !a.retryOf; }), re = atts.filter(function (a) { return a.retryOf; });
     var ok = main.filter(function (a) { return G.isSkillCorrect(a.result); }).length;
     var reOk = re.filter(function (a) { return G.isSkillCorrect(a.result); }).length;
+    var isLv2 = rec.practiceSet === 'lv2';
+    // Lv2：学習項目ごとの正解数（回答前には項目名を出さないので、結果で確かめられるようにする）
+    var byItem = '';
+    if (isLv2) {
+      var tally = {}, order_ = [];
+      main.forEach(function (a) { var k = a.skillId; if (!tally[k]) { tally[k] = { n: 0, ok: 0 }; order_.push(k); } tally[k].n++; if (G.isSkillCorrect(a.result)) tally[k].ok++; });
+      byItem = '<section class="panel"><div class="panel-head"><h2>学習項目ごとの結果</h2></div><ul class="plain-list">' + LV2.skills.filter(function (sk) { return tally[sk.id]; }).map(function (sk) {
+        return '<li><strong>' + esc(sk.label) + '</strong>：' + tally[sk.id].n + '問中 ' + tally[sk.id].ok + '問正解</li>';
+      }).join('') + '</ul></section>';
+    }
     return '<p class="lead">範囲：' + esc(rec.rangeLabel || '全範囲') + ' ・ ' + main.length + '問中 ' + ok + '問正解' +
       (re.length ? '（解き直し ' + re.length + '問中 ' + reOk + '問正解）' : '') + '。自分で始めた練習として履歴に残しました。確認状況と復習予定は変わりません。</p>' +
+      byItem +
       '<section class="panel"><div class="panel-head"><h2>今回の回答</h2></div><ul class="att-list">' + atts.map(function (a) {
         var qq = q(a.questionId);
         return '<li><button type="button" class="att-row" data-act="question" data-q="' + qq.id + '">' +
-          '<span class="att-type">' + esc(skill(qq.skill).term) + (a.retryOf ? '<span class="muted">解き直し</span>' : '') + '</span>' +
-          '<span class="att-q">' + esc(plain(qq.ja || qq.sentence)) + '</span>' +
+          '<span class="att-type">' + esc(isLv2 ? skill(qq.skill).label : skill(qq.skill).term) + (a.retryOf ? '<span class="muted">解き直し</span>' : '') + (isLv2 ? '<span class="muted">' + esc(fmtLabel(qq)) + '</span>' : '') + '</span>' +
+          '<span class="att-q">' + esc(promptTextOf(qq)) + '<span class="muted att-ans" lang="en">' + esc(a.responseText || '（わからない）') + '</span></span>' +
           '<span class="att-tags">' + resultBadge(a.result) + '</span></button></li>';
       }).join('') + '</ul></section>' +
       '<div class="actions actions-split"><button type="button" class="btn-primary btn-lg" data-go="home">ホームへ</button>' +
@@ -4717,7 +5141,7 @@ details.panel > p { margin-top: 8px; }
     var pct = Math.round(done / total * 100);
     var fromPct = progressShown.sessionId === s.id ? progressShown.pct : pct;
     progressShown = { sessionId: s.id, pct: pct };
-    var progress = '<div class="q-progress"><span class="q-type">' + esc(s.practiceSet === 'lv1' ? '不定詞Lv1の練習' : SESSION_LABEL[s.type]) + '</span>' +
+    var progress = '<div class="q-progress"><span class="q-type">' + esc(sessionLabelOf(s)) + '</span>' +
       '<span class="q-count">' + (s.index + 1) + ' / ' + total + '</span>' +
       '<span class="q-bar" role="progressbar" aria-label="この学習の進み具合（終えた項目）" aria-valuemin="0" aria-valuemax="' + total + '" aria-valuenow="' + done + '">' +
       '<span class="q-bar-fill" data-to="' + pct + '" style="width:' + fromPct + '%"></span></span></div>';
@@ -4744,10 +5168,11 @@ details.panel > p { margin-top: 8px; }
       similar: '単語や場面を変えた類題です。',
       review: '復習です。答えを見ずに思い出してみましょう。',
       trial: '試作の問題です（確認状況・復習予定には反映しません）。',
-      self: item.retryOf ? '間違えた問題と同じ形式・同じ用法の、別の問題です。' : '自分で始めた練習です（範囲：' + (s.rangeLabel || '全範囲') + '）。確認状況・復習予定には反映しません。'
+      // Lv2 は回答前に学習項目名（範囲）を出さない（範囲は単元タブと学習結果で確かめる）
+      self: item.retryOf ? '間違えた問題と同じ形式・同じ用法の、別の問題です。' : s.practiceSet === 'lv2' ? '自分で始めた練習です。確認状況・復習予定には反映しません。' : '自分で始めた練習です（範囲：' + (s.rangeLabel || '全範囲') + '）。確認状況・復習予定には反映しません。'
     }[item.attemptType] || '';
     // 確認問題は、問題画面の見出しでは「類題」と短く示す（記録・履歴の種類は「確認問題」のまま）
-    var typeLabel = s.practiceSet === 'lv1' ? (item.retryOf ? 'Lv1練習・解き直し' : 'Lv1練習') : item.attemptType === 'followup' ? '類題' : TYPE_LABEL[item.attemptType];
+    var typeLabel = SET_SHORT[s.practiceSet] ? SET_SHORT[s.practiceSet] + (item.retryOf ? '・解き直し' : '') : item.attemptType === 'followup' ? '類題' : TYPE_LABEL[item.attemptType];
 
     // 初回診断の1問目を初めて開いたときだけ、結果と解説がいつ出るかを短く案内する（そのまま答えられる位置）。
     // 診断を始めた直後だけ firstNoteFor が立つ。途中から再開したとき・再読み込みしたとき・2問目以降では出さない
@@ -4762,9 +5187,9 @@ details.panel > p { margin-top: 8px; }
       body += '<div class="helpers">' +
         '<button type="button" class="btn-toggle" data-act="unsure" aria-pressed="' + (cur.unsure ? 'true' : 'false') + '">' +
           '<span class="toggle-box" aria-hidden="true">' + (cur.unsure ? '✓' : '') + '</span>自信がない</button>' +
-        '<button type="button" class="btn-quiet" data-act="hint"' + (cur.hintUsed ? ' disabled' : '') + '>ヒントを見る</button>' +
+        (qq2.hint ? '<button type="button" class="btn-quiet" data-act="hint"' + (cur.hintUsed ? ' disabled' : '') + '>ヒントを見る</button>' : '') +
         '<button type="button" class="btn-quiet" data-act="giveup">' + giveUpLabel(s) + '</button>' +
-        '<span class="helpers-note">「自信がない」「ヒントを見る」は押さなくてかまいません。押しても減点はありません（ヒントを見た場合は「ヒントあり」と記録します）。「' + giveUpLabel(s) + '」を押すと、この問題は「わからない」として記録され、正解には数えられません。' +
+        '<span class="helpers-note">' + (qq2.hint ? '「自信がない」「ヒントを見る」は押さなくてかまいません。押しても減点はありません（ヒントを見た場合は「ヒントあり」と記録します）。' : '「自信がない」は押さなくてかまいません。押しても減点はありません。') + '「' + giveUpLabel(s) + '」を押すと、この問題は「わからない」として記録され、正解には数えられません。' +
           '' + '</span>' +
         '</div>' +
         '<div class="actions"><button type="button" class="btn-primary btn-lg" data-act="submit" id="submit-btn"' + (hasDraft(qq2, cur) ? '' : ' disabled') + '>回答を確定</button></div>';
@@ -4779,6 +5204,7 @@ details.panel > p { margin-top: 8px; }
         else body += '<div class="your-answer"><span class="label">あなたの答え</span><span lang="en">' + (a.responseText ? esc(a.responseText) : '（わからない）') + '</span></div>';
         body += '<div class="verdict"><span class="label">答え</span>' + resultBadge(a.result) + flagsHtml(a) + '</div>';
         if (a.feedback) body += '<p class="feedback-note">' + esc(a.feedback) + '</p>';
+        body += orderInfoHtml(qq2, a) + tfCorrectionHtml(qq2);
         if (a.reason) body += reasonResultHtml(qq2, a);
         if (a.followUp) {
           body += '<div class="next-note" role="note">' + (a.followUp.added
@@ -4792,6 +5218,26 @@ details.panel > p { margin-top: 8px; }
       }
     }
     return progress + body + '</section>';
+  }
+
+  /** 並べ替え（余分な語・不足語）の回答の補足：使わなかった語句・補った語と、原本の余分な語・不足語 */
+  function orderInfoHtml(qq, a) {
+    if (qq.format !== 'order' || !qq.orderKind || qq.orderKind === 'normal') return '';
+    var i = a.orderInfo || {}, rows = [];
+    if (qq.orderKind === 'extra') {
+      if (!a.gaveUp) rows.push('使わなかった語句：<span lang="en">' + esc((i.unused || []).join(', ') || '（なし）') + '</span>');
+      rows.push('余分な語：<strong lang="en">' + esc(qq.extraToken) + '</strong>');
+    } else {
+      if (!a.gaveUp) rows.push('補った語：<span lang="en">' + esc(i.added || '（なし）') + '</span>' + (i.addedPos ? '（' + i.addedPos + '番目に置いた）' : ''));
+      rows.push('不足していた語：<strong lang="en">' + esc(qq.missingWord) + '</strong>');
+    }
+    return '<p class="order-info">' + rows.map(function (r) { return '<span>' + r + '</span>'; }).join('') + '</p>';
+  }
+  /** ○×判断で答えが×の問題：訂正例と、文法と意味のどちらが違ったか（採点後に表示） */
+  function tfCorrectionHtml(qq) {
+    if (qq.format !== 'judge' || qq.answer !== 'x') return '';
+    return '<div class="tf-correction"><span class="label">訂正例</span><p class="q-sentence" lang="en">' + rich(qq.correction) + '</p>' +
+      '<p>この英文は×：<strong>' + esc(qq.wrongLabel) + '</strong>が違っていました。</p></div>';
   }
 
   /** 英文の中で、意味の問いが聞いている部分を太字＋下線にする（to が複数あっても対象がわかるように） */
@@ -5000,29 +5446,73 @@ details.panel > p { margin-top: 8px; }
    * 選択肢の並べ方。空所補充（to play などの短い語句）は2列。
    * 文や日本語の選択肢は、狭い列に詰めて2行に折り返さないよう、1つの選択肢に1行を使う（1列）。
    */
-  function choiceCols(qq) { return qq.format === 'fill' ? '' : ' choices-1col'; }
+  function choiceCols(qq) { return qq.format === 'fill' ? '' : qq.format === 'judge' ? ' choices-tf' : ' choices-1col'; }
 
   function hasDraft(qq, cur) {
-    if (qq.format === 'order') return !!(cur.draft && cur.draft.length === qq.tokens.length);
+    if (qq.format === 'order') {
+      var d = cur.draft || [];
+      if (qq.orderKind === 'extra') return d.length === qq.tokens.length - 1;                       // 1語句を使わずに確定
+      if (qq.orderKind === 'missing') return !!cur.added && d.length === qq.tokens.length + 1 && d.indexOf(qq.tokens.length) >= 0; // 補った語も置く
+      return d.length === qq.tokens.length;
+    }
     if (qq.format === 'ja2en') return !!(cur.draft && cur.draft.trim());
     return !!cur.draft;
   }
 
   function answerControlHtml(qq, cur) {
-    if (qq.format === 'fill' || qq.format === 'meaning') {
+    if (qq.format === 'fill' || qq.format === 'meaning' || qq.format === 'judge') {
       return '<div class="choices' + choiceCols(qq) + '" role="radiogroup" aria-label="選択肢">' + ordered(qq.choices, cur.choiceOrder).map(function (c) {
         var on = cur.draft === c.id;
         return '<button type="button" role="radio" aria-checked="' + on + '" class="choice' + (on ? ' is-selected' : '') + '" data-act="choose" data-choice="' + c.id + '"' + (qq.format === 'fill' || qq.choicesLang === 'en' ? ' lang="en"' : '') + '>' +
           '<span class="choice-dot" aria-hidden="true"></span><span class="choice-text">' + rich(c.text) + '</span></button>';
       }).join('') + '</div>';
     }
-    if (qq.format === 'order') return '<div id="order-mount" lang="en"></div>';
+    if (qq.format === 'order') {
+      var pre = '', post = '';
+      if (qq.orderKind === 'missing') {
+        var msg = addWordMsg; addWordMsg = '';
+        pre = '<div class="add-word"><label class="field-label" for="add-word-input">補う語（1語）</label>' +
+          '<div class="add-word-row"><input id="add-word-input" class="text-input" type="text" lang="en" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="ここに入力" value="' +
+            esc(cur.addedInput != null && cur.addedInput !== '' ? cur.addedInput : (cur.added || '')) + '">' +
+          '<button type="button" class="btn-quiet" data-act="add-word-set">' + (cur.added ? '補う語を直す' : '語句に加える') + '</button>' +
+          (cur.added ? '<button type="button" class="btn-text" data-act="add-word-del">補った語を消す</button>' : '') + '</div>' +
+          (msg ? '<p class="toast toast-error add-word-msg" role="alert">' + esc(msg) + '</p>' : '') +
+          '<p class="field-note">' + (cur.added ? '補った語「<span lang="en">' + esc(cur.added) + '</span>」は、下の語句に点線の枠で入っています。タップして好きな位置に置けます。' : '入力して「語句に加える」を押すと、下の語句に点線の枠で加わります。') +
+          '確定する前なら、直したり消したりできます。</p></div>';
+      }
+      if (qq.orderKind === 'extra') post = '<p class="field-note">使わない語句を1つ残したまま「回答を確定」を押します。</p>';
+      return pre + '<div id="order-mount" lang="en"></div>' + post;
+    }
     if (qq.format === 'ja2en') {
       return '<label class="field-label" for="ja2en-input">英文を入力</label>' +
         '<textarea id="ja2en-input" class="text-input" rows="2" lang="en" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false" placeholder="ここに英文を書きます">' + esc(cur.draft || '') + '</textarea>' +
         '<p class="field-note">大文字・小文字、余分な空白、文末の「.」の有無は採点に影響しません。登録されていない答えは「採点保留」になり、誤りとはしません。</p>';
     }
     return '';
+  }
+
+  /* ---- 不足語を補う並べ替え：補う語を加える・直す・消す（確定前だけ。途中保存・再開で復元される） ---- */
+  var addWordMsg = '';
+  function addWordSet() {
+    var s = state.activeSession;
+    if (!s || !s.current || s.current.phase !== 'answer') return;
+    var input = document.getElementById('add-word-input');
+    var w = G.cleanWord(input ? input.value : s.current.addedInput);
+    if (!w) addWordMsg = '補う語を入力してください。';
+    else if (/\s/.test(w)) addWordMsg = '補う語は1語で入力してください（空白を入れずに）。';
+    else { s.current.added = w; s.current.addedInput = w; }
+    persist(); render();
+    var f = document.getElementById(addWordMsg ? 'add-word-input' : 'add-word-input');
+    if (f) f.focus({ preventScroll: true });
+  }
+  function addWordDel() {
+    var s = state.activeSession;
+    if (!s || !s.current || s.current.phase !== 'answer') return;
+    var qq = q(s.items[s.index].questionId), n = qq.tokens.length;
+    s.current.added = null; s.current.addedInput = '';
+    s.current.draft = (s.current.draft || []).filter(function (i) { return i !== n; }); // 解答欄に置いていたら外す
+    persist(); render();
+    var f = document.getElementById('add-word-input'); if (f) f.focus({ preventScroll: true });
   }
 
   /** 選択肢をタップしたとき：画面全体を描き直さず、その場で選択状態だけを変える（すぐに反応が見えるように） */
@@ -5088,10 +5578,21 @@ details.panel > p { margin-top: 8px; }
     var qq = q(s.items[s.index].questionId);
     var btn = document.getElementById('submit-btn');
     if (qq.format === 'order') {
-      EA.orderWidget.mount(document.getElementById('order-mount'), qq.tokens, s.current.pool, s.current.draft || [], function (placed) {
-        s.current.draft = placed; persist();
-        btn.disabled = !hasDraft(qq, s.current);
-      }, { fixed: qq.fixedStart || null });
+      var n = qq.tokens.length, cur = s.current;
+      var hasAdded = qq.orderKind === 'missing' && !!cur.added;
+      // 補った語は語句の番号 n として扱い、語句の最後に加える（解答欄のどこにでも置ける）
+      var tokens = hasAdded ? qq.tokens.concat([cur.added]) : qq.tokens;
+      var pool = hasAdded ? cur.pool.concat([n]) : cur.pool;
+      var placed = (cur.draft || []).filter(function (i) { return i < tokens.length; });
+      EA.orderWidget.mount(document.getElementById('order-mount'), tokens, pool, placed, function (next) {
+        cur.draft = next; persist();
+        btn.disabled = !hasDraft(qq, cur);
+      }, { fixedStart: qq.fixedStart || null, fixedEnd: qq.fixedEnd || null, addedIndex: hasAdded ? n : null });
+      var aw = document.getElementById('add-word-input');
+      if (aw) {
+        aw.addEventListener('input', function () { cur.addedInput = aw.value; schedulePersist(); });
+        aw.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' && !ev.isComposing) { ev.preventDefault(); addWordSet(); } });
+      }
     }
     if (qq.format === 'ja2en') {
       var input = document.getElementById('ja2en-input');
@@ -5139,7 +5640,7 @@ details.panel > p { margin-top: 8px; }
     if (!rec) return renderHome();
     var t = now();
     var atts = rec.attemptIds.map(attemptById).filter(function (a) { return a && q(a.questionId); }); // 削除した問題の回答は出さない
-    var h = '<p class="eyebrow">' + esc(rec.practiceSet === 'lv1' ? '不定詞Lv1の練習' : SESSION_LABEL[rec.type]) + 'のまとめ' + (rec.endedEarly ? '（今日はここまで）' : '') + '</p><h1 class="page-title">おつかれさまでした</h1>';
+    var h = '<p class="eyebrow">' + esc(sessionLabelOf(rec)) + 'のまとめ' + (rec.endedEarly ? '（今日はここまで）' : '') + '</p><h1 class="page-title">おつかれさまでした</h1>';
     if (rec.type === 'trial') return h + trialSummaryHtml(atts);
     if (rec.type === 'self') return h + selfSummaryHtml(rec, atts);
     var RB = EA.banks[rec.unitId] || BANK; // この学習回の単元の項目だけを示す
@@ -5260,7 +5761,7 @@ details.panel > p { margin-top: 8px; }
         var qq = q(a.questionId);
         return '<li><button type="button" class="att-row" data-act="question" data-q="' + esc(a.questionId) + '">' +
           '<span class="att-type">' + esc(typeLabelOf(a)) + '<span class="muted">' + U.fmtDateTime(a.answeredAt) + '</span></span>' +
-          '<span class="att-q">' + esc(qq ? plain(qq.ja || qq.sentence) : '（削除した問題：' + a.questionId + '）') + '<span class="muted att-ans" lang="en">' + esc(a.responseText || '（わからない）') + '</span></span>' +
+          '<span class="att-q">' + esc(qq ? promptTextOf(qq) : '（削除した問題：' + a.questionId + '）') + '<span class="muted att-ans" lang="en">' + esc(a.responseText || '（わからない）') + '</span></span>' +
           '<span class="att-tags">' + resultBadge(a.result) + flagsHtml(a) + '</span></button></li>';
       }).join('') + '</ul>' : '<p class="muted">学習履歴はまだありません</p>') + '</section>';
     return h;
@@ -5450,7 +5951,7 @@ details.panel > p { margin-top: 8px; }
       (slist.length ? '<div class="table-wrap"><table class="att-table"><thead><tr><th>開始</th><th>種類</th><th>回答</th><th>学習時間</th><th>離席</th><th>状態</th></tr></thead><tbody>' +
         slist.map(function (s) {
           var r = recs[s.id], type = (r && r.type) || s.type;
-          var setName = (r && r.practiceSet === 'lv1') || (act && act.id === s.id && act.practiceSet === 'lv1') ? '不定詞Lv1の練習' : null;
+          var setName = P.practiceSetLabel((r && r.practiceSet) || (act && act.id === s.id && act.practiceSet) || null);
           var state_ = r ? (r.endedEarly ? '途中で終了' : '完了') : (act && act.id === s.id ? '途中（保存中）' : '—');
           return '<tr><td class="num">' + U.fmtDateTime(s.first) + '</td>' +
             '<td>' + esc(setName || SESSION_LABEL[type] || type || '—') + (r && r.rangeLabel ? '<span class="muted">' + esc(r.rangeLabel) + '</span>' : (act && act.id === s.id && act.rangeLabel ? '<span class="muted">' + esc(act.rangeLabel) + '</span>' : '')) + '</td>' +
@@ -5786,6 +6287,20 @@ details.panel > p { margin-top: 8px; }
         view.params.selfRange = el.getAttribute('data-range'); render();
         var sr = appEl.querySelector('[data-act="self-range"][data-range="' + view.params.selfRange + '"]'); if (sr) sr.focus({ preventScroll: true });
         break;
+      case 'lv2-open':
+        view.params.lv2Open = !view.params.lv2Open; render();
+        var lo = appEl.querySelector('[data-act="lv2-open"]'); if (lo) lo.focus({ preventScroll: true });
+        break;
+      case 'lv2-range':
+        view.params.lv2Range = el.getAttribute('data-range'); render();
+        var lr = appEl.querySelector('[data-act="lv2-range"][data-range="' + view.params.lv2Range + '"]'); if (lr) lr.focus({ preventScroll: true });
+        break;
+      case 'lv2-start':
+        // 保存中の途中の学習は上書きしない（再開へ案内する）
+        if (state.activeSession) { notice = { tone: 'error', text: '途中の学習が保存されているため、Lv2の練習は始められません。「途中の学習を再開」から続きを進めてください。' }; render(); break; }
+        startSession(P.buildPracticeSetSession(state, LV2, view.params.lv2Range || 'all', t.app)); break;
+      case 'add-word-set': addWordSet(); break;
+      case 'add-word-del': addWordDel(); break;
       case 'lv1-start':
         // 保存中の途中の学習は上書きしない（再開へ案内する）
         if (state.activeSession) { notice = { tone: 'error', text: '途中の学習が保存されているため、Lv1の練習は始められません。「途中の学習を再開」から続きを進めてください。' }; render(); break; }
