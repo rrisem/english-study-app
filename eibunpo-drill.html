@@ -813,6 +813,62 @@ details.panel > p { margin-top: 8px; }
 .tr-item[open] { display: grid; gap: 12px; }
 .tr-item .rec-attempt { box-shadow: none; padding: 16px; }
 @media (max-width: 520px) { .tr-stats { grid-template-columns: 1fr; } .tr-num { font-size: 1.5rem; } }
+/* ---------- 短文読解・日付別の学習記録 ---------- */
+.q-passage { font-family: var(--font-en); font-size: clamp(1.25rem, 2.6vw, 1.5rem); line-height: 1.75; margin: 0; padding: 14px 18px; background: var(--surface-2); border-left: 4px solid var(--accent); border-radius: 0 var(--r-s) var(--r-s) 0; overflow-wrap: anywhere; }
+.gloss .label { display: block; margin-bottom: 4px; }
+.gloss-list { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; }
+.gloss-list dt { font-weight: 700; }
+.gloss-list dd { margin: 0; }
+.reread-box { display: grid; gap: 10px; padding: 14px 16px; border: 2px solid var(--accent); border-radius: var(--r-s); }
+.reread-box p { margin: 0; }
+.reading-note p { margin: 0; }
+.reading-note p + p { margin-top: 6px; }
+.reading-note .icon { color: var(--accent); }
+.skill-line-read { color: var(--muted); white-space: nowrap; font-size: var(--fs-xs); font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); }
+.skill-line-read.rs-settled { color: var(--ok); background: var(--ok-soft); }
+.skill-line-read.rs-recheck { color: var(--hold); background: var(--hold-soft); }
+.rs-settled strong { color: var(--ok); }
+.rs-recheck strong { color: var(--hold); }
+.status-grid dd .muted { font-size: var(--fs-xs); }
+.day-list-section { margin-top: 8px; }
+.day-list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); }
+.day-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px 16px; padding: 10px 16px; min-height: 64px; }
+.day-row + .day-row { border-top: 1px solid var(--line); }
+.day-row.is-empty { min-height: 52px; }
+.day-row.is-empty .day-date { color: var(--muted); font-weight: 400; }
+.day-date { font-weight: 700; font-size: var(--fs-m); }
+.day-sum { font-size: var(--fs-s); white-space: nowrap; }
+.day-sum .num { font-family: var(--font-en); font-size: 1.25rem; font-weight: 700; }
+.day-row.is-empty .day-sum { grid-column: 2 / -1; text-align: right; }
+.day-open { min-height: 48px; padding-inline: 14px; }
+.day-open .icon { color: var(--accent); transition: transform 0.2s ease-out; }
+.day-open[aria-expanded="true"] .icon { transform: rotate(90deg); }
+.day-units { grid-column: 1 / -1; list-style: none; margin: 4px 0 6px; padding: 0; display: grid; gap: 8px; }
+.day-unit { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 16px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-s); cursor: pointer; text-align: left; touch-action: manipulation; }
+@media (hover: hover) { .day-unit:hover { border-color: var(--accent); } }
+.day-unit-name { font-weight: 700; margin-right: auto; min-width: 0; overflow-wrap: anywhere; }
+.day-unit-sum { font-size: var(--fs-s); white-space: nowrap; }
+.day-unit-sum .num { font-family: var(--font-en); font-weight: 700; font-size: 1.125rem; }
+.day-unit-sum .is-ng { color: var(--ng); }
+.day-unit > .icon { color: var(--muted); }
+.wrong-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.wrong-item { display: grid; gap: 10px; }
+.wrong-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0; }
+.wrong-tags .muted { font-size: var(--fs-xs); margin-left: 4px; }
+.wrong-grid { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; margin: 0; }
+.wrong-grid dt { font-size: var(--fs-xs); color: var(--muted); font-weight: 700; padding-top: 4px; }
+.wrong-grid dd { margin: 0; font-size: var(--fs-m); overflow-wrap: anywhere; }
+.wrong-prompt { font-weight: 700; }
+.wrong-mine { color: var(--ng); }
+.wrong-mine::before { content: "× "; font-weight: 700; }
+.wrong-correct { color: var(--ok); font-weight: 700; }
+.wrong-correct::before { content: "✓ "; }
+@media (max-width: 520px) {
+  .day-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .day-row .day-open { grid-column: 1 / -1; justify-content: space-between; }
+  .wrong-grid { grid-template-columns: 1fr; gap: 2px; }
+  .wrong-grid dd { margin-bottom: 6px; }
+}
 </style>
 <div id="app"><p style="padding:24px">読み込み中…（表示されない場合は、ページを再読み込みしてください）</p></div>
 <script>
@@ -3455,6 +3511,230 @@ details.panel > p { margin-top: 8px; }
   EA.registerBank(lv3.bank);
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- data/infinitive-reading.js ---- */
+/*
+ * infinitive-reading.js — 不定詞の短文読解（初見の英文で、文法を手がかりに意味を読み取る）
+ *
+ * ■ 講師の方へ
+ *   - 文法問題とは別の問題集です（確認状況・文法の復習予定には入りません。短文読解の「定着」は js/reading.js で判定します）。
+ *   - use … sameDay：文法を学んだ当日に出す1問 ／ check：後日の確認（初見の短文）／ basic：基本語で書いた短文
+ *           summary：まとめ復習（2〜3文の英文1本。passage が同じ問題は同じ英文の設問）
+ *   - skill … その設問で確かめる文法項目（採点結果と復習予定日は、この項目に反映します）
+ *   - gloss … 必要な単語の意味（「単語の意味を見る」で表示。見てからの正解は「ヒントあり」）
+ *   - 選択肢は、文法の読み違い（目的と結果・だれがするか・何を説明しているか・評価と事実）を誤答にし、
+ *     語彙や常識だけでは選べないようにしています。正答は事前に確認済みです。
+ *   - 問題を直したら version を上げてください（当時の問題文・正答は回答の記録に控えています）。
+ */
+(function (root) {
+  'use strict';
+  var EA = root.EA = root.EA || {};
+  var TERM = { 'inf-noun': '名詞的用法（〜すること）', 'inf-adj': '形容詞的用法（〜するための・〜する）',
+    'inf-adv': '副詞的用法（目的：〜するために）', 'inf-it': 'It is ～ for A to do（形式主語の It）' };
+  function choices(list) {
+    var ans = null;
+    var out = list.map(function (c, i) {
+      var id = 'abc'.charAt(i);
+      if (c[1] == null) { ans = id; return { id: id, text: c[0] }; }
+      return { id: id, text: c[0], feedback: c[1] };
+    });
+    return { choices: out, answer: ans };
+  }
+  /** 短文1問 */
+  function R(id, skill, use, d) {
+    var c = choices(d.c);
+    return { id: id, version: 1, status: 'active', role: 'reading', reading: true, readingUse: use, skill: skill,
+      format: 'meaning', formatLabel: '短文読解', instruction: '英文を読んで、質問に答えましょう。',
+      checks: d.checks || '初見の英文で、to＋動詞 の働きを手がかりに内容を読み取れるか',
+      sentence: d.en, question: d.q, choices: c.choices, answer: c.answer,
+      gloss: d.g, hint: '単語の意味',
+      explanation: { answer: d.en, translation: d.ja, point: d.p, term: TERM[skill] } };
+  }
+  /** まとめ復習の英文1本（設問2つ。設問ごとに確かめる文法項目を持つ） */
+  function S(pid, en, ja, gloss, qs) {
+    return qs.map(function (x, i) {
+      var q = R(pid + '-q' + (i + 1), x.skill, 'summary', { en: en, ja: ja, g: gloss, q: x.q, c: x.c, p: x.p, checks: x.checks });
+      q.passage = pid;
+      return q;
+    });
+  }
+
+  var Q = [
+    /* ===== 〜すること（名詞的用法） ===== */
+    R('rd-n-sd', 'inf-noun', 'sameDay', { en: 'After the game, Mai decided to practice her serve every morning.', ja: '試合のあと、マイは毎朝サーブを練習することに決めた。',
+      g: [['decide', '決める'], ['practice', '練習する'], ['serve', '（テニスなどの）サーブ']], q: 'マイが決めたことは何ですか？',
+      c: [['毎朝サーブを練習すること', null], ['サーブを練習するために、毎朝早く起きること', 'to practice は「練習するために（目的）」ではなく、decided の中身（何を決めたか）です。'], ['毎朝練習しているサーブを変えること', '「変える」にあたる語はありません。decided のあとの to practice が決めた中身です。']],
+      p: 'decided のすぐあとの to practice her serve が、決めた中身（〜すること）を表す。' }),
+    R('rd-n-c1', 'inf-noun', 'check', { en: 'My brother\'s job at the stadium is to check the tickets at the gate.', ja: '兄のスタジアムでの仕事は、門で切符を確認することだ。',
+      g: [['stadium', '競技場'], ['check', '確認する'], ['gate', '門・入口']], q: '兄の仕事の中身は何ですか？',
+      c: [['切符を確認するために、門で待っている人に会うこと', 'to check を「確認するために（目的）」と読んだときの意味です。is のあとの to check が仕事の中身です。'], ['門で切符を確認すること', null], ['門で確認された切符を集めること', '「集める」にあたる語はありません。仕事＝to check the tickets です。']],
+      p: 'is のあとの to check the tickets が、job（仕事）の中身を表す（仕事＝切符を確認すること）。' }),
+    R('rd-n-c2', 'inf-noun', 'check', { en: 'To keep a diary in English was hard for Aki at first.', ja: '英語で日記をつけることは、最初はアキにとって大変だった。',
+      g: [['keep a diary', '日記をつける'], ['at first', '最初は']], q: 'アキにとって最初大変だったことは何ですか？',
+      c: [['英語の日記を書くための時間をつくること', '「時間」にあたる語はありません。文頭の To keep a diary が「〜すること」で文の主語です。'], ['英語で日記をつけるために、早く起きること', '「早く起きる」にあたる語はありません。To keep a diary は目的ではなく主語です。'], ['英語で日記をつけること', null]],
+      p: '文頭の To keep a diary in English が主語（〜すること）で、was hard が「大変だった」。' }),
+    R('rd-n-c3', 'inf-noun', 'check', { en: 'Ryo forgot to send the photos, so Yui sent them herself.', ja: 'リョウが写真を送るのを忘れたので、ユイが自分で送った。',
+      g: [['forget', '忘れる（過去形 forgot）'], ['herself', '自分で']], q: '写真を送ったのはだれですか？',
+      c: [['ユイ', null], ['リョウ', 'forgot to send は「送るのを忘れた」なので、リョウは送っていません。'], ['リョウとユイの二人とも', 'リョウは送るのを忘れています。']],
+      p: 'forgot to send は「送るのを忘れた（送っていない）」。そのため（so）ユイが送った。' }),
+    R('rd-n-c4', 'inf-noun', 'check', { en: 'Sara\'s plan was to visit her aunt, but she stayed home because of the rain.', ja: 'サラの予定はおばを訪ねることだったが、雨のため家にいた。',
+      g: [['plan', '予定・計画'], ['aunt', 'おば'], ['because of', '〜のために']], q: 'サラが実際にしたことはどれですか？',
+      c: [['おばを訪ねた', 'to visit her aunt は予定の中身です。but のあとで実際には家にいたと書かれています。'], ['おばを訪ねるために、雨の中を出かけた', 'to visit は目的ではなく、予定（plan）の中身です。'], ['家にいた', null]],
+      p: 'was to visit her aunt は予定の中身（〜すること）。実際は but 以下で stayed home。' }),
+    R('rd-n-b1', 'inf-noun', 'basic', { en: 'Tom started to cook dinner at six.', ja: 'トムは6時に夕食を作り始めた。',
+      g: [['start', '始める'], ['cook', '料理する']], q: 'トムが6時に始めたことは何ですか？',
+      c: [['夕食を作ること', null], ['夕食を作るために帰ること', '「帰る」にあたる語はありません。to cook は started の中身です。'], ['6時に作った夕食を食べること', '「食べる」にあたる語はありません。']],
+      p: 'started のすぐあとの to cook dinner が、始めたこと（〜すること）を表す。' }),
+    R('rd-n-b2', 'inf-noun', 'basic', { en: 'My dream is to be a teacher.', ja: '私の夢は先生になることです。',
+      g: [['dream', '夢'], ['be', '〜になる']], q: '「私の夢」は何ですか？',
+      c: [['先生になるために勉強すること', '「勉強する」にあたる語はありません。is のあとの to be a teacher が夢の中身です。'], ['先生になること', null], ['先生が持っている夢', 'to be は a teacher を説明していません。夢＝先生になること、です。']],
+      p: 'is のあとの to be a teacher が、夢の中身（〜すること）を表す。' }),
+
+    /* ===== 〜するための・〜する（形容詞的用法） ===== */
+    R('rd-a-sd', 'inf-adj', 'sameDay', { en: 'Kenta has no time to play games this week.', ja: 'ケンタには今週、ゲームをする時間がない。',
+      g: [['no time', '時間がない'], ['this week', '今週']], q: '今週のケンタについて分かることはどれですか？',
+      c: [['ゲームをするために、時間を使わない', 'to play を「〜するために（目的）」と読んだ意味です。この文では time を説明しています。'], ['ゲームをしたいと思っていない', '「〜したい」にあたる語はありません。'], ['ゲームをする時間がない', null]],
+      p: 'to play games が、すぐ前の time を後ろから説明する（ゲームをする時間）。' }),
+    R('rd-a-c1', 'inf-adj', 'check', { en: 'The first person to answer the question was a new student from Osaka.', ja: 'その質問に最初に答えた人は、大阪から来た新しい生徒だった。',
+      g: [['the first person', '最初の人'], ['answer', '答える']], q: 'その質問に最初に答えたのはだれですか？',
+      c: [['大阪から来た新しい生徒', null], ['新しい生徒に質問をした人', 'to answer は「質問に答える人」の説明です。質問をした人ではありません。'], ['新しい生徒に、答えるように言った人', '「言った」にあたる語はありません。']],
+      p: 'to answer the question が The first person を後ろから説明する（質問に最初に答えた人）。その人＝新しい生徒。' }),
+    R('rd-a-c2', 'inf-adj', 'check', { en: 'Mika needs a friend to talk to after school.', ja: 'ミカには、放課後に話しかけられる友だちが必要だ。',
+      g: [['need', '必要とする'], ['talk to', '〜に話しかける']], q: 'ミカが必要としているのは何ですか？',
+      c: [['放課後に友だちと話すための時間', '「時間」にあたる語はありません。to talk to は a friend を説明しています。'], ['放課後に話しかけられる友だち', null], ['放課後に友だちに話しかけること', '必要なのは a friend（友だち）です。to talk to は友だちを説明しています。']],
+      p: 'to talk to が a friend を後ろから説明する（話しかける相手としての友だち）。最後の to まで読む。' }),
+    R('rd-a-c3', 'inf-adj', 'check', { en: 'There are many books to read in this room, but the room is closed today.', ja: 'この部屋には読める本がたくさんあるが、今日は部屋が閉まっている。',
+      g: [['There are', '〜がある'], ['closed', '閉まっている']], q: '英文から分かることはどれですか？',
+      c: [['今日は、本を読むために部屋を閉めた', 'to read は部屋を閉めた目的ではなく、books を説明しています。'], ['部屋が閉まっているので、本を読む人が多い', 'そのような因果関係は書かれていません。'], ['部屋には読める本が多いが、今日は閉まっている', null]],
+      p: 'to read が many books を後ろから説明する（読む本）。but 以下で今日は閉まっている。' }),
+    R('rd-a-c4', 'inf-adj', 'check', { en: 'Yuto gave me something to eat on the train.', ja: 'ユウトは、電車で食べる物を私にくれた。',
+      g: [['gave', 'くれた（give の過去形）'], ['something', '何か']], q: 'ユウトがくれたのは何ですか？',
+      c: [['電車で食べる物', null], ['電車で食べ物を買うためのお金', '「お金」にあたる語はありません。to eat は something を説明しています。'], ['ユウトが電車で食べていた物', 'to eat の動作をするのは、物をもらった「私」です。ユウトが食べていたとは書かれていません。']],
+      p: 'to eat が something を後ろから説明する（食べる物＝食べ物）。' }),
+    R('rd-a-b1', 'inf-adj', 'basic', { en: 'We have three songs to sing at the party.', ja: '私たちには、パーティーで歌う歌が3曲ある。',
+      g: [['song', '歌'], ['sing', '歌う']], q: '英文から分かることはどれですか？',
+      c: [['パーティーで歌う歌が3曲ある', null], ['歌を歌うために、3回パーティーに行く', 'to sing は目的ではなく、three songs を説明しています。'], ['パーティーで3曲歌いたいと思っている', '「〜したい」にあたる語はありません。']],
+      p: 'to sing が three songs を後ろから説明する（歌う歌）。' }),
+    R('rd-a-b2', 'inf-adj', 'basic', { en: 'She is looking for a pen to write with.', ja: '彼女は、書くためのペンを探している。',
+      g: [['look for', '探す'], ['write with', '〜を使って書く']], q: '彼女が探しているのは何ですか？',
+      c: [['ペンで書いた手紙', '「手紙」にあたる語はありません。'], ['書くためのペン', null], ['ペンで書くための場所', '「場所」にあたる語はありません。to write with は a pen を説明しています。']],
+      p: 'to write with が a pen を後ろから説明する（それを使って書くペン）。' }),
+
+    /* ===== 〜するために（副詞的用法・目的） ===== */
+    R('rd-v-sd', 'inf-adv', 'sameDay', { en: 'Naoki went to the library early to find a quiet seat.', ja: 'ナオキは静かな席を見つけるために、早く図書館へ行った。',
+      g: [['library', '図書館'], ['quiet', '静かな'], ['seat', '席']], q: 'ナオキが早く図書館へ行ったのはなぜですか？',
+      c: [['早く行ったので、静かな席が見つかったから', 'to find は目的（見つけるために）です。見つかったという結果は書かれていません。'], ['静かな席を見つけるため', null], ['静かな席の見つけ方を知るため', '「知る」にあたる語はありません。']],
+      p: 'to find a quiet seat が、早く行った目的を表す。見つかったかどうかは分からない。' }),
+    R('rd-v-c1', 'inf-adv', 'check', { en: 'To catch the first train, Emi left home before six.', ja: '始発電車に乗るために、エミは6時前に家を出た。',
+      g: [['catch', '（電車に）間に合って乗る'], ['the first train', '始発電車'], ['left', '出た（leave の過去形）']], q: 'エミが6時前に家を出たのはなぜですか？',
+      c: [['始発電車に乗るため', null], ['始発電車に乗ったあと、家に戻ったから', '文頭の To catch は目的（乗るために）で、乗ったあとのことは書かれていません。'], ['始発電車に乗る人を、家で待つため', '家を出たので、家で待ってはいません。']],
+      p: '文頭の To catch the first train が、家を出た目的を表す（文の前に目的を置いた形）。' }),
+    R('rd-v-c2', 'inf-adv', 'check', { en: 'Kaito called the hotel to change the date, but nobody answered.', ja: 'カイトは日付を変えるためにホテルに電話したが、だれも出なかった。',
+      g: [['call', '電話する'], ['date', '日付'], ['nobody', 'だれも〜ない']], q: '英文から分かることはどれですか？',
+      c: [['電話して、日付を変えることができた', 'to change は目的です。nobody answered なので、変えられていません。'], ['日付を変えるために電話したが、つながらなかった', null], ['日付が変わったので、ホテルに電話した', 'to change は電話した目的で、理由（すでに変わった）ではありません。']],
+      p: 'to change the date は電話した目的。but nobody answered で、結果は変えられなかった。' }),
+    R('rd-v-c3', 'inf-adv', 'check', { en: 'Ms. Kato stopped her car to let the children cross.', ja: '加藤さんは、子どもたちが渡れるように車を止めた。',
+      g: [['stop', '止める'], ['let A 〜', 'A に〜させる'], ['cross', '渡る']], q: '加藤さんが車を止めたのはなぜですか？',
+      c: [['子どもたちが渡ったから', 'to let は目的（〜させるために）です。渡ったという結果が先にあったのではありません。'], ['子どもたちを渡らせないため', 'let は「〜させる」です。渡らせないためではありません。'], ['子どもたちが渡れるようにするため', null]],
+      p: 'to let the children cross が、車を止めた目的を表す（子どもたちを渡らせるために）。' }),
+    R('rd-v-c4', 'inf-adv', 'check', { en: 'We saved money for two years to travel to Canada.', ja: '私たちはカナダへ旅行するために、2年間お金をためた。',
+      g: [['save', 'ためる'], ['travel', '旅行する']], q: '英文から分かることはどれですか？',
+      c: [['カナダへ旅行するために、2年間お金をためた', null], ['カナダへ旅行したあとで、2年間お金をためた', 'to travel は目的です。旅行はお金をためたあとにすることです。'], ['カナダ旅行で、2年分のお金を使った', '「使った」にあたる語はありません。saved は「ためた」です。']],
+      p: 'to travel to Canada が、お金をためた目的を表す。旅行したかどうかは書かれていない。' }),
+    R('rd-v-b1', 'inf-adv', 'basic', { en: 'I went to the shop to buy some bread.', ja: '私はパンを買うために店へ行った。',
+      g: [['shop', '店'], ['bread', 'パン']], q: '私が店へ行ったのはなぜですか？',
+      c: [['パンを買うため', null], ['パンを買ったから', 'to buy は目的（買うために）です。買ったという結果は書かれていません。'], ['パンを買う人に会うため', '「会う」にあたる語はありません。']],
+      p: 'to buy some bread が、店へ行った目的を表す。' }),
+    R('rd-v-b2', 'inf-adv', 'basic', { en: 'He got up early to walk his dog.', ja: '彼は犬を散歩させるために早く起きた。',
+      g: [['got up', '起きた'], ['walk a dog', '犬を散歩させる']], q: '彼が早く起きたのはなぜですか？',
+      c: [['犬が早く起きたから', '早く起きたのは He（彼）です。'], ['犬を散歩させるため', null], ['犬の散歩から帰ったから', 'to walk は目的です。散歩はこれからすることです。']],
+      p: 'to walk his dog が、早く起きた目的を表す。' }),
+
+    /* ===== It is ～ for A to do ===== */
+    R('rd-i-sd', 'inf-it', 'sameDay', { en: 'It was difficult for Sota to read the map in the dark.', ja: '暗い中で地図を読むのは、ソウタには難しかった。',
+      g: [['difficult', '難しい'], ['map', '地図'], ['in the dark', '暗い中で']], q: '英文から分かることはどれですか？',
+      c: [['ソウタのために、だれかが地図を読むのは難しかった', 'for Sota から、地図を読むのはソウタです。'], ['暗い中で地図を読むのは、ソウタには難しかった', null], ['ソウタは暗い中で地図をかいた', '「かく」にあたる語はありません。read は「読む」です。']],
+      p: 'for Sota は to read をする人。It は to read the map in the dark を指す。' }),
+    R('rd-i-c1', 'inf-it', 'check', { en: 'It is not safe for small children to swim here without an adult.', ja: '小さな子どもが大人なしでここで泳ぐのは安全ではない。',
+      g: [['safe', '安全な'], ['without', '〜なしで'], ['adult', '大人']], q: '英文から分かることはどれですか？',
+      c: [['小さな子どもが大人なしでここで泳ぐのは、安全ではない', null], ['ここで泳ぐ大人は、子どもにとって危険だ', 'for small children から、泳ぐのは小さな子どもです。'], ['小さな子どもがここで泳いで、けがをした', 'not safe は「安全ではない」という評価です。けがをしたという出来事は書かれていません。']],
+      p: 'for small children が泳ぐ人。It is not safe は評価で、実際の出来事ではない。' }),
+    R('rd-i-c2', 'inf-it', 'check', { en: 'It took a long time for Ken to finish the puzzle.', ja: 'ケンがそのパズルを仕上げるのに長い時間がかかった。',
+      g: [['take a long time', '長い時間がかかる（took は過去形）'], ['puzzle', 'パズル']], q: '英文から分かることはどれですか？',
+      c: [['ケンは、パズルを仕上げるのが速かった', 'took a long time は「長い時間がかかった」です。'], ['ケンは、パズルを仕上げた人を長く待った', 'for Ken から、パズルを仕上げるのはケンです。'], ['ケンがパズルを仕上げるのに、長い時間がかかった', null]],
+      p: 'for Ken が仕上げる人。It took a long time で、to finish the puzzle にかかった時間を表す。' }),
+    R('rd-i-c3', 'inf-it', 'check', { en: 'If you follow this road, it will be easy for you to find the station.', ja: 'この道を進めば、あなたは駅を簡単に見つけられるでしょう。',
+      g: [['follow', '（道を）たどる'], ['easy', '簡単な'], ['station', '駅']], q: '英文から分かることはどれですか？',
+      c: [['この道を進めば、あなたは駅を簡単に見つけられる', null], ['この道を進めば、だれかがあなたのために駅を探してくれる', 'for you から、駅を見つけるのはあなたです。'], ['この道は、駅から簡単に見つけられる', '見つけるのは駅で、道ではありません。to find the station です。']],
+      p: 'for you が見つける人。it will be easy は、to find the station が簡単だという評価。' }),
+    R('rd-i-c4', 'inf-it', 'check', { en: 'It is fun for the students to cook lunch together on Fridays.', ja: '金曜日に一緒に昼食を作るのは、生徒たちにとって楽しい。',
+      g: [['fun', '楽しい'], ['together', '一緒に']], q: '英文から分かることはどれですか？',
+      c: [['金曜日に、生徒たちのために昼食を作るのは楽しい', 'for the students から、昼食を作るのは生徒たちです。'], ['生徒たちが金曜日に一緒に昼食を作るのは、楽しい', null], ['生徒たちは金曜日に昼食を作らなければならない', 'fun は「楽しい」という評価です。「しなければならない」にあたる語はありません。']],
+      p: 'for the students が作る人。fun はそれが楽しいという評価。' }),
+    R('rd-i-b1', 'inf-it', 'basic', { en: 'It is hard for my sister to get up early.', ja: '姉にとって、早く起きるのは難しい。',
+      g: [['hard', '難しい・大変な'], ['get up', '起きる']], q: '英文から分かることはどれですか？',
+      c: [['姉にとって、早く起きるのは難しい', null], ['姉のために早く起きるのは難しい', 'for my sister から、早く起きるのは姉です。'], ['姉は今朝、早く起きられなかった', 'hard は「難しい」という評価です。今朝のことは書かれていません。']],
+      p: 'for my sister が起きる人。hard は評価で、今朝の出来事ではない。' }),
+    R('rd-i-b2', 'inf-it', 'basic', { en: 'It is fun for us to play cards.', ja: '私たちにとって、トランプをするのは楽しい。',
+      g: [['fun', '楽しい'], ['play cards', 'トランプをする']], q: '英文から分かることはどれですか？',
+      c: [['私たちのためにトランプを作るのは楽しい', 'for us から、トランプをするのは私たちです。「作る」にあたる語はありません。'], ['私たちは今、トランプをしている', 'fun は評価です。今していることは書かれていません。'], ['私たちにとって、トランプをするのは楽しい', null]],
+      p: 'for us がする人。fun はそれが楽しいという評価。' })
+  ];
+
+  /* ===== まとめ復習（2〜3文の英文1本・設問2つ。設問の根拠はそれぞれ英文中にある） ===== */
+  Q = Q.concat(
+    S('rd-s1', 'Hana wants to become a nurse. To learn more about the job, she visited a hospital last summer.',
+      'ハナは看護師になりたいと思っている。その仕事についてもっと知るために、彼女は去年の夏に病院を訪れた。',
+      [['nurse', '看護師'], ['learn about', '〜について知る'], ['visit', '訪れる']], [
+      { skill: 'inf-noun', q: 'ハナが望んでいることは何ですか？', c: [['看護師について学べる病院', 'wants のあとの to become a nurse が、望んでいることの中身です。'], ['看護師になること', null], ['病院で看護師に仕事を教わったこと', '教わったとは書かれていません。']], p: 'wants のあとの to become a nurse が、望んでいることの中身（〜すること）。' },
+      { skill: 'inf-adv', q: 'ハナが去年の夏に病院を訪れたのはなぜですか？', c: [['仕事についてもっと知るため', null], ['仕事についてよく知っていたから', '文頭の To learn は目的（知るために）です。すでに知っていたのではありません。'], ['看護師に病院を案内するため', '「案内する」にあたる語はありません。']], p: '文頭の To learn more about the job が、病院を訪れた目的。' }]),
+    S('rd-s2', 'Our plan for Sunday is to clean the park. We need some bags to put the trash in.',
+      '日曜日の私たちの計画は、公園を掃除することだ。ごみを入れる袋がいくつか必要だ。',
+      [['plan', '計画'], ['trash', 'ごみ'], ['put A in', 'A を中に入れる']], [
+      { skill: 'inf-noun', q: '日曜日の計画は何ですか？', c: [['公園を掃除すること', null], ['掃除用の袋を買うために公園へ行くこと', '「買う」にあたる語はありません。is のあとの to clean the park が計画の中身です。'], ['掃除された公園で遊ぶこと', '「遊ぶ」にあたる語はありません。']], p: 'is のあとの to clean the park が、計画の中身（〜すること）。' },
+      { skill: 'inf-adj', q: '必要なものは何ですか？', c: [['袋に入ったごみ', 'to put the trash in は some bags を説明しています。必要なのは袋です。'], ['ごみを捨てる場所', '「場所」にあたる語はありません。'], ['ごみを入れる袋', null]], p: 'to put the trash in が some bags を後ろから説明する（ごみを入れる袋）。最後の in まで読む。' }]),
+    S('rd-s3', 'Ken tried to finish his report last night. It was hard for him to stay awake, so he went to bed at ten.',
+      'ケンは昨夜、レポートを仕上げようとした。起きているのが彼には大変だったので、10時に寝た。',
+      [['try to 〜', '〜しようとする'], ['report', 'レポート'], ['stay awake', '起きている']], [
+      { skill: 'inf-noun', q: '昨夜ケンがしようとしたことは何ですか？', c: [['10時に寝ること', '10時に寝たのは結果です。tried のあとの to finish が、しようとしたことです。'], ['レポートを仕上げること', null], ['起きているためにレポートを書くこと', 'to finish は目的ではなく、tried の中身です。']], p: 'tried のあとの to finish his report が、しようとしたこと。仕上げたかどうかは書かれていない。' },
+      { skill: 'inf-it', q: 'ケンにとって大変だったことは何ですか？', c: [['起きていること', null], ['10時に寝ること', 'It は to stay awake を指します。寝ることが大変だったのではありません。'], ['だれかのために起きていること', 'for him から、起きているのはケンです。']], p: 'It was hard for him to stay awake：It は to stay awake を指し、for him が起きている人。' }]),
+    S('rd-s4', 'Lisa went to the station early to meet her cousin. She brought a book to read while she waited.',
+      'リサはいとこを出迎えるために、早く駅へ行った。彼女は待っている間に読む本を持っていった。',
+      [['cousin', 'いとこ'], ['brought', '持ってきた（bring の過去形）'], ['while', '〜する間']], [
+      { skill: 'inf-adv', q: 'リサが早く駅へ行ったのはなぜですか？', c: [['いとこが早く着いたから', 'to meet は目的（会うために）です。いとこが早く着いたとは書かれていません。'], ['いとこを出迎えるため', null], ['いとこに本を渡すため', '本はリサが待つ間に読むものです。']], p: 'to meet her cousin が、早く行った目的。' },
+      { skill: 'inf-adj', q: 'リサが持っていった本はどんな本ですか？', c: [['待っている間に読む本', null], ['いとこに読んでもらう本', '読むのは she（リサ）です。'], ['いとこが書いた本', '「書いた」にあたる語はありません。']], p: 'to read が a book を後ろから説明する（待つ間に読む本）。' }]),
+    S('rd-s5', 'This town has many old temples to visit. It is easy for tourists to walk from one temple to another.',
+      'この町には訪れることができる古い寺がたくさんある。観光客が寺から寺へ歩いて回るのは簡単だ。',
+      [['temple', '寺'], ['tourist', '観光客'], ['from one to another', 'ひとつから別のものへ']], [
+      { skill: 'inf-adj', q: '英文から分かることはどれですか？', c: [['古い寺を訪れるために、この町ができた', 'to visit は町ができた目的ではなく、temples を説明しています。'], ['訪れることができる古い寺が、たくさんある', null], ['古い寺を訪れた人が、たくさんいる', '人の数は書かれていません。']], p: 'to visit が many old temples を後ろから説明する（訪れる寺）。' },
+      { skill: 'inf-it', q: '簡単なのはどんなことですか？', c: [['観光客のために、寺から寺へ道を作ること', 'for tourists から、歩くのは観光客です。「作る」にあたる語はありません。'], ['観光客が寺から寺へ歩いて回ること', null], ['観光客が寺の場所を見つけること', '「見つける」にあたる語はありません。to walk です。']], p: 'It is easy for tourists to walk…：It は to walk from one temple to another を指し、for tourists が歩く人。' }]),
+    S('rd-s6', 'To save time, Yuki took a taxi. It was cheaper for her to share it with a friend.',
+      '時間を節約するために、ユキはタクシーに乗った。友だちと相乗りする方が、彼女には安かった。',
+      [['save', '節約する'], ['cheaper', 'より安い'], ['share', '分け合う・共有する']], [
+      { skill: 'inf-adv', q: 'ユキがタクシーに乗ったのはなぜですか？', c: [['時間を節約するため', null], ['時間が余ったから', '文頭の To save time は目的（節約するために）です。'], ['友だちに会うため', '友だちとは相乗りしただけで、会うことが目的とは書かれていません。']], p: '文頭の To save time が、タクシーに乗った目的。' },
+      { skill: 'inf-it', q: 'ユキにとって安かったのはどんなことですか？', c: [['友だちがユキのためにタクシー代を払うこと', 'for her から、相乗りするのはユキです。払うことは書かれていません。'], ['友だちにタクシーを貸すこと', 'share は「分け合う」です。'], ['友だちとタクシーを分け合うこと', null]], p: 'It は to share it with a friend を指し、for her（ユキ）がする人。' }]),
+    S('rd-s7', 'Taro\'s job this week is to feed the class rabbit. He comes to school early to do it before the first lesson.',
+      '今週のタロウの仕事は、クラスのウサギにえさをやることだ。彼は1時間目の前にそれをするために、早く学校に来る。',
+      [['feed', 'えさをやる'], ['rabbit', 'ウサギ'], ['lesson', '授業']], [
+      { skill: 'inf-noun', q: '今週のタロウの仕事は何ですか？', c: [['ウサギにえさをやること', null], ['ウサギのえさを買うために、早く来ること', 'is のあとの to feed が仕事の中身です。「買う」にあたる語はありません。'], ['えさをもらったウサギの世話を、先生に頼むこと', '「頼む」にあたる語はありません。']], p: 'is のあとの to feed the class rabbit が、仕事の中身（〜すること）。' },
+      { skill: 'inf-adv', q: 'タロウが早く学校に来るのはなぜですか？', c: [['1時間目に遅れたから', 'to do it は目的（するために）です。'], ['1時間目の準備を先生に頼むため', '「頼む」にあたる語はありません。'], ['1時間目の前に、えさをやるため', null]], p: 'to do it before the first lesson が、早く来る目的。it は「えさをやること」を指す。' }]),
+    S('rd-s8', 'Aya is looking for someone to help her with math. It is difficult for her to understand the new unit alone.',
+      'アヤは数学を手伝ってくれる人を探している。新しい単元をひとりで理解するのは、彼女には難しい。',
+      [['look for', '探す'], ['help A with B', 'A の B を手伝う'], ['unit', '単元'], ['alone', 'ひとりで']], [
+      { skill: 'inf-adj', q: 'アヤが探しているのはどんな人ですか？', c: [['アヤが数学を教えてあげる人', 'help her の her はアヤです。手伝うのは someone で、手伝ってもらうのがアヤです。'], ['数学を手伝ってくれる人', null], ['数学の先生を手伝う人', '手伝う相手は her（アヤ）です。']], p: 'to help her with math が someone を後ろから説明する。her はアヤ。' },
+      { skill: 'inf-it', q: '英文から分かることはどれですか？', c: [['新しい単元をひとりで理解するのは、アヤには難しい', null], ['アヤがひとりで新しい単元を教えるのは難しい', '「教える」にあたる語はありません。to understand です。'], ['新しい単元は、アヤにはやさしかった', 'difficult は「難しい」です。']], p: 'It は to understand the new unit alone を指し、for her（アヤ）が理解する人。' }])
+  );
+
+  EA.registerBank({
+    unit: { id: 'infinitive-reading', parent: 'infinitive', title: '不定詞（短文読解）', reading: true,
+      description: '初見の短文で、to＋動詞 の働きを手がかりに内容を読み取る' },
+    skills: [],
+    // その項目で読み取ること（「次は別の短文で、〜を確認」の表示に使う）
+    readingFocus: { 'inf-noun': '「何を・何が（〜すること）」の読み取り', 'inf-adj': '「どんな〜か（名詞の説明）」の読み取り',
+      'inf-adv': '目的の読み取り', 'inf-it': '「だれが・何をすることが」の読み取り' },
+    questions: Q
+  });
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* ---- js/grading.js ---- */
 /*
  * grading.js — 採点（ルールのみ。AIは使いません）
@@ -4049,6 +4329,8 @@ details.panel > p { margin-top: 8px; }
       settings: { dailyGoalMinutes: (EA.config && EA.config.defaultDailyGoalMinutes) || 10, confirmBeforeExplain: true, soundEffects: true },
       // profile：講師に送る学習記録のコードに入れる、この記録の持ち主（studentId は端末ごとに自動でつける）
       profile: { studentId: EA.util.uid('st'), name: '' },
+      // reading：短文読解の定着と復習予定（文法項目ごと。js/reading.js）
+      reading: { skills: {}, daily: null },
       attempts: [],
       schedule: {},
       units: {},
@@ -4316,10 +4598,28 @@ details.panel > p { margin-top: 8px; }
 
   /** 初回診断：role が diagnostic の問題を、問題集に書いた順に出す */
   function buildDiagnosticSession(bank, now) {
-    var items = activeQuestions(bank)
-      .filter(function (q) { return q.role === 'diagnostic'; })
-      .map(function (q) { return { kind: 'question', questionId: q.id, attemptType: 'diagnostic' }; });
+    var diag = activeQuestions(bank).filter(function (q) { return q.role === 'diagnostic'; });
+    var items = [];
+    diag.forEach(function (q, i) {
+      items.push({ kind: 'question', questionId: q.id, attemptType: 'diagnostic' });
+      // その項目の文法問題のあとに、意味の読み取りに関わる短文を1問（学習した当日の確認）
+      var last = !diag.slice(i + 1).some(function (x) { return x.skill === q.skill; });
+      var rd = last && sameDayReading(q.skill);
+      if (rd) items.push({ kind: 'question', questionId: rd.id, attemptType: 'reading', readingPurpose: 'sameDay' });
+    });
     return newSession('diagnostic', bank.unit.id, items, now);
+  }
+  function sameDayReading(skill) {
+    var rb = EA.banks['infinitive-reading'];
+    return rb && rb.questions.filter(function (x) { return x.readingUse === 'sameDay' && x.skill === skill && x.status !== 'excluded'; })[0];
+  }
+
+  /** 短文読解の学習回（今日のおすすめ・もう1本）：英文1本。まとめ復習は同じ英文の設問を最大2問 */
+  function buildReadingSession(state, now) {
+    var rec = EA.reading.recommend(state, now);
+    if (!rec) return null;
+    var items = rec.items.map(function (x) { return { kind: 'question', questionId: x.questionId, attemptType: 'reading', readingPurpose: x.purpose }; });
+    return newSession('reading', EA.reading.BANK_ID, items, now, { readingKind: rec.kind, readingWhy: rec.why, readingSkills: rec.skills });
   }
 
   /** 試作の単元：問題を順に出すだけ（確認状況・復習予定には反映しない） */
@@ -4578,7 +4878,7 @@ details.panel > p { margin-top: 8px; }
     var u = unitState(state, bank.unit.id);
     var s = state.activeSession;
     if (s) {
-      var label = practiceSetLabel(s.practiceSet) || { diagnostic: '不定詞 Lv1', practice: '類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習' }[s.type];
+      var label = practiceSetLabel(s.practiceSet) || { diagnostic: '不定詞 Lv1', practice: '類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習', reading: '短文読解' }[s.type];
       var cur = s.current && s.current.index === s.index ? s.current : null;
       var where = !cur ? '' : cur.phase === 'reason' ? '（意味の問いの回答前）' : cur.phase === 'feedback' ? '（解説の表示中）' : '（回答の途中）';
       // 期限を迎えた復習（いま再開する学習回がその復習なら、その項目は数えない）
@@ -4598,9 +4898,9 @@ details.panel > p { margin-top: 8px; }
       var n = activeQuestions(bank).filter(function (q) { return q.role === 'diagnostic'; }).length;
       return {
         kind: 'diagnostic', title: '不定詞 Lv1',
-        detail: n + '問', detailKind: 'size',
+        detail: n + '問＋短文読解' + bank.skills.filter(function (sk) { return sameDayReading(sk.id); }).length + '問', detailKind: 'size',
         why: '',
-        help: { label: 'Lv1とは？', text: '最初に取り組む8問です。答えるたびに正誤と解説を表示し、間違えたときは同じ形の別の問題ですぐに解き直します。結果は項目ごとの確認状況と復習予定に反映されます。' },
+        help: { label: 'Lv1とは？', text: '最初に取り組む8問です。答えるたびに正誤と解説を表示し、間違えたときは同じ形の別の問題ですぐに解き直します。用法ごとに文法問題のあとで、その文法を手がかりに読む短文を1問出します。結果は項目ごとの確認状況と復習予定に反映されます。' },
         cta: 'Lv1をはじめる'
       };
     }
@@ -4617,8 +4917,18 @@ details.panel > p { margin-top: 8px; }
         cta: '復習をはじめる', dueCount: due.length
       };
     }
+    // 短文読解（今日のおすすめは英文1本。2本目からは「もう1本」）
+    var rec = EA.reading && EA.reading.recommend(state, now);
+    if (rec && EA.reading.passagesToday(state, now) === 0) {
+      return {
+        kind: 'reading', title: rec.kind === 'summary' ? '短文読解（まとめ復習）' : '短文読解の確認',
+        detail: '英文1本・' + rec.items.length + '問', detailKind: 'size', detailIcon: 'book',
+        why: '', cta: '読解をはじめる'
+      };
+    }
     var next = nextReviewDate(state, bank);
     return {
+      moreReading: !!rec,
       kind: 'done', title: '今日の課題は完了です',
       detail: next ? '次の復習は ' + EA.util.fmtDate(next) + '（' + EA.util.relDay(next, now) + '）' : '',
       why: '「履歴・復習」で、これまでの解説や回答を見返せます。',
@@ -4627,6 +4937,7 @@ details.panel > p { margin-top: 8px; }
   }
 
   EA.planner = {
+    buildReadingSession: buildReadingSession,
     buildDiagnosticSession: buildDiagnosticSession,
     buildTrialSession: buildTrialSession,
     buildSelfPracticeSession: buildSelfPracticeSession,
@@ -4694,7 +5005,12 @@ details.panel > p { margin-top: 8px; }
   var EA = root.EA = root.EA || {};
   var G = EA.grading;
 
-  function q(bank, id) { return EA.findQuestion(bank, id); }
+  function q(bank, id) {
+    var r = EA.findQuestion(bank, id);
+    if (r) return r;
+    for (var k in EA.banks) { r = EA.findQuestion(EA.banks[k], id); if (r) return r; } // 短文読解は別の問題集
+    return null;
+  }
   function item(state) { var s = state.activeSession; return s ? s.items[s.index] : null; }
   function attemptById(state, id) {
     for (var i = state.attempts.length - 1; i >= 0; i--) if (state.attempts[i].id === id) return state.attempts[i];
@@ -4751,7 +5067,7 @@ details.panel > p { margin-top: 8px; }
       var qq = q(bank, it.questionId);
       s.current = {
         index: s.index, startedAt: t.app, activeMs: 0, awayMs: 0, visibleSince: t.real, hiddenSince: null,
-        hintUsed: false, unsure: false, draft: null, phase: 'answer', attemptId: null,
+        hintUsed: !!it.glossed, unsure: false, draft: null, phase: 'answer', attemptId: null, // 答え直し（語注つき）は単語の意味を見た状態から
         pool: qq.format === 'order' ? shuffledPool(qq.tokens, qq.answers.map(function (x) { return G.orderCore(qq, x); })) : null,
         // 不足語を補う並べ替え：補った語（added）と入力欄の途中（addedInput）。解答欄では語句の番号 tokens.length で表す
         added: null, addedInput: '',
@@ -4903,6 +5219,8 @@ details.panel > p { margin-top: 8px; }
     if (it.retryOf) a.retryOf = it.retryOf;            // 間違えた問題の解き直し（別の問題）
     // 回答した時点の問題文と正答（問題集があとで更新されても、当時の内容を振り返れるように）
     if (EA.daily) a.snapshot = EA.daily.snapshotOf(qq);
+    // 短文読解：文法問題とは区別して記録する（readingPurpose：sameDay / check / recheck / summary / basic）
+    if (qq.reading) { a.reading = true; a.readingPurpose = it.readingPurpose || 'check'; a.glossUsed = !!cur.hintUsed; if (qq.passage) a.passage = qq.passage; }
     if (s.type !== 'diagnostic') a.reasonDecision = reasonDecision(state, bank, s, qq, it, a);
     state.attempts.push(a);
     s.attemptIds.push(a.id);
@@ -4965,7 +5283,54 @@ details.panel > p { margin-top: 8px; }
     var s = state.activeSession;
     s.current.phase = 'feedback';
     s.explained[a.skillId] = true; // 解説を表示するので、このあとの同じ項目の回答は「解説後」
+    var qq = q(bank, a.questionId);
+    if (qq && qq.reading) return concludeReading(state, s, a, qq);
     planFollowUp(state, bank, s, a);
+  }
+
+  /**
+   * 短文読解の回答を確定したとき：定着・復習予定日に反映し（reading.js）、間違えたときの流れを決める。
+   *   1回目の誤答（単語の意味を見ていない）… 正答を見せずに止める（readingHold）。「単語の意味を見て答え直す」か「答えと解説を見る」
+   *   単語の意味を見ても誤答 … 基本語で書いた別の短文を、この学習回で最大1問だけ追加する
+   */
+  function concludeReading(state, s, a, qq) {
+    var it = s.items[s.index];
+    EA.reading.apply(state, a, qq, it);
+    var wrong = EA.grading.isSkillWrong(a.result);
+    if (!wrong) return;
+    if (!a.gaveUp && !a.hintUsed && it.attemptType !== 'reread' && it.readingPurpose !== 'basic') { s.current.readingHold = true; return; }
+    if (a.gaveUp && it.attemptType !== 'reread' && it.readingPurpose !== 'basic') { EA.reading.unclear(state, a); return; }
+    if ((a.hintUsed || it.attemptType === 'reread') && it.readingPurpose !== 'basic' && !s.basicAdded) {
+      var used = {}; s.items.forEach(function (x) { used[x.questionId] = true; });
+      var b = EA.reading.pickSingle(state, qq.skill, used);
+      if (b && b.q.readingUse === 'basic' && !used[b.q.id]) {
+        s.items.splice(s.index + 1, 0, { kind: 'question', questionId: b.q.id, attemptType: 'reading', readingPurpose: 'basic' });
+        s.basicAdded = true;
+        a.followUp = { added: b.q.id, kind: 'basic' };
+      } else {
+        // 基本語の短文がないときは、次の復習で基本語の短文から
+        EA.reading.unclear(state, a);
+      }
+    }
+  }
+
+  /** 短文で誤答したあと「単語の意味を見て答え直す」：同じ問いを、単語の意味を見た状態でもう一度（ヒントありとして記録） */
+  function reread(state, bank, t) {
+    var s = state.activeSession;
+    if (!s || !s.current || s.current.phase !== 'feedback' || !s.current.readingHold) return false;
+    var it = s.items[s.index];
+    s.items.splice(s.index + 1, 0, { kind: 'question', questionId: it.questionId, attemptType: 'reread', readingPurpose: it.readingPurpose, glossed: true });
+    s.current.readingHold = false;
+    return next(state, bank, t, { internal: true });
+  }
+  /** 短文で誤答したあと「答えと解説を見る」（単語の意味を見ずに進む＝原因がはっきりしない → 次は基本語の短文） */
+  function reveal(state) {
+    var s = state.activeSession;
+    if (!s || !s.current || !s.current.readingHold) return null;
+    s.current.readingHold = false;
+    var a = attemptById(state, s.current.attemptId);
+    EA.reading.unclear(state, a);
+    return a;
   }
 
   /**
@@ -5047,10 +5412,12 @@ details.panel > p { margin-top: 8px; }
     var early = !!(opts && opts.early);
     var attempts = s.attemptIds.map(function (id) { return attemptById(state, id); }).filter(Boolean);
     // 試作の単元・自分で始めた練習（もう一度練習）は復習予定に入れない
-    var changes = (s.type === 'trial' || s.type === 'self') ? [] : EA.scheduler.applySession(state.schedule, s.type, attempts, state.attempts, t.app, EA.config, bank);
+    // 短文読解の学習回は、文法の復習予定を変えない（短文読解の予定は回答ごとに reading.js で反映済み）
+    if (s.type === 'reading' && attempts.length) EA.reading.countPassage(state, t.app);
+    var changes = (s.type === 'trial' || s.type === 'self' || s.type === 'reading') ? [] : EA.scheduler.applySession(state.schedule, s.type, attempts, state.attempts, t.app, EA.config, bank);
     // 単元の状態（初回診断・類題の完了）は、初回診断・類題のときだけ触る（自分で始めた練習・試作では作らない）
     var u = (s.type === 'diagnostic' || s.type === 'practice') ? EA.planner.unitState(state, s.unitId) : {};
-    if (s.type === 'diagnostic') { u.diagnosticDoneAt = t.app; u.diagnosticSessionId = s.id; }
+    if (s.type === 'diagnostic') { u.diagnosticDoneAt = t.app; u.diagnosticSessionId = s.id; EA.reading.afterDiagnostic(state); }
     if (s.type === 'practice') { u.practiceDoneAt = t.app; if (early) u.practiceEndedEarly = true; }
     var skipped = [];
     if (early) {
@@ -5081,7 +5448,7 @@ details.panel > p { margin-top: 8px; }
   EA.session = {
     start: start, item: item, ensureCurrent: ensureCurrent, pause: pause, resume: resume,
     suspend: suspend, recover: recover, touch: touch, repairOrders: repairOrders,
-    submit: submit, submitReason: submitReason, next: next, finish: finish,
+    submit: submit, submitReason: submitReason, next: next, finish: finish, reread: reread, reveal: reveal,
     reasonDecision: reasonDecision, attemptById: attemptById, shuffledPool: shuffledPool, orderDetail: orderDetail
   };
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -5373,6 +5740,7 @@ details.panel > p { margin-top: 8px; }
   }
   function promptTextOf(q) {
     if (!q) return '';
+    if (q.reading) return q.sentence + ' ／ ' + q.question;
     return EA.util.plain(q.format === 'judge' ? q.sentence : (q.ja && q.format !== 'meaning' ? q.ja : (q.sentence || q.ja || '')));
   }
   /** 回答した時点の問題の控え（回答の記録に入れる） */
@@ -5400,13 +5768,16 @@ details.panel > p { margin-top: 8px; }
       });
     return order.map(function (k) {
       var list = byKey[k], first = list[0], fk = kindOf(first);
-      var later = list.slice(1).filter(function (a) { return a.attemptType !== 'retry'; });
+      var later = list.slice(1).filter(function (a) { return a.attemptType !== 'retry' && a.attemptType !== 'reread'; });
       var laterCorrect = later.some(isCorrect);
+      // 短文読解で、単語の意味（語注）を見て同じ問いに答え直して正解（ヒントあり）
+      var glossCorrect = list.slice(1).some(function (a) { return a.attemptType === 'reread' && isCorrect(a); });
       var recovered = fk === 'wrong' && laterCorrect;
       var hadWrong = list.some(isWrong);
       var tags = [PRIMARY[fk]];
       if (list.length > 1) {
         if (recovered) tags.push({ label: '解き直しで正解', tone: 'ok' });
+        else if (glossCorrect) tags.push({ label: '単語の意味を見て正解', tone: 'hold' });
         else if (laterCorrect && fk !== 'correct') tags.push({ label: 'その後 正解', tone: 'ok' });
         else if (fk === 'correct' && hadWrong) tags.push({ label: 'のちに誤答', tone: 'ng' });
         else if (fk !== 'correct') tags.push({ label: '解き直しも未正解', tone: 'ng' });
@@ -5570,6 +5941,289 @@ details.panel > p { margin-top: 8px; }
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- js/reading.js ---- */
+/*
+ * reading.js — 短文読解の「定着」と復習予定（文法項目ごと）・今日のおすすめの出題順（画面は扱いません）
+ *
+ * 文法問題の確認状況（mastery.js）・文法の復習予定（state.schedule）とは別に、state.reading.skills[項目] に持ちます。
+ * 日付はすべて日本時間の日付（'2026-11-14'）で扱います。
+ *
+ * ■ 段階（phase）
+ *   pre     … 定着前。後日の確認で、初見の短文にヒントなしで正解した日を数える（countDays）。
+ *              学習日とは別の、異なる2つの日で正解したら「定着」（settled）。
+ *              数えないもの：学習した日の正解・同じ日の2回目以降・答え直し・単語の意味（語注）を見たあとの正解・基本語の補助の短文。
+ *              誤答したら、回数（1/2 など）はそのままにして、次の確認を翌日に早める。
+ *   settled … 定着済み。復習時期が来たら、まとめ復習（2〜3文の英文1本・設問は最大2問）で確かめる。
+ *              正解で間隔をのばす。つまずいたら recheck へ（過去の定着は settledHistory に残す）。
+ *   recheck … 短文で再確認。翌日以降に単独の短文1問。初見・ヒントなしで1回正解したら settled に戻す。
+ *
+ * ■ 間隔：data/config.js の reviewIntervalsDays（1・3・7・14・30日）を段階 step で使う。
+ *   学習した日の短文のあとは、文法の復習予定日（数日後）に合わせる。
+ *
+ * ■ 今日のおすすめ（recommend）… 英文1本を返す。出さなかった項目・解かなかった項目の予定日は変えない
+ *   1. まとめ復習の対象に、予定日から7日以上遅れている項目があれば、まとめ復習を先に（最も長く待っている項目を含める）
+ *   2. それ以外は、定着前の確認と、まとめ復習でつまずいたあとの再確認を同じ枠に置き、予定日が古い項目から単独の短文1問
+ *   3. 単独の確認がなければ、復習時期が来た項目のまとめ復習
+ *   文法の復習が今日の予定に入っている項目は、文法問題で確かめてから短文に進む（それまで短文はおすすめしない）。
+ */
+(function (root) {
+  'use strict';
+  var EA = root.EA = root.EA || {};
+  var DAY = 24 * 60 * 60 * 1000;
+  var BANK_ID = 'infinitive-reading', GRAMMAR_ID = 'infinitive';
+  var DELAY_PRIORITY_DAYS = 7;
+
+  function D() { return EA.daily; }
+  function rbank() { return EA.banks[BANK_ID]; }
+  function intervals() { return EA.config.reviewIntervalsDays; }
+  function addDays(key, n) { return D().shiftKey(key, n); }
+  function diffDays(from, to) { return Math.round((D().keyStart(to) - D().keyStart(from)) / DAY); }
+  function maxKey(a, b) { return !a ? b : !b ? a : a > b ? a : b; }
+
+  function store(state) {
+    if (!state.reading) state.reading = { skills: {}, daily: null };
+    if (!state.reading.skills) state.reading.skills = {};
+    return state.reading;
+  }
+  function grammarSkills() { return EA.banks[GRAMMAR_ID].skills.map(function (s) { return s.id; }); }
+  /** 文法の復習予定日（日本時間の日付） */
+  function grammarDue(state, skill) { var e = state.schedule[skill]; return e ? D().dayKey(e.dueAt) : null; }
+
+  function ensure(state, skill, day) {
+    var st = store(state).skills;
+    if (!st[skill]) {
+      var u = state.units[GRAMMAR_ID] || {};
+      st[skill] = { skill: skill, phase: 'pre', count: 0, countDays: [], step: 0,
+        learnedDay: u.diagnosticDoneAt ? D().dayKey(u.diagnosticDoneAt) : day,
+        dueDay: addDays(day, 1), settledHistory: [], log: [], next: null };
+    }
+    return st[skill];
+  }
+
+  /**
+   * 以前の記録から始める：初回の学習（不定詞 Lv1）を終えているのに短文読解の状態がない項目は、
+   * 定着前（0/2）として、文法の復習予定日から確認を始める。既存の記録は変えない。
+   */
+  function init(state) {
+    var u = state.units[GRAMMAR_ID];
+    if (!u || !u.diagnosticDoneAt) return;
+    var learned = D().dayKey(u.diagnosticDoneAt);
+    grammarSkills().forEach(function (sk) {
+      if (store(state).skills[sk]) return;
+      var r = ensure(state, sk, learned);
+      r.dueDay = maxKey(addDays(learned, 1), grammarDue(state, sk));
+      r.migrated = true;
+    });
+  }
+  /** 初回の学習（Lv1）を終えたとき：当日の短文で間違えていない項目は、文法の復習予定日に合わせる */
+  function afterDiagnostic(state) {
+    init(state);
+    grammarSkills().forEach(function (sk) {
+      var r = store(state).skills[sk];
+      if (r && r.phase === 'pre' && !r.count && !r.sameDayWrong) r.dueDay = maxKey(r.dueDay, grammarDue(state, sk));
+    });
+  }
+
+  function focusOf(skill) { return (rbank().readingFocus || {})[skill] || '読み取り'; }
+  function nextText(skill, basic) { return (basic ? '次は基本語を使った別の短文で、' : '次は別の短文で、') + focusOf(skill) + 'を確認'; }
+
+  /**
+   * 短文の回答を反映する（回答を確定したとき・意味の確認と同じ形式の問題）。a.readingResult に結果を残す。
+   * item.readingPurpose：sameDay / check / recheck / summary / basic、item.attemptType 'reread' は語注を見ての答え直し
+   */
+  function apply(state, a, q, item) {
+    var day = D().dayKey(a.answeredAt), skill = q.skill;
+    var r = ensure(state, skill, day);
+    var purpose = item.readingPurpose || 'check', reread = item.attemptType === 'reread';
+    var extra = reread || purpose === 'basic';
+    var correct = EA.grading.isSkillCorrect(a.result) && !a.gaveUp;
+    var firstToday = !r.log.some(function (l) { return l.day === day && !l.extra; });
+    var out = { counted: false, phaseBefore: r.phase, msg: '' };
+    var I = intervals(), max = I.length - 1, tomorrow = addDays(day, 1);
+
+    if (extra) {
+      if (reread) out.msg = correct ? '単語の意味を見て正解しました（ヒントありとして記録します。定着の回数には数えません）。' : '単語の意味を見ても、違う答えでした。';
+      else out.msg = correct ? '基本語の短文では読み取れました（定着の回数には数えません）。' : '';
+      if (reread && correct) r.next = { basic: false, text: nextText(skill, false) };
+      if (purpose === 'basic') r.next = { basic: !correct, text: nextText(skill, !correct) };
+    } else if (purpose === 'sameDay') {
+      if (!r.learnedDay || r.learnedDay > day) r.learnedDay = day;
+      r.sameDayWrong = !correct;
+      r.dueDay = correct ? maxKey(tomorrow, grammarDue(state, skill)) : tomorrow;
+      out.msg = '学習した日の短文です。定着の回数には、後日の確認で正解した日だけを数えます。';
+      if (!correct) r.next = { basic: false, text: nextText(skill, false) };
+    } else if (!firstToday) {
+      out.msg = '今日はすでにこの項目の短文に答えているため、定着の回数には数えません。';
+    } else {
+      var independent = correct && !a.hintUsed;
+      var countable = independent && day !== r.learnedDay && r.countDays.indexOf(day) < 0;
+      if (r.phase === 'pre') {
+        if (countable) {
+          r.count++; r.countDays.push(day); r.step = Math.min(r.step + 1, max); out.counted = true;
+          if (r.count >= 2) {
+            r.phase = 'settled'; r.settledHistory.push({ day: day, at: a.answeredAt });
+            out.msg = '定着しました（2/2）。次からは、まとめ復習で確かめます。';
+          } else out.msg = '後日の確認 ' + r.count + '/2 になりました。';
+          r.dueDay = addDays(day, I[r.step]);
+        } else if (independent) {
+          out.msg = '学習した日の正解は、定着の回数には数えません。';
+        } else if (correct) {
+          out.msg = '単語の意味を見たあとの正解（ヒントあり）は、定着の回数には数えません。次の確認を早めます。';
+          r.dueDay = tomorrow;
+        } else {
+          r.step = 0; r.dueDay = tomorrow;
+          out.msg = '定着の回数 ' + r.count + '/2 はそのままです。次の確認を早めます（' + D().labelOfKey(tomorrow) + '）。';
+        }
+      } else if (r.phase === 'recheck') {
+        if (independent) {
+          r.phase = 'settled'; r.dueDay = addDays(day, I[r.step]);
+          out.msg = '再確認できました。次からは、まとめ復習に戻ります。';
+        } else {
+          r.dueDay = tomorrow;
+          out.msg = '次も単独の短文で再確認します（' + D().labelOfKey(tomorrow) + '）。';
+        }
+      } else { // settled（まとめ復習）
+        if (independent) { r.step = Math.min(r.step + 1, max); r.dueDay = addDays(day, I[r.step]); }
+        else {
+          r.phase = 'recheck'; r.dueDay = tomorrow;
+          out.msg = 'この項目は、' + D().labelOfKey(tomorrow) + '以降に単独の短文で再確認します。';
+        }
+      }
+      if (!correct) r.next = { basic: false, text: nextText(skill, false) };
+      else if (!a.hintUsed) r.next = null;
+      r.needBasicUsed = !!r.needBasic; r.needBasic = false;
+    }
+    r.log.push({ at: a.answeredAt, day: day, qid: q.id, purpose: purpose, reread: reread, extra: extra, correct: correct, hint: !!a.hintUsed, counted: out.counted });
+    if (r.next && r.next.basic) r.needBasic = true;
+    out.phase = r.phase; out.count = r.count; out.next = r.next ? r.next.text : '';
+    a.readingResult = out;
+    return out;
+  }
+
+  /** 誤答のあと、単語の意味を見ずに解説へ進んだ（原因がはっきりしない）→ 次は基本語の短文 */
+  function unclear(state, a) {
+    var q = D().findQ(a.questionId); if (!q) return;
+    var r = ensure(state, q.skill, D().dayKey(a.answeredAt));
+    r.next = { basic: true, text: nextText(q.skill, true) }; r.needBasic = true;
+    if (a.readingResult) a.readingResult.next = r.next.text;
+  }
+
+  /* ---------- 出題する問題を選ぶ ---------- */
+  function seen(state) {
+    var s = {};
+    state.attempts.forEach(function (a) { if (!(s[a.questionId] >= a.answeredAt)) s[a.questionId] = a.answeredAt || 1; });
+    return s;
+  }
+  function pool(use, skill) {
+    return rbank().questions.filter(function (q) { return q.status !== 'excluded' && q.readingUse === use && (!skill || q.skill === skill); });
+  }
+  /** 単独の短文：初見を優先（基本語が必要なら基本語の短文）。すべて見た場合は、しばらく見ていないもの */
+  function pickSingle(state, skill, exclude) {
+    var r = store(state).skills[skill] || {}, sn = seen(state); exclude = exclude || {};
+    var order = r.needBasic ? ['basic', 'check'] : ['check', 'basic'];
+    for (var i = 0; i < order.length; i++) {
+      var fresh = pool(order[i], skill).filter(function (q) { return !sn[q.id] && !exclude[q.id]; });
+      if (fresh.length) return { q: fresh[0], fresh: true };
+    }
+    var all = pool(order[0], skill).concat(pool(order[1], skill)).filter(function (q) { return !exclude[q.id]; })
+      .sort(function (x, y) { return (sn[x.id] || 0) - (sn[y.id] || 0); });
+    return all.length ? { q: all[0], fresh: false } : null;
+  }
+  function passages() {
+    var by = {};
+    pool('summary').forEach(function (q) { (by[q.passage] = by[q.passage] || []).push(q); });
+    return Object.keys(by).map(function (k) { return { id: k, qs: by[k] }; });
+  }
+  /** まとめ復習：primary を含む英文。due（ほかの対象）と組み合わせられれば2問、なければ primary の設問だけ */
+  function pickSummary(state, primary, others) {
+    var sn = seen(state);
+    var cands = passages().filter(function (p) { return p.qs.some(function (q) { return q.skill === primary; }); });
+    function fresh(p) { return p.qs.every(function (q) { return !sn[q.id]; }); }
+    function lastSeen(p) { return Math.max.apply(null, p.qs.map(function (q) { return sn[q.id] || 0; })); }
+    var best = null;
+    others.some(function (o) {
+      var withO = cands.filter(function (p) { return p.qs.some(function (q) { return q.skill === o; }); });
+      var f = withO.filter(fresh);
+      if (f.length) { best = { p: f[0], skills: [primary, o] }; return true; }
+      return false;
+    });
+    if (!best) {
+      var f2 = cands.filter(fresh);
+      var p = f2[0] || cands.slice().sort(function (x, y) { return lastSeen(x) - lastSeen(y); })[0];
+      if (!p) return null;
+      // 初見の組み合わせがないときも、ほかの対象と一緒に確かめられる英文なら2問にする
+      var other = others.filter(function (o) { return p.qs.some(function (q) { return q.skill === o; }); })[0];
+      best = { p: p, skills: other ? [primary, other] : [primary] };
+    }
+    return { passage: best.p.id, qs: best.p.qs.filter(function (q) { return best.skills.indexOf(q.skill) >= 0; }) };
+  }
+
+  /** 今日まだ解ける短文の対象（文法の復習が今日の予定の項目は除く） */
+  function targets(state, now) {
+    var today = D().dayKey(now), st = store(state).skills;
+    var singles = [], summary = [];
+    grammarSkills().forEach(function (sk) {
+      var r = st[sk];
+      if (!r || !r.dueDay || r.dueDay > today) return;
+      var g = grammarDue(state, sk);
+      if (g && g <= today) return; // 文法問題で確かめてから短文へ
+      var t = { skill: sk, dueDay: r.dueDay, delay: diffDays(r.dueDay, today), phase: r.phase };
+      (r.phase === 'settled' ? summary : singles).push(t);
+    });
+    var byDue = function (a, b) { return a.dueDay < b.dueDay ? -1 : a.dueDay > b.dueDay ? 1 : 0; };
+    singles.sort(byDue); summary.sort(byDue);
+    return { today: today, singles: singles, summary: summary };
+  }
+
+  /** 今日のおすすめ（英文1本）。対象がなければ null */
+  function recommend(state, now) {
+    var t = targets(state, now);
+    var late = t.summary.filter(function (x) { return x.delay >= DELAY_PRIORITY_DAYS; });
+    function summaryRec(why) {
+      var primary = t.summary[0]; // 予定日が最も古い（最も長く待っている）項目
+      var pick = pickSummary(state, primary.skill, t.summary.slice(1).map(function (x) { return x.skill; }));
+      return pick && { kind: 'summary', why: why, passage: pick.passage, items: pick.qs.map(function (q) { return { questionId: q.id, skill: q.skill, purpose: 'summary' }; }),
+        skills: pick.qs.map(function (q) { return q.skill; }), delay: primary.delay };
+    }
+    if (late.length) return summaryRec('late');
+    if (t.singles.length) {
+      var x = t.singles[0], p = pickSingle(state, x.skill);
+      if (p) return { kind: 'single', why: x.phase === 'recheck' ? 'recheck' : 'check', skills: [x.skill], fresh: p.fresh,
+        items: [{ questionId: p.q.id, skill: x.skill, purpose: x.phase === 'recheck' ? 'recheck' : 'check' }] };
+    }
+    if (t.summary.length) return summaryRec('due');
+    return null;
+  }
+  /** 今日すでに取り組んだ英文の本数 */
+  function passagesToday(state, now) {
+    var d = store(state).daily, today = D().dayKey(now);
+    return d && d.day === today ? d.passages : 0;
+  }
+  function countPassage(state, now) {
+    var s = store(state), today = D().dayKey(now);
+    if (!s.daily || s.daily.day !== today) s.daily = { day: today, passages: 0 };
+    s.daily.passages++;
+  }
+
+  /** 項目の状態（表示用） */
+  function status(state, skill) {
+    var r = store(state).skills[skill];
+    if (!r) return { kind: 'none', label: '短文読解はまだ', short: '読解 —' };
+    var hist = r.settledHistory || [];
+    var past = hist.length ? '（' + D().labelOfKey(hist[hist.length - 1].day) + 'に定着）' : '';
+    if (r.phase === 'settled') return { kind: 'settled', label: '定着' + past, short: '読解 定着', r: r };
+    if (r.phase === 'recheck') return { kind: 'recheck', label: '短文で再確認' + past, short: '読解 再確認', r: r };
+    return { kind: 'pre', label: '定着前 ' + r.count + '/2', short: '読解 ' + r.count + '/2', r: r };
+  }
+
+  EA.reading = {
+    BANK_ID: BANK_ID, DELAY_PRIORITY_DAYS: DELAY_PRIORITY_DAYS,
+    init: init, afterDiagnostic: afterDiagnostic, apply: apply, unclear: unclear, ensure: ensure,
+    pickSingle: pickSingle, pickSummary: pickSummary, targets: targets, recommend: recommend,
+    passagesToday: passagesToday, countPassage: countPassage, status: status, nextText: nextText, focusOf: focusOf, store: store
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* ---- js/app.js ---- */
 /*
  * app.js — 画面の表示と操作だけを扱います（判定・出題・保存のルールは他のファイル）
@@ -5603,8 +6257,9 @@ details.panel > p { margin-top: 8px; }
   var teacherUnlocked = false, teacherForm = null, teacherMsg = '', pinLockTimer = null;
   var TAP_GUARD_MS = 250;
 
-  var TYPE_LABEL = { diagnostic: 'Lv1（初回）', retry: '解き直し', similar: '類題', followup: '確認問題', review: '復習', trial: '試作', self: 'もう一度練習' };
-  var SESSION_LABEL = { diagnostic: '不定詞 Lv1', practice: '類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習' };
+  var TYPE_LABEL = { diagnostic: 'Lv1（初回）', retry: '解き直し', similar: '類題', followup: '確認問題', review: '復習', trial: '試作', self: 'もう一度練習', reading: '短文読解', reread: '短文・答え直し' };
+  var SESSION_LABEL = { diagnostic: '不定詞 Lv1', practice: '類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習', reading: '短文読解' };
+  var READ_PURPOSE = { sameDay: '短文読解（学習日）', check: '短文読解（後日の確認）', recheck: '短文読解（再確認）', summary: 'まとめ復習', basic: '短文読解（基本語）' };
   var FORMAT_LABEL = { fill: '空所補充', order: '並び替え', ja2en: '日本語→英語', meaning: '意味の確認' };
   var LV1 = EA.banks.infinitive; // 不定詞 Lv1 の8問は、不定詞（基本）の問題集の set: 'lv1'
   var LV2 = EA.banks['infinitive-lv2']; // 不定詞 Lv2・Lv3 は別の問題集（範囲を選んで練習する。親の単元は不定詞）
@@ -5615,7 +6270,7 @@ details.panel > p { margin-top: 8px; }
   /** 問題の形式名（問題ごとに formatLabel があればそれ。用法の分類名は出さない） */
   function fmtLabel(qq) { return (qq && (qq.formatLabel || FORMAT_LABEL[qq.format])) || ''; }
   /** 回答の種類の表示名（決まった問題の練習は、その名前） */
-  function typeLabelOf(a) { if (a.sessionType === 'diagnostic' && a.retryOf) return 'Lv1・解き直し'; return SET_SHORT[a.practiceSet] ? SET_SHORT[a.practiceSet] + (a.retryOf ? '・解き直し' : '') : (TYPE_LABEL[a.attemptType] || a.attemptType); }
+  function typeLabelOf(a) { if (a.reading) return (READ_PURPOSE[a.readingPurpose] || '短文読解') + (a.attemptType === 'reread' ? '・答え直し' : ''); if (a.sessionType === 'diagnostic' && a.retryOf) return 'Lv1・解き直し'; return SET_SHORT[a.practiceSet] ? SET_SHORT[a.practiceSet] + (a.retryOf ? '・解き直し' : '') : (TYPE_LABEL[a.attemptType] || a.attemptType); }
   /** 学習回の表示名（決まった問題の練習は、その名前） */
   function sessionLabelOf(s) { return P.practiceSetLabel(s.practiceSet) || SESSION_LABEL[s.type]; }
   var plain = U.plain, rich = U.rich;
@@ -5791,7 +6446,9 @@ details.panel > p { margin-top: 8px; }
       return h;
     }
     if (qq.format === 'meaning') {
-      if (qq.jaShown && !qq.sentence) {
+      if (qq.reading) {
+        h += '<p class="q-passage" lang="en">' + esc(qq.sentence) + '</p><p class="q-ja q-question">' + esc(qq.question) + '</p>';
+      } else if (qq.jaShown && !qq.sentence) {
         // 正しい語順を選ぶ：日本語 → 設問（日本語の意味まで含めて選ぶ）
         h += '<p class="q-ja">' + esc(qq.ja) + '</p>';
         h += '<p class="q-ja q-question">' + esc(qq.question) + '</p>';
@@ -5841,7 +6498,7 @@ details.panel > p { margin-top: 8px; }
     var inSession = view.name === 'session' && state.activeSession;
     var navItems = [['home', 'ホーム', 'home'], ['units', '単元', 'book'], ['history', '履歴・復習', 'chart'], ['settings', '設定', 'gear']];
     var nav = inSession ? '' : '<nav class="nav" aria-label="メニュー">' + navItems.map(function (n) {
-      var cur = view.name === n[0] || (n[0] === 'history' && view.name === 'question') || (n[0] === 'settings' && view.name === 'teacher-time') ||
+      var cur = view.name === n[0] || (n[0] === 'history' && (view.name === 'question' || view.name === 'day-unit')) || (n[0] === 'settings' && view.name === 'teacher-time') ||
         (n[0] === 'home' && (view.name === 'today' || view.name === 'record'));
       return '<button type="button" class="nav-item' + (cur ? ' is-current' : '') + '" data-go="' + n[0] + '"' + (cur ? ' aria-current="page"' : '') + '>' + icon(n[2]) + '<span>' + n[1] + '</span></button>';
     }).join('') + '</nav>';
@@ -5974,6 +6631,7 @@ details.panel > p { margin-top: 8px; }
       '<div class="hero-actions">' +
       (task.cta ? '<button type="button" class="btn-primary btn-lg hero-cta" data-act="task-' + task.kind + '">' + esc(task.cta) + icon('chevron') + '</button>'
         : '<button type="button" class="btn-quiet hero-cta" data-go="history">' + icon('book') + '解説と回答を見返す</button>') +
+      (task.moreReading ? '<button type="button" class="btn-quiet hero-cta" data-act="reading-more">' + icon('book') + '短文読解をもう１本</button>' : '') +
       '</div>' +
       (task.kind === 'resume' && task.dueWaiting ? '<p class="hero-due" role="note">' + icon('calendar') +
         '<span>復習 <strong class="num">' + task.dueWaiting + '</strong>件が待っています（この学習のあとに始められます）</span></p>' : '') +
@@ -6003,6 +6661,7 @@ details.panel > p { margin-top: 8px; }
           '<span class="skill-line-status st-' + ls.cls + '"><span aria-hidden="true">' + ls.mark + '</span>' + ls.text + '</span>' +
           '<span class="skill-line-ach">' + achievementMeter(st.achievement) + '実績 ' + st.achievement + '/3</span>' +
           '<span class="skill-line-due' + (dueToday ? ' is-today' : '') + '">' + dueText + '</span>' +
+          '<span class="skill-line-read rs-' + EA.reading.status(state, sk.id).kind + '">' + esc(EA.reading.status(state, sk.id).short) + '</span>' +
           icon('chevron') + '</button></li>';
       }).join('') + '</ul>' +
       '<p class="panel-note skills-note">実績 ＝ これまでの確認（アプリ内の記録で、習得の保証ではありません）。項目を押すと詳しい実績を確認できます。</p></section>';
@@ -6290,23 +6949,27 @@ details.panel > p { margin-top: 8px; }
       self: item.retryOf ? '間違えた問題と同じ形式・同じ用法の、別の問題です。' : isLevelSet(s.practiceSet) ? '自分で始めた練習です。確認状況・復習予定には反映しません。' : '自分で始めた練習です（範囲：' + (s.rangeLabel || '全範囲') + '）。確認状況・復習予定には反映しません。'
     }[item.attemptType] || '';
     if (item.retryOf) typeNote = '間違えた問題と同じ形式・同じ用法の、別の問題です。';
+    if (qq2.reading) typeNote = item.attemptType === 'reread' ? '単語の意味を見て、同じ問いにもう一度答えます。' :
+      item.readingPurpose === 'basic' ? '基本の単語で書いた別の短文です。同じ文法での読み取りを確かめます。' :
+      item.readingPurpose === 'sameDay' ? '学んだ文法を手がかりに、初めて読む英文の内容を読み取ります。' : '初めて読む英文です。';
     // 確認問題は、問題画面の見出しでは「類題」と短く示す（記録・履歴の種類は「確認問題」のまま）
-    var typeLabel = s.type === 'diagnostic' ? (item.retryOf ? 'Lv1・解き直し' : 'Lv1') : SET_SHORT[s.practiceSet] ? SET_SHORT[s.practiceSet] + (item.retryOf ? '・解き直し' : '') : item.attemptType === 'followup' ? '類題' : TYPE_LABEL[item.attemptType];
+    var typeLabel = qq2.reading ? (s.type === 'diagnostic' ? 'Lv1・' : '') + (item.readingPurpose === 'summary' ? 'まとめ復習' : '短文読解') + (item.attemptType === 'reread' ? '・答え直し' : '') :
+      s.type === 'diagnostic' ? (item.retryOf ? 'Lv1・解き直し' : 'Lv1') : SET_SHORT[s.practiceSet] ? SET_SHORT[s.practiceSet] + (item.retryOf ? '・解き直し' : '') : item.attemptType === 'followup' ? '類題' : TYPE_LABEL[item.attemptType];
 
     // 初回診断の1問目を初めて開いたときだけ、結果と解説がいつ出るかを短く案内する（そのまま答えられる位置）。
     // 診断を始めた直後だけ firstNoteFor が立つ。途中から再開したとき・再読み込みしたとき・2問目以降では出さない
     var firstDiag = firstNoteFor === s.id && s.type === 'diagnostic' && s.index === 0 && cur.phase === 'answer';
     var body = '<section class="sheet" aria-live="polite">' +
-      '<p class="eyebrow">' + esc(typeLabel) + ' ・ ' + esc(fmtLabel(qq2)) + (typeNote ? '<span class="eyebrow-note">' + esc(typeNote) + '</span>' : '') + '</p>' +
+      '<p class="eyebrow">' + esc(typeLabel) + (qq2.reading ? '' : ' ・ ' + esc(fmtLabel(qq2))) + (typeNote ? '<span class="eyebrow-note">' + esc(typeNote) + '</span>' : '') + '</p>' +
       (firstDiag ? '<p class="first-note" role="note">' + icon('clock') + '<span>答えるたびに、正誤と解説を表示します</span></p>' : '');
 
     if (cur.phase === 'answer') {
       body += questionPromptHtml(qq2, cur.draft, { hideJa: qq2.showJa === 'after' }) + '<div class="answer-area" id="answer-area">' + answerControlHtml(qq2, cur) + '</div>';
-      if (cur.hintUsed) body += '<div class="hint" role="note"><span class="label">ヒント</span>' + esc(qq2.hint) + '</div>';
+      if (cur.hintUsed) body += qq2.gloss ? glossHtml(qq2) : '<div class="hint" role="note"><span class="label">ヒント</span>' + esc(qq2.hint) + '</div>';
       body += '<div class="helpers">' +
         '<button type="button" class="btn-toggle" data-act="unsure" aria-pressed="' + (cur.unsure ? 'true' : 'false') + '">' +
           '<span class="toggle-box" aria-hidden="true">' + (cur.unsure ? '✓' : '') + '</span>自信がない</button>' +
-        (qq2.hint ? '<button type="button" class="btn-quiet" data-act="hint"' + (cur.hintUsed ? ' disabled' : '') + '>ヒントを見る</button>' : '') +
+        (qq2.hint ? '<button type="button" class="btn-quiet" data-act="hint"' + (cur.hintUsed ? ' disabled' : '') + '>' + (qq2.gloss ? '単語の意味を見る' : 'ヒントを見る') + '</button>' : '') +
         '<button type="button" class="btn-quiet" data-act="giveup">' + giveUpLabel(s) + '</button>' +
         '<span class="helpers-note">' + (qq2.hint ? '「自信がない」「ヒントを見る」は押さなくてかまいません。押しても減点はありません（ヒントを見た場合は「ヒントあり」と記録します）。' : '「自信がない」は押さなくてかまいません。押しても減点はありません。') + '「' + giveUpLabel(s) + '」を押すと、この問題は「わからない」として記録され、正解には数えられません。' +
           '' + '</span>' +
@@ -6317,15 +6980,20 @@ details.panel > p { margin-top: 8px; }
       if (cur.phase === 'reason') {
         // 意味の問いに答えるまでは、日本語訳・正答・正誤・解説を出さない。英文と、聞いている部分（太字）だけを示す
         body += reasonAskHtml(qq2, cur);
+      } else if (qq2.reading && cur.readingHold) {
+        body += readingHoldHtml(qq2, a, cur);
       } else {
         body += questionPromptHtml(qq2, qq2.format === 'fill' ? a.response : null);
+        if (qq2.reading && a.hintUsed) body += glossHtml(qq2);
         if (qq2.choices) body += resultChoicesHtml(qq2, a, cur);
         else body += '<div class="your-answer"><span class="label">あなたの答え</span><span lang="en">' + (a.responseText ? esc(a.responseText) : '（わからない）') + '</span></div>';
         body += '<div class="verdict"><span class="label">答え</span>' + resultBadge(a.result) + flagsHtml(a) + '</div>';
         if (a.feedback) body += '<p class="feedback-note">' + esc(a.feedback) + '</p>';
         body += orderInfoHtml(qq2, a) + tfCorrectionHtml(qq2);
         if (a.reason) body += reasonResultHtml(qq2, a);
-        if (a.followUp) {
+        if (qq2.reading) body += readingResultHtml(a);
+        if (a.followUp && a.followUp.kind === 'basic') body += '<div class="next-note" role="note"><strong>このあと、基本の単語で書いた別の短文で、同じ文法での読み取りを確かめます。</strong></div>';
+        else if (a.followUp) {
           body += '<div class="next-note" role="note">' + (a.followUp.added
             ? '<strong>' + (a.followUp.kind === 'retry' ? 'このあと、同じ形式・同じ用法の別の問題で解き直します。' : 'このあと、単語や場面を変えた問題でもう一度確かめます。') + '</strong>'
             : esc(a.followUp.why)) + '</div>';
@@ -6337,6 +7005,38 @@ details.panel > p { margin-top: 8px; }
       }
     }
     return progress + body + '</section>';
+  }
+
+  /** 短文読解：必要な単語の意味（語注） */
+  function glossHtml(qq) {
+    return '<div class="hint gloss" role="note"><span class="label">単語の意味</span><dl class="gloss-list">' + (qq.gloss || []).map(function (g) {
+      return '<dt lang="en">' + esc(g[0]) + '</dt><dd>' + esc(g[1]) + '</dd>';
+    }).join('') + '</dl></div>';
+  }
+  /** 短文読解の1回目の誤答：正答は見せずに、答え直すか、答えと解説を見るかを選ぶ */
+  function readingHoldHtml(qq, a, cur) {
+    var mine = a.response;
+    return questionPromptHtml(qq, null) +
+      '<ul class="choices choices-result choices-1col" aria-label="あなたの答え">' + ordered(qq.choices, cur.choiceOrder).map(function (c) {
+        var isMine = c.id === mine;
+        return '<li class="choice choice-result ' + (isMine ? 'is-wrong' : 'is-other') + '"><span class="result-icon" aria-hidden="true">' + (isMine ? '×' : '') + '</span>' +
+          '<span class="choice-text">' + rich(c.text) + '</span>' + (isMine ? '<span class="result-tag">× あなたの答え</span>' : '') + '</li>';
+      }).join('') + '</ul>' +
+      '<div class="verdict"><span class="label">答え</span>' + resultBadge(a.result) + '</div>' +
+      readingResultHtml(a, true) +
+      '<div class="reread-box"><p>必要な単語の意味だけを見て、同じ問いにもう一度答えられます（正解は「ヒントあり」として記録します）。</p>' +
+      '<div class="actions-inline"><button type="button" class="btn-primary btn-lg" data-act="reading-reread">単語の意味を見て、もう一度答える</button>' +
+      '<button type="button" class="btn-quiet" data-act="reading-reveal">答えと解説を見る</button></div></div>';
+  }
+  /** 短文読解の結果の補足：定着の回数・次に何をするか */
+  function readingResultHtml(a, holding) {
+    var r = a.readingResult;
+    if (!r) return '';
+    // 答え直すかどうかを選ぶ前は、次にすること（次は別の短文で…）はまだ出さない
+    var nxt = !holding && (r.next && EA.grading.isSkillWrong(a.result) || (r.next && a.hintUsed)) ? r.next : '';
+    if (!r.msg && !nxt) return '';
+    return '<div class="next-note reading-note" role="note">' + (r.msg ? '<p>' + esc(r.msg) + '</p>' : '') +
+      (nxt ? '<p><strong>' + icon('arrow') + ' ' + esc(nxt) + '</strong></p>' : '') + '</div>';
   }
 
   /** 並べ替え（余分な語・不足語）の回答の補足：使わなかった語句・補った語と、原本の余分な語・不足語 */
@@ -6846,7 +7546,82 @@ details.panel > p { margin-top: 8px; }
           '<span class="unit-pick-name">' + esc(b.unit.title) + '</span>' +
           (ri.kind === 'ready' ? '<span class="unit-pick-due">' + icon('repeat') + '復習' + ri.count + '問</span>' : '') +
           icon('chevron') + '</button></li>';
-      }).join('') + '</ul>';
+      }).join('') + '</ul>' + dateListHtml();
+  }
+
+  /* ================= 履歴・復習：日付別の学習記録（日付 → 単元 → 間違えた問題） ================= */
+  /** 回答した時点の問題文と正解（保存済みの控えを優先）。当時の内容を確認できないときは note に理由 */
+  function contentOf(a) {
+    var qq = D.findQ(a.questionId), snap = a.snapshot;
+    var known = typeof a.questionVersion === 'number', same = !!qq && known && a.questionVersion === qq.version;
+    var prompt = snap && snap.prompt ? snap.prompt : qq ? D.promptTextOf(qq) : '';
+    var correct = snap && snap.correct ? snap.correct : qq ? D.correctTextOf(qq) : '';
+    var note = '';
+    if (!snap) {
+      if (!qq) note = '旧データのため、当時の問題文と正解を確認できません。';
+      else if (!same) note = '旧データのため当時の問題文・正解は保存されていません。いまの問題（版 ' + qq.version + '）の内容を表示しています' + (known ? '（回答したのは版 ' + a.questionVersion + '）' : '') + '。';
+    }
+    return { prompt: prompt, correct: correct, note: note };
+  }
+  /** 回答の単元。問題が削除された古い記録は、文法項目（skillId）を持つ単元にまとめる */
+  function unitIdOfGroup(g) {
+    var u = attemptUnitId(g.first);
+    if (u) return u;
+    for (var k in EA.banks) if (EA.findSkill(EA.banks[k], g.first.skillId)) return EA.banks[k].unit.parent || k;
+    return 'other';
+  }
+  function unitTitle(id) { return EA.banks[id] ? EA.banks[id].unit.title : '（単元不明）'; }
+
+  /** 日付の一覧：今日を含む直近7日はすべて（学習しなかった日は「学習なし」）、それより前は1問以上回答した日だけ。新しい順 */
+  function dateListHtml() {
+    var today = todayKey(), keys = [];
+    for (var i = 0; i < 7; i++) keys.push(D.shiftKey(today, -i));
+    keys = keys.concat(D.daysWithRecords(state.attempts).filter(function (k) { return k < keys[6]; }));
+    var open = view.params.openDay;
+    return '<section aria-labelledby="days-title" class="day-list-section"><h2 id="days-title" class="section-title">日付別の学習記録</h2>' +
+      '<ul class="day-list" aria-label="日付（新しい順）">' + keys.map(function (k) {
+        var groups = D.dayGroups(state.attempts, k), sum = D.summarize(groups);
+        var label = D.labelOfKey(k) + (k === today ? '（今日）' : '');
+        if (!groups.length) return '<li class="day-row is-empty"><span class="day-date">' + esc(label) + '</span><span class="day-sum muted">学習なし</span></li>';
+        var isOpen = open === k, units = {}, order = [];
+        groups.forEach(function (g) {
+          var u = unitIdOfGroup(g);
+          if (!units[u]) { units[u] = []; order.push(u); }
+          units[u].push(g);
+        });
+        return '<li class="day-row' + (isOpen ? ' is-open' : '') + '"><span class="day-date">' + esc(label) + '</span>' +
+          '<span class="day-sum"><span class="num">' + sum.problems + '</span>問・誤答 <span class="num">' + sum.wrong + '</span></span>' +
+          '<button type="button" class="btn-quiet day-open" data-act="day-open" data-day="' + k + '" aria-expanded="' + isOpen + '" aria-controls="day-' + k + '">単元を見る' + icon('chevron') + '</button>' +
+          (isOpen ? '<ul class="day-units" id="day-' + k + '">' + order.map(function (u) {
+            var s2 = D.summarize(units[u]);
+            return '<li><button type="button" class="day-unit" data-act="day-unit" data-day="' + k + '" data-unit="' + esc(u) + '">' +
+              '<span class="day-unit-name">' + esc(unitTitle(u)) + '</span>' +
+              '<span class="day-unit-sum">問題 <span class="num">' + s2.problems + '</span>・誤答 <span class="num' + (s2.wrong ? ' is-ng' : '') + '">' + s2.wrong + '</span></span>' +
+              icon('chevron') + '</button></li>';
+          }).join('') + '</ul>' : '') + '</li>';
+      }).join('') + '</ul></section>';
+  }
+
+  /** その日・その単元で間違えた問題：問題文・最初に誤答したときの自分の回答・正解（解き直しで正解していても最初の誤答を出す） */
+  function renderDayUnit() {
+    var day = view.params.day, unit = view.params.unit;
+    var groups = D.dayGroups(state.attempts, day).filter(function (g) { return unitIdOfGroup(g) === unit; });
+    var wrong = groups.filter(function (g) { return g.hadWrong; });
+    var h = '<button type="button" class="btn-text back" data-act="day-back" data-day="' + esc(day) + '">← 日付の一覧に戻る</button>' +
+      '<p class="eyebrow">' + esc(D.labelOfKey(day)) + '</p><h1 class="page-title">' + esc(unitTitle(unit)) + '</h1>' +
+      '<p class="lead">この日に取り組んだ問題 ' + groups.length + '問のうち、間違えた問題 ' + wrong.length + '問</p>';
+    if (!wrong.length) return h + '<p class="muted">この日、この単元で間違えた問題はありません。</p>';
+    return h + '<ul class="wrong-list">' + wrong.map(function (g) {
+      var fw = g.attempts.filter(function (a) { return !a.gaveUp && a.result === 'incorrect'; })[0];
+      var c = contentOf(fw);
+      return '<li class="panel wrong-item"><p class="wrong-tags">' + tagsHtml(g) + '<span class="muted">' + esc(D.timeOf(fw.answeredAt)) + ' ・ ' + esc(typeLabelOf(fw)) + '</span></p>' +
+        '<dl class="wrong-grid">' +
+          '<dt>問題文</dt><dd class="wrong-prompt" lang="en">' + (c.prompt ? esc(c.prompt) : '<span lang="ja" class="muted">確認できません</span>') + '</dd>' +
+          '<dt>最初の回答</dt><dd class="wrong-mine" lang="en">' + esc(fw.responseText || '（なし）') + '</dd>' +
+          '<dt>正解</dt><dd class="wrong-correct" lang="en">' + (c.correct ? esc(c.correct) : '<span lang="ja" class="muted">確認できません</span>') + '</dd>' +
+        '</dl>' + (c.note ? '<p class="rec-version" role="note">' + esc(c.note) + '</p>' : '') +
+        '<div class="actions-inline"><button type="button" class="btn-text" data-act="record-open" data-day="' + esc(day) + '" data-key="' + esc(g.key) + '">解説と解き直しの結果を見る</button></div></li>';
+    }).join('') + '</ul>';
   }
 
   /** 単元の詳細：見出し＝単元名、上に「復習」、下に「学習履歴」（この単元の記録だけ） */
@@ -6886,6 +7661,17 @@ details.panel > p { margin-top: 8px; }
     return h;
   }
 
+  /** 短文読解の状態（定着の回数・次の確認日・次にすること） */
+  function readingStatusRows(skillId) {
+    var rs = EA.reading.status(state, skillId);
+    if (rs.kind === 'none') return '<dt>短文読解</dt><dd class="muted">まだ（不定詞 Lv1 のあとに始まります）</dd>';
+    var r = rs.r;
+    return '<dt>短文読解</dt><dd class="rs-' + rs.kind + '"><strong>' + esc(rs.label) + '</strong>' +
+      (r.countDays.length ? '<span class="muted">正解した日：' + r.countDays.map(D.labelOfKey).join('・') + '</span>' : '') + '</dd>' +
+      '<dt>短文の次の確認</dt><dd>' + esc(D.labelOfKey(r.dueDay)) + (rs.kind === 'settled' ? '（まとめ復習）' : '（単独の短文）') +
+      (r.next ? '<span class="muted">' + esc(r.next.text) + '</span>' : '') + '</dd>';
+  }
+
   /** 項目ごとの確認状況と復習予定（選んだ単元の項目・問題だけ） */
   function skillPanelsHtml(bank, t) {
     return bank.skills.map(function (sk) {
@@ -6901,6 +7687,7 @@ details.panel > p { margin-top: 8px; }
             '<dt>いまの状態</dt><dd class="tone-text-' + st.tone + '">' + esc(st.headline) + '</dd>' +
             '<dt>これまでの確認実績</dt><dd>' + achievementMeter(st.achievement) + ' ' + esc(st.achievementLabel) + '</dd>' +
             '<dt>意味の確認</dt><dd>' + esc(meaningText) + '</dd>' +
+            readingStatusRows(sk.id) +
           '</dl>' +
           // 詳しい実績（ホームの一行では「実績 n/3」だけを示す）
           '<ul class="ach-list" aria-label="これまでの確認実績">' + ACH_SHORT.map(function (label, j) {
@@ -7381,6 +8168,7 @@ details.panel > p { margin-top: 8px; }
       case 'settings': main = renderSettings(); break;
       case 'today': main = renderToday(); break;
       case 'record': main = renderRecord(); break;
+      case 'day-unit': main = renderDayUnit(); break;
       case 'teacher-time': main = teacherUnlocked ? (view.params.tab === 'records' ? renderTeacherRecords() : renderTeacherTime()) : renderTeacherLock(); break;
       default: main = renderHome();
     }
@@ -7552,6 +8340,18 @@ details.panel > p { margin-top: 8px; }
         startSession(P.buildReviewSession(state, rb, t.app)); break;
       }
       case 'save-home': saveAndGoHome(); break;
+      case 'task-reading': case 'reading-more': {
+        if (state.activeSession) { go('session'); break; }
+        var rs = P.buildReadingSession(state, t.app);
+        if (rs) startSession(rs); else { notice = '今日の短文読解の対象は、もうありません。'; go('home'); }
+        break;
+      }
+      case 'reading-reread': { var rr = S.reread(state, SB(), t); if (rr === false) break; tapGuardUntil = Date.now() + TAP_GUARD_MS; afterProgress(rr); break; }
+      case 'reading-reveal': if (S.reveal(state)) { persist(); render(); } break;
+      case 'day-open': view.params.openDay = view.params.openDay === el.getAttribute('data-day') ? null : el.getAttribute('data-day'); render();
+        var dob = appEl.querySelector('[data-act="day-open"][data-day="' + el.getAttribute('data-day') + '"]'); if (dob) dob.focus({ preventScroll: true }); break;
+      case 'day-back': go('history', { openDay: el.getAttribute('data-day') }); var db = appEl.querySelector('[data-act="day-open"][data-day="' + el.getAttribute('data-day') + '"]'); if (db) db.scrollIntoView({ block: 'center' }); break;
+      case 'day-unit': go('day-unit', { day: el.getAttribute('data-day'), unit: el.getAttribute('data-unit') }); break;
       case 'choose': selectChoice(el.getAttribute('data-choice')); break;
       case 'toggle-explain': toggleExplanation(el); break;
       case 'toggle-help': toggleHelp(el); break;
@@ -7722,6 +8522,7 @@ details.panel > p { margin-top: 8px; }
         go('teacher-time', { tab: 'records', day: ev.target.value > todayKey() ? todayKey() : ev.target.value, student: view.params.student });
       }
     });
+    EA.reading.init(state); // 以前の記録：Lv1 を終えている項目は、短文読解を定着前（0/2）から始める
     S.recover(state); // 前回、計時中のまま閉じていた場合も、閉じていた時間は学習時間に数えない
     var fixMsg = dropDeletedFromActiveSession();
     if (fixMsg) loadMessage = (loadMessage ? loadMessage + ' ' : '') + fixMsg;
