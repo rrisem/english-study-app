@@ -460,6 +460,10 @@ h2 .skill-term { margin-left: 10px; }
 mark { background: linear-gradient(transparent 45%, var(--marker) 45%); color: inherit; padding: 0 2px; }
 .ex-translation { font-size: var(--fs-l); }
 .ex-also { font-size: var(--fs-s); color: var(--muted); }
+.ex-others ul { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 6px; }
+.ex-others li { padding: 10px 14px; border-radius: var(--r-s); background: var(--surface-2); display: grid; gap: 2px; }
+.ex-other-choice { font-weight: 700; }
+.ex-other-why { font-size: var(--fs-s); color: var(--muted); }
 .ex-map { list-style: none; margin: 4px 0; padding: 0; display: grid; gap: 6px; }
 .ex-map li { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 14px; border-radius: var(--r-s); background: var(--surface-2); }
 .ex-map li.is-mark { background: var(--marker); color: var(--marker-ink); font-weight: 700; }
@@ -2799,6 +2803,163 @@ details.panel > p { margin-top: 8px; }
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- data/infinitive-lv2-explain.js ---- */
+/*
+ * infinitive-lv2-explain.js — 不定詞 Lv2 の解説の補足（Lv1 の解説と同じ形にそろえる）
+ *
+ * ■ 講師の方へ
+ *   問題ID（inf-lv2- を除いた部分）ごとに、解説に足す内容を書きます。原本の point（判断の根拠）はそのまま使います。
+ *     tr  … 英文の和訳（「英文から確実に分かること」は原本に和訳がないため、ここで足す）
+ *     ch  … 語句と意味の対応。「英語=日本語」を | で区切って文の順に書き、つなげると英文全体（文末の . を除く）になるようにする。
+ *           先頭に * を付けたまとまりを、解説の英文と表で強調する（その問題で見てほしい部分）。
+ *     tm  … 文法の名前（具体的な形）。書かないときは項目名。
+ *     cmp … 比べてみよう（形が似ていて意味が変わる表現）。任意。
+ *   選択肢がある問題では、解説の下に「ほかの選択肢がちがう理由」を、選択肢の説明（原本）から自動で表示します。
+ */
+(function (root) {
+  'use strict';
+  var EA = root.EA = root.EA || {};
+  EA.lv2Explain = {
+    /* ===== 動名詞 or 不定詞 ===== */
+    'gi-ord-01': { ch: 'Mika avoided=ミカは避けた（何を？）|*missing the last bus=最終バスを逃すこと', tm: 'avoid ＋ -ing（〜するのを避ける）', cmp: 'avoid の後ろに to do は置けません（× avoided to miss）。' },
+    'gi-ord-02': { ch: 'We decided=私たちは決めた（何を？）|*to leave after lunch=昼食後に出発すること', tm: 'decide ＋ to do（〜することにする）', cmp: 'decide の後ろに -ing は置けません（× decided leaving）。' },
+    'gi-ord-03': { ch: 'At midnight,=真夜中に|he stopped=彼はやめた（何を？）|*playing the piano=ピアノを弾くこと', tm: 'stop ＋ -ing（〜するのをやめる）', cmp: '比べてみよう：stopped playing（弾くのをやめた）／stopped to play（弾くために立ち止まった・手を止めた）' },
+    'gi-ord-04': { ch: 'She stopped=彼女は立ち止まった（何のために？）|*to drink some water=水を飲むために', tm: 'stop ＋ to do（〜するために止まる）', cmp: '比べてみよう：stopped to drink（飲むために立ち止まった）／stopped drinking（飲むのをやめた）' },
+    'gi-ord-05': { ch: 'I remember=私は覚えている（何を？）|*meeting him=彼に会ったこと|for the first time=初めて', tm: 'remember ＋ -ing（〜したことを覚えている）', cmp: '比べてみよう：remember meeting（会ったことを覚えている＝過去）／remember to meet（忘れずに会う＝これから）' },
+    'gi-ord-06': { ch: 'Before leaving,=出る前に|I remembered=私は覚えていた（何を？）|*to close the window=窓を閉めること', tm: 'remember ＋ to do（忘れずに〜する）', cmp: '比べてみよう：remembered to close（忘れずに閉めた）／remembered closing（閉めたことを覚えていた）。Before leaving の leaving は前置詞のあとの -ing です。' },
+    'gi-ord-07': { ch: 'They suggested=彼らは提案した（何を？）|*changing the schedule=日程を変えること', tm: 'suggest ＋ -ing（〜することを提案する）', cmp: 'suggest の後ろに to do は置けません（× suggested to change）。' },
+    'gi-ord-08': { ch: 'We agreed=私たちは同意した（何に？）|*to share the cost=費用を分担すること', tm: 'agree ＋ to do（〜することに同意する）', cmp: 'agree の後ろに -ing は置けません（× agreed sharing）。' },
+    'gi-fact-01': { tr: 'ミアは電話に出るために（していたことを）止めた。', ch: 'Mia stopped=ミアは手を止めた（何のために？）|*to answer the phone=電話に出るために', tm: 'stop ＋ to do（〜するために止まる）', cmp: '比べてみよう：stopped to answer（出るために手を止めた）／stopped answering（出るのをやめた）' },
+    'gi-fact-02': { tr: 'ケンは携帯を確認するのをやめた。', ch: 'Ken stopped=ケンはやめた（何を？）|*checking=確認すること|his phone=自分の携帯を', tm: 'stop ＋ -ing（〜するのをやめる）', cmp: '比べてみよう：stopped checking（確認するのをやめた）／stopped to check（確認するために手を止めた）' },
+    'gi-fact-03': { tr: 'リナはファイルを送ったことを覚えている。', ch: 'Lina remembers=リナは覚えている（何を？）|*sending=送ったこと|the file=そのファイルを', tm: 'remember ＋ -ing（〜したことを覚えている）', cmp: '比べてみよう：remembers sending（送ったことを覚えている）／remembers to send（忘れずに送る）' },
+    'gi-fact-04': { tr: '私は忘れずにドアに鍵をかけた。', ch: 'I remembered=私は覚えていた（何を？）|*to lock=鍵をかけること|the door=ドアに', tm: 'remember ＋ to do（忘れずに〜する）', cmp: '比べてみよう：remembered to lock（忘れずに鍵をかけた）／remembered locking（鍵をかけたことを覚えていた）' },
+    'gi-fact-05': { tr: '彼はパソコンを再起動しようとした。', ch: 'He tried=彼は試みた（何を？）|*to restart=再起動しようと|the computer=パソコンを', tm: 'try ＋ to do（〜しようとする）', cmp: '比べてみよう：tried to restart（再起動しようとした＝できたかは不明）／tried restarting（試しに再起動してみた）' },
+    'gi-fact-06': { tr: '彼女は試しにパソコンを再起動してみた。', ch: 'She tried=彼女は試した（何を？）|*restarting=再起動すること|the computer=パソコンを', tm: 'try ＋ -ing（試しに〜してみる）', cmp: '比べてみよう：tried restarting（実際にやってみた）／tried to restart（やろうとした）' },
+    'gi-fact-07': { tr: 'ユキはテーマを変えることを検討した。', ch: 'Yuki considered=ユキは検討した（何を？）|*changing=変えること|her topic=自分のテーマを', tm: 'consider ＋ -ing（〜することを検討する）', cmp: 'consider の後ろに to do は置けません（× considered to change）。' },
+    'gi-fact-08': { tr: '彼らは金曜日に会うことで合意した。', ch: 'They agreed=彼らは合意した（何に？）|*to meet=会うこと|on Friday=金曜日に', tm: 'agree ＋ to do（〜することに同意する）' },
+    'gi-wo-01': { ch: 'She finished=彼女は終えた（何を？）|*writing her essay=作文を書くこと|after school=放課後に', tm: 'finish ＋ -ing（〜し終える）', cmp: 'finish の後ろに to do は置けません（× finished to write）。' },
+    'gi-wo-02': { ch: 'We decided=私たちは決めた（何を？）|*to leave early=早く出ること|the next morning=翌朝', tm: 'decide ＋ to do（〜することにする）' },
+    'gi-wo-03': { ch: 'He stopped=彼は立ち止まった（何のために？）|*to check his bag=荷物を確かめるために', tm: 'stop ＋ to do（〜するために止まる）', cmp: '比べてみよう：stopped to check（確かめるために立ち止まった）／stopped checking（確かめるのをやめた）' },
+    'gi-wo-04': { ch: 'He stopped=彼はやめた（何を？）|*checking his bag=荷物を確かめること', tm: 'stop ＋ -ing（〜するのをやめる）', cmp: '比べてみよう：stopped checking（確かめるのをやめた）／stopped to check（確かめるために立ち止まった）' },
+    'gi-wo-05': { ch: 'I remember=私は覚えている（何を？）|*sending her an email=彼女にメールを送ったこと', tm: 'remember ＋ -ing（〜したことを覚えている）', cmp: '比べてみよう：remember sending（送ったことを覚えている）／remember to send（忘れずに送る）' },
+    'gi-wo-06': { ch: 'She offered=彼女は申し出た（何を？）|*to show us the way=私たちに道を教えること', tm: 'offer ＋ to do（〜しようと申し出る）', cmp: 'offer の後ろに -ing は置けません（× offered showing）。' },
+    'gi-wo-07': { ch: 'They suggested=彼らは提案した（何を？）|*meeting=会うこと|after lunch=昼食後に', tm: 'suggest ＋ -ing（〜することを提案する）', cmp: 'suggest の後ろに to do は置けません（× suggested to meet）。' },
+    'gi-wo-08': { ch: 'She avoided=彼女は避けた（何を？）|*answering the question=その質問に答えること', tm: 'avoid ＋ -ing（〜するのを避ける）', cmp: 'avoid の後ろに to do は置けません（× avoided to answer）。' },
+    'gi-tf-01': { ch: 'She finished=彼女は終えた（何を？）|*doing her homework=宿題をすること', tm: 'finish ＋ -ing（〜し終える）', cmp: '問題の英文 finished to do は、finish の後ろに to do を置いているので文法の誤りです。' },
+    'gi-tf-02': { ch: 'He refused=彼は拒んだ（何を？）|*to sign the document=その書類に署名すること', tm: 'refuse ＋ to do（〜することを拒む）', cmp: 'refuse の後ろに -ing は置けません（× refused signing）。' },
+    'gi-tf-03': { ch: 'She stopped=彼女は立ち止まった（何のために？）|*to take photos=写真を撮るために|in the garden=庭で', tm: 'stop ＋ to do（〜するために止まる）', cmp: '問題の英文 stopped taking photos は文法は正しいが「写真を撮るのをやめた」という意味で、日本語と合いません。' },
+    'gi-tf-04': { ch: 'I remember=私は覚えている（何を？）|*meeting her=彼女に会ったこと|here before=以前ここで', tm: 'remember ＋ -ing（〜したことを覚えている）' },
+    'gi-tf-05': { ch: 'She avoided=彼女は避けた（何を？）|*talking about the topic=その話題について話すこと', tm: 'avoid ＋ -ing（〜するのを避ける）', cmp: '問題の英文 avoided to talk は、avoid の後ろに to do を置いているので文法の誤りです。' },
+    'gi-tf-06': { ch: 'He decided=彼は決めた（何を？）|*to continue=続けること|*working=作業すること（を）|after the break=休憩のあとで', tm: 'decide ＋ to do／continue ＋ -ing', cmp: 'continue は to do も -ing も後ろに置けます（continue working / continue to work）。' },
+    'gi-tf-07': { ch: 'He tried=彼は試した（何を？）|*using a different browser=別のブラウザを使うこと', tm: 'try ＋ -ing（試しに〜してみる）', cmp: '比べてみよう：tried using（実際に使ってみた）／tried to use（使おうとした）' },
+    'gi-tf-08': { ch: 'They suggested=彼らは提案した（何を？）|*leaving=出発すること|after lunch=昼食後に', tm: 'suggest ＋ -ing（〜することを提案する）', cmp: '問題の英文 suggested to leave は、suggest の後ろに to do を置いているので文法の誤りです。' },
+
+    /* ===== not to do ===== */
+    'not-ord-01': { ch: 'We decided=私たちは決めた（何を？）|*not to open=開けないこと|the link=そのリンクを', tm: 'decide ＋ not to do（〜しないことにする）', cmp: 'not は to の直前に置きます（× decided to not open は避け、× not decided は「決めなかった」）。' },
+    'not-ord-02': { ch: 'She promised=彼女は約束した（何を？）|*not to tell=話さないこと|anyone the secret=誰にも秘密を', tm: 'promise ＋ not to do（〜しないと約束する）' },
+    'not-ord-03': { ch: 'Our teacher told us=先生は私たちに言った（何を？）|*not to open=開けないように|the window=窓を', tm: 'tell A ＋ not to do（A に〜しないように言う）', cmp: '比べてみよう：told us not to open（開けないように言った）／didn\'t tell us to open（開けるようには言わなかった）' },
+    'not-ord-04': { ch: 'I asked my brother=私は弟に頼んだ（何を？）|*not to use=使わないように|my notebook=私のノートを', tm: 'ask A ＋ not to do（A に〜しないように頼む）' },
+    'not-ord-05': { ch: 'The doctor advised him=医師は彼に助言した（何を？）|*not to go back=戻らないように|to work right away=すぐに仕事に', tm: 'advise A ＋ not to do（A に〜しないよう助言する）', cmp: 'go back to work の to は「〜へ」の前置詞です。不定詞の to は not の直後の to です。' },
+    'not-ord-06': { ch: 'She tried=彼女は努めた（何を？）|*not to rush=急がないように|her reply=返事を', tm: 'try ＋ not to do（〜しないようにする）', cmp: '比べてみよう：tried not to rush（急がないように心がけた）／didn\'t try to rush（急ごうとはしなかった）' },
+    'not-ord-07': { ch: 'The guide warned us=案内係は私たちに警告した（何を？）|*not to touch=触れないように|the exhibits=展示品に', tm: 'warn A ＋ not to do（A に〜しないよう警告する）' },
+    'not-ord-08': { ch: 'Ken decided=ケンは決めた（何を？）|*not to spread=広めないこと|the news=その知らせを', tm: 'decide ＋ not to do（〜しないことにする）' },
+    'not-fact-01': { tr: '私はチケットを買わないことにした。', ch: 'I decided=私は決めた（何を？）|*not to buy=買わないこと|the ticket=チケットを', tm: 'decide ＋ not to do（〜しないことにする）', cmp: '比べてみよう：decided not to buy（買わないと決めた）／didn\'t decide to buy（買うと決めたわけではない）' },
+    'not-fact-02': { tr: '私はチケットを買うと決めたわけではない。', ch: '*I didn\'t decide=私は決めなかった（何を？）|to buy the ticket=チケットを買うこと', tm: '否定の位置：didn\'t decide to do', cmp: '比べてみよう：didn\'t decide to buy（決定そのものを打ち消す）／decided not to buy（買わないと決めた）' },
+    'not-fact-03': { tr: 'マヤはレオに写真を共有しないよう頼んだ。', ch: 'Maya asked Leo=マヤはレオに頼んだ（何を？）|*not to share=共有しないように|the photo=写真を', tm: 'ask A ＋ not to do（A に〜しないように頼む）', cmp: '頼んだのは文の主語のマヤ、頼まれたのは asked のすぐあとのレオです。' },
+    'not-fact-04': { tr: '先生は私たちに携帯を使わないよう言った。', ch: 'Our teacher told us=先生は私たちに言った（何を？）|*not to use=使わないように|our phones=携帯を', tm: 'tell A ＋ not to do（A に〜しないように言う）' },
+    'not-fact-05': { tr: '彼女は結果を公表しないと約束した。', ch: 'She promised=彼女は約束した（何を？）|*not to reveal=公表しないこと|the result=結果を', tm: 'promise ＋ not to do（〜しないと約束する）' },
+    'not-fact-06': { tr: 'レオは笑わないようにした。', ch: 'Leo tried=レオは努めた（何を？）|*not to laugh=笑わないように', tm: 'try ＋ not to do（〜しないようにする）', cmp: 'tried not to laugh は「笑いをこらえようとした」。実際に笑わずにいられたかは書かれていません。' },
+    'not-fact-07': { tr: '私はその晩、返信しないことにした。', ch: 'I chose=私は選んだ（何を？）|*not to reply=返信しないこと|that evening=その晩', tm: 'choose ＋ not to do（〜しないことを選ぶ）' },
+    'not-fact-08': { tr: '案内係は私たちに橋を渡らないよう警告した。', ch: 'The guide warned us=案内係は私たちに警告した（何を？）|*not to cross=渡らないように|the bridge=橋を', tm: 'warn A ＋ not to do（A に〜しないよう警告する）' },
+    'not-wo-01': { ch: 'We decided=私たちは決めた（何を？）|*not to book=予約しないこと|the room=部屋を', tm: 'decide ＋ not to do（〜しないことにする）', cmp: '比べてみよう：decided not to book（予約しないと決めた）／didn\'t decide to book（予約すると決めたわけではない）' },
+    'not-wo-02': { ch: '*We didn\'t decide=私たちは決めなかった（何を？）|to book the room=部屋を予約すること', tm: '否定の位置：didn\'t decide to do', cmp: '比べてみよう：didn\'t decide to book（決定そのものを打ち消す）／decided not to book（予約しないと決めた）' },
+    'not-wo-03': { ch: 'She asked me=彼女は私に頼んだ（何を？）|*not to move=動かさないように|the box=その箱を', tm: 'ask A ＋ not to do（A に〜しないように頼む）' },
+    'not-wo-04': { ch: 'He promised=彼は約束した（何を？）|*not to be late=遅れないこと', tm: 'promise ＋ not to do（〜しないと約束する）' },
+    'not-wo-05': { ch: 'I tried=私は努めた（何を？）|*not to interrupt=遮らないように', tm: 'try ＋ not to do（〜しないようにする）' },
+    'not-wo-06': { ch: 'The coach told us=コーチは私たちに言った（何を？）|*not to run=走らないように', tm: 'tell A ＋ not to do（A に〜しないように言う）' },
+    'not-wo-07': { ch: 'They decided=彼らは決めた（何を？）|*not to discuss it=それを話し合わないこと|now=今は', tm: 'decide ＋ not to do（〜しないことにする）' },
+    'not-wo-08': { ch: 'She advised me=彼女は私に助言した（何を？）|*not to write=書かないように|my name=名前を', tm: 'advise A ＋ not to do（A に〜しないよう助言する）' },
+
+    /* ===== enough to do ===== */
+    'enough-ord-01': { ch: 'She is=彼女は〜だ|*strong enough=十分に力がある（どのくらい？）|to lift the box=箱を持ち上げられるほど', tm: '形容詞 ＋ enough ＋ to do（〜できるほど…）', cmp: 'enough は形容詞の後ろに置きます（× enough strong）。' },
+    'enough-ord-02': { ch: 'He stood=彼は立っていた|*close enough=十分に近くに（どのくらい？）|to hear the instructions=指示を聞き取れるくらい', tm: '副詞 ＋ enough ＋ to do（〜できるくらい…に）' },
+    'enough-ord-03': { ch: 'We have=私たちにはある|*enough time=十分な時間（何のための？）|to review the report=報告書を見直すための', tm: 'enough ＋ 名詞 ＋ to do（〜するのに十分な…）', cmp: '名詞のときは enough を名詞の前に置きます（enough time）。形容詞・副詞のときは後ろ（strong enough）。' },
+    'enough-ord-04': { ch: 'She spoke=彼女は話した|*loudly enough=十分に大きな声で（どのくらい？）|for everyone=全員が（聞く人）|to hear=聞こえるくらい', tm: '副詞 ＋ enough ＋ for A ＋ to do', cmp: 'for everyone は「聞く人」を表します。to hear の動作をするのは everyone です。' },
+    'enough-ord-05': { ch: 'This desk is=この机は〜だ|*wide enough=十分に広い（どのくらい？）|to hold two laptops=ノートパソコンを2台置けるほど', tm: '形容詞 ＋ enough ＋ to do（〜できるほど…）' },
+    'enough-ord-06': { ch: 'The car didn\'t have=その車にはなかった|*enough fuel=十分な燃料（何のための？）|to cross the mountains=山を越えるための', tm: 'enough ＋ 名詞 ＋ to do（〜するのに十分な…）', cmp: 'didn\'t have enough fuel は「燃料が足りなかった」ということです。' },
+    'enough-ord-07': { ch: 'He was=彼は〜だった|*confident enough=十分に自信がある（どのくらい？）|to answer the question=その質問に答えられるほど|in English=英語で', tm: '形容詞 ＋ enough ＋ to do（〜できるほど…）', cmp: 'enough が「十分に」を表すので、very などは重ねません。' },
+    'enough-ord-08': { ch: 'The sound was=その音は〜だった|*loud enough=十分に大きい（どのくらい？）|to be heard=聞こえるほど（聞かれるほど）|in the next room=隣の部屋で', tm: '形容詞 ＋ enough ＋ to be ＋ 過去分詞（〜されるほど…）', cmp: '音は「聞かれる」側なので、受け身の不定詞 to be heard にします。' },
+    'enough-fact-01': { tr: 'その棚は、箱を2つとも置けるほど幅が広い。', ch: 'The shelf is=その棚は〜だ|*wide enough=十分に幅がある（どのくらい？）|to hold both boxes=箱を2つとも置けるほど', tm: '形容詞 ＋ enough ＋ to do（〜できるほど…）', cmp: 'enough to hold は「置ける広さがある」ことで、実際に置いたかは書かれていません。' },
+    'enough-fact-02': { tr: '私たちには、答えを確認するだけの時間があった。', ch: 'We had=私たちにはあった|*enough time=十分な時間（何のための？）|to check our answers=答えを確認するための', tm: 'enough ＋ 名詞 ＋ to do（〜するのに十分な…）', cmp: '時間があったことは分かりますが、実際に確認したかは書かれていません。' },
+    'enough-fact-03': { tr: 'その部屋は、子どもたちが上着を脱げるほど暖かくなかった。', ch: 'The room wasn\'t=その部屋は〜でなかった|*warm enough=十分に暖かい（どのくらい？）|for the children=子どもたちが（脱ぐ人）|to take off their coats=上着を脱げるほど', tm: 'not ＋ 形容詞 ＋ enough ＋ for A ＋ to do（A が〜するには…が足りない）' },
+    'enough-fact-04': { tr: 'その指示は、初心者でも従えるほど明確だった。', ch: 'The instructions were=その指示は〜だった|*clear enough=十分に明確（どのくらい？）|for beginners=初心者が（従う人）|to follow=従えるほど', tm: '形容詞 ＋ enough ＋ for A ＋ to do' },
+    'enough-fact-05': { tr: 'レオには、携帯を買い替えるだけのお金があった。', ch: 'Leo had=レオにはあった|*enough money=十分なお金（何のための？）|to replace his phone=携帯を買い替えるための', tm: 'enough ＋ 名詞 ＋ to do（〜するのに十分な…）' },
+    'enough-fact-06': { tr: 'そのスーツケースは、エミが一人で運べるほど軽かった。', ch: 'The suitcase was=そのスーツケースは〜だった|*light enough=十分に軽い（どのくらい？）|for Emi=エミが（運ぶ人）|to carry alone=一人で運べるほど', tm: '形容詞 ＋ enough ＋ for A ＋ to do' },
+    'enough-fact-07': { tr: '私には、判断するのに十分な情報がなかった。', ch: 'I didn\'t have=私にはなかった|*enough information=十分な情報（何のための？）|to make a decision=判断するための', tm: 'enough ＋ 名詞 ＋ to do（〜するのに十分な…）' },
+    'enough-fact-08': { tr: 'そのホールは、200人が座れるほど広い。', ch: 'The hall is=そのホールは〜だ|*large enough=十分に広い（どのくらい？）|to seat two hundred people=200人を座らせられるほど', tm: '形容詞 ＋ enough ＋ to do（〜できるほど…）', cmp: '「200人が座れる」ことは分かりますが、上限がちょうど200人かは書かれていません。' },
+    'enough-wo-01': { ch: 'The box is=その箱は〜だ|*light enough=十分に軽い（どのくらい？）|for me=私が（運ぶ人）|to carry=運べるほど', tm: '形容詞 ＋ enough ＋ for A ＋ to do', cmp: 'for me は to carry の直前に置きます。to carry for me にすると「私のために運ぶ」と読めてしまいます。' },
+    'enough-wo-02': { ch: 'We have=私たちにはある|*enough time=十分な時間（何のための？）|to discuss the problem=問題を話し合うための', tm: 'enough ＋ 名詞 ＋ to do（〜するのに十分な…）' },
+    'enough-wo-03': { ch: 'He stood=彼は立っていた|*close enough=十分に近くに（どのくらい？）|to hear us=私たちの声が聞こえるくらい', tm: '副詞 ＋ enough ＋ to do（〜できるくらい…に）' },
+    'enough-wo-04': { ch: 'The room was=その部屋は〜だった|*large enough=十分に広い（どのくらい？）|for everyone=全員が（座る人）|to sit in=座れるほど', tm: '形容詞 ＋ enough ＋ for A ＋ to do', cmp: 'to sit in の in は「その部屋の中に」。最後の前置詞まで読みます。' },
+    'enough-wo-05': { ch: 'The desk is=その机は〜だ|*strong enough=十分に頑丈（どのくらい？）|to hold the equipment=機材を置けるほど', tm: '形容詞 ＋ enough ＋ to do（〜できるほど…）' },
+    'enough-wo-06': { ch: 'She has=彼女にはある|*enough funds=十分な資金（何のための？）|to continue the research=調査を続けるための', tm: 'enough ＋ 名詞 ＋ to do（〜するのに十分な…）' },
+    'enough-wo-07': { ch: 'She spoke=彼女は話した|*slowly enough=十分にゆっくり（どのくらい？）|for me=私が（理解する人）|to understand=理解できるくらい', tm: '副詞 ＋ enough ＋ for A ＋ to do' },
+    'enough-wo-08': { ch: 'The water wasn\'t=その水は〜でなかった|*warm enough=十分に暖かい（どのくらい？）|to swim in=泳げるほど', tm: 'not ＋ 形容詞 ＋ enough ＋ to do（〜するには…が足りない）', cmp: 'to swim in の in は「その水の中で」。最後の前置詞まで読みます。' },
+
+    /* ===== in order to do ===== */
+    'inorder-ord-01': { ch: '*In order to avoid traffic,=渋滞を避けるために|we left early=私たちは早く出発した', tm: 'in order to do（〜するために：目的）', cmp: 'In order to … を文頭に置くときは、コンマのあとに文の中心（we left early）を続けます。' },
+    'inorder-ord-02': { ch: 'She called the hotel=彼女はホテルに電話した（何のために？）|*in order to check availability=空きを確認するために', tm: 'in order to do（〜するために：目的）', cmp: 'in order to は to だけ（to check）でも同じ意味ですが、目的をはっきり示します。' },
+    'inorder-ord-03': { ch: '*In order to make the labels easier to read,=文字を読みやすくするために|he enlarged them=彼はそれらを大きくした', tm: 'in order to make A ＋ 形容詞（A を〜にするために）', cmp: 'easier to read は「読むのにより易しい」。make A easier で「A をより易しくする」。' },
+    'inorder-ord-04': { ch: 'We borrowed the tools=私たちは道具を借りた（何のために？）|*in order to reduce costs=費用を減らすために', tm: 'in order to do（〜するために：目的）' },
+    'inorder-ord-05': { ch: '*In order to obtain more information,=詳しい情報を得るために|she contacted the person in charge=彼女は担当者に連絡した', tm: 'in order to do（〜するために：目的）' },
+    'inorder-ord-06': { ch: 'He closed the door quietly=彼は静かにドアを閉めた（何のために？）|*in order not to wake the baby=赤ちゃんを起こさないように', tm: 'in order not to do（〜しないように）', cmp: 'not は to の直前に置きます（in order not to）。not in order to にすると「〜するためではない」という別の意味になります。' },
+    'inorder-ord-07': { ch: '*In order to meet the deadline,=締め切りに間に合わせるために|they divided up the work=彼らは作業を分担した', tm: 'in order to do（〜するために：目的）', cmp: 'in order to のあとは動詞の原形（meet）。for は使いません。' },
+    'inorder-ord-08': { ch: 'She added a table=彼女は表を加えた（何のために？）|*in order to emphasize the main point=要点を強調するために', tm: 'in order to do（〜するために：目的）' },
+    'inorder-fact-01': { tr: '私たちは渋滞を避けるために早く出発した。', ch: 'We left early=私たちは早く出発した（何のために？）|*in order to avoid traffic=渋滞を避けるために', tm: 'in order to do（〜するために：目的）', cmp: '目的は分かりますが、実際に渋滞を避けられたかは書かれていません。' },
+    'inorder-fact-02': { tr: '費用を減らすために、チームは古い材料を再利用した。', ch: '*In order to reduce costs,=費用を減らすために|the team reused old materials=チームは古い材料を再利用した', tm: 'in order to do（〜するために：目的）', cmp: '費用を減らすのは目的です。実際に減ったかは書かれていません。' },
+    'inorder-fact-03': { tr: 'ミアは作業内容をなくさないように、コピーをいくつか保存した。', ch: 'Mia saved several copies=ミアはコピーをいくつか保存した（何のために？）|*in order not to lose her work=作業内容をなくさないように', tm: 'in order not to do（〜しないように）' },
+    'inorder-fact-04': { tr: '売上が落ちた理由を調べるために、彼らは客に話を聞いた。', ch: '*In order to find out=調べるために（何を？）|why sales had fallen,=なぜ売上が落ちたのかを|they interviewed customers=彼らは客に話を聞いた', tm: 'in order to do（〜するために：目的）', cmp: '理由を調べるのは目的です。理由が分かったかは書かれていません。' },
+    'inorder-fact-05': { tr: '彼は住所を覚えておくために書き留めた。', ch: 'He wrote down the address=彼は住所を書き留めた（何のために？）|*in order to remember it=それを覚えておくために', tm: 'in order to do（〜するために：目的）' },
+    'inorder-fact-06': { tr: '報告書を短くするために、リナは例を2つ削った。', ch: '*In order to make the report shorter,=報告書を短くするために|Lina removed two examples=リナは例を2つ削った', tm: 'in order to make A ＋ 形容詞（A を〜にするために）' },
+    'inorder-fact-07': { tr: '彼らは、より多くの客に座ってもらうために、広い部屋を予約した。', ch: 'They booked a larger room=彼らは広い部屋を予約した（何のために？）|*in order to seat more guests=より多くの客を座らせるために', tm: 'in order to do（〜するために：目的）' },
+    'inorder-fact-08': { tr: '私は執筆に集中するために通知を切った。', ch: 'I turned off notifications=私は通知を切った（何のために？）|*in order to focus on writing=執筆に集中するために', tm: 'in order to do（〜するために：目的）', cmp: '集中するのは目的です。実際に集中できたかは書かれていません。' },
+    'inorder-wo-01': { ch: 'We stopped=私たちは立ち止まった（何のために？）|*in order to inspect the bridge=橋を調べるために', tm: 'in order to do（〜するために：目的）', cmp: '語順は in → order → to → 動詞の原形 の順に固定です。' },
+    'inorder-wo-02': { ch: '*In order to check the deadline,=提出期限を確認するために|I reread the notice=私は案内を読み直した', tm: 'in order to do（〜するために：目的）' },
+    'inorder-wo-03': { ch: 'We started early=私たちは早く始めた（何のために？）|*in order not to miss the deadline=締め切りに遅れないように', tm: 'in order not to do（〜しないように）', cmp: '比べてみよう：in order not to miss（遅れないように）／not in order to miss（遅れるためではない）' },
+    'inorder-wo-04': { ch: 'He used a diagram=彼は図を使った（何のために？）|*in order to make the explanation clearer=説明を分かりやすくするために', tm: 'in order to make A ＋ 形容詞（A を〜にするために）' },
+    'inorder-wo-05': { ch: '*In order to compare the costs,=費用を比べるために|they contacted two companies=彼らは二社に連絡した', tm: 'in order to do（〜するために：目的）' },
+    'inorder-wo-06': { ch: 'I recorded my voice=私は自分の声を録音した（何のために？）|*in order to check my pronunciation=発音を確かめるために', tm: 'in order to do（〜するために：目的）' },
+    'inorder-wo-07': { ch: 'She checked the address=彼女は住所を確認した（何のために？）|*in order not to go to the wrong place=間違った場所へ行かないように', tm: 'in order not to do（〜しないように）', cmp: '比べてみよう：in order not to go（行かないように）／not in order to go（行くためではない）' },
+    'inorder-wo-08': { ch: '*In order to collect more opinions,=より多くの意見を集めるために|we extended the survey period=私たちは調査期間を延ばした', tm: 'in order to do（〜するために：目的）' },
+
+    /* ===== 疑問詞＋不定詞 ===== */
+    'wh-ord-01': { ch: 'I don\'t know=私は知らない（何を？）|*how to use=どうやって使うか|this app=このアプリを', tm: 'how ＋ to do（〜のしかた）', cmp: 'how to use で「使い方」。know の中身（何を知らないか）を表します。' },
+    'wh-ord-02': { ch: 'We decided=私たちは決めた（何を？）|*which report to read=どの報告書を読むか', tm: 'which ＋ 名詞 ＋ to do（どの…を〜するか）', cmp: 'which report はひとまとまり。to read はその後ろに置きます（× which to read report）。' },
+    'wh-ord-03': { ch: 'She told me=彼女は私に教えてくれた（何を？）|*where to get off=どこで降りればよいか', tm: 'where ＋ to do（どこで〜すればよいか）' },
+    'wh-ord-04': { ch: 'He asked=彼は尋ねた（何を？）|*what to bring=何を持っていけばよいか', tm: 'what ＋ to do（何を〜すればよいか）' },
+    'wh-ord-05': { ch: 'We aren\'t sure=私たちには分からない（何が？）|*when to apply=いつ申請すればよいか', tm: 'when ＋ to do（いつ〜すればよいか）' },
+    'wh-ord-06': { ch: 'She knows=彼女は知っている（何を？）|*who to contact=誰に連絡すればよいか|next=次に', tm: 'who ＋ to do（誰に〜すればよいか）' },
+    'wh-ord-07': { ch: 'Please show me=私に見せてください（何を？）|*how to open=どうやって開けるか|the gate=門を', tm: 'how ＋ to do（〜のしかた）', cmp: '疑問詞のあとは to ＋ 動詞の原形。should は使いません（× how should to open）。' },
+    'wh-ord-08': { ch: 'They didn\'t know=彼らは分からなかった（何が？）|*which bus to take=どのバスに乗ればよいか', tm: 'which ＋ 名詞 ＋ to do（どの…を〜するか）' },
+    'wh-fact-01': { tr: 'リナはファイルの開き方を尋ねた。', ch: 'Lina asked=リナは尋ねた（何を？）|*how to open=どうやって開くか|the file=ファイルを', tm: 'how ＋ to do（〜のしかた）', cmp: '比べてみよう：how to open（開き方）／which file to open（どのファイルを開くか）／when to open（いつ開くか）' },
+    'wh-fact-02': { tr: '私たちは放課後に会う場所を決めた。', ch: 'We decided=私たちは決めた（何を？）|*where to meet=どこで会うか|after school=放課後に', tm: 'where ＋ to do（どこで〜するか）', cmp: '比べてみよう：where to meet（会う場所）／when to meet（会う時刻）／who to meet（会う相手）' },
+    'wh-fact-03': { tr: 'ミカは私に、どの用紙に記入すればよいか教えてくれた。', ch: 'Mika told me=ミカは私に教えてくれた（何を？）|*which form to fill out=どの用紙に記入するか', tm: 'which ＋ 名詞 ＋ to do（どの…を〜するか）', cmp: '比べてみよう：which form to fill out（どの用紙か）／how to fill out the form（用紙の書き方）' },
+    'wh-fact-04': { tr: 'ケンは、その変更について誰に連絡すればよいか分からない。', ch: 'Ken doesn\'t know=ケンは分からない（何が？）|*who to contact=誰に連絡すればよいか|about the change=その変更について', tm: 'who ＋ to do（誰に〜すればよいか）' },
+    'wh-fact-05': { tr: '私は会議で何を言えばよいか分かっている。', ch: 'I know=私は分かっている（何を？）|*what to say=何を言えばよいか|at the meeting=会議で', tm: 'what ＋ to do（何を〜すればよいか）', cmp: 'what to say はこれから言う内容です。言ったことではありません。' },
+    'wh-fact-06': { tr: '彼女は私に結果の確認のしかたを教えてくれた。', ch: 'She showed me=彼女は私に示した（何を？）|*how to check=どうやって確認するか|the results=結果を', tm: 'how ＋ to do（〜のしかた）' },
+    'wh-fact-07': { tr: '彼らは、いつ結果を発表するかをまだ決めていない。', ch: 'They haven\'t decided=彼らはまだ決めていない（何を？）|*when to announce=いつ発表するか|the result=結果を', tm: 'when ＋ to do（いつ〜するか）', cmp: 'haven\'t decided は「まだ決めていない」。発表しないと決めたわけではありません。' },
+    'wh-fact-08': { tr: 'エミは、私たちがどこに荷物を置けばよいか説明した。', ch: 'Emi explained=エミは説明した（何を？）|*where to leave=どこに置けばよいか|our bags=私たちの荷物を', tm: 'where ＋ to do（どこに〜すればよいか）' },
+    'wh-wo-01': { ch: 'She knows=彼女は知っている（何を？）|*how to use=どうやって使うか|the machine=その機械を', tm: 'how ＋ to do（〜のしかた）', cmp: '語順は「疑問詞 → to → 動詞の原形」の順です。' },
+    'wh-wo-02': { ch: 'He asked=彼は尋ねた（何を？）|*which book to borrow=どの本を借りればよいか', tm: 'which ＋ 名詞 ＋ to do（どの…を〜するか）', cmp: 'which book はひとまとまり。to borrow はその後ろに置きます。' },
+    'wh-wo-03': { ch: 'I don\'t know=私は分からない（何が？）|*where to leave=どこに置けばよいか|my bag=荷物を', tm: 'where ＋ to do（どこに〜すればよいか）' },
+    'wh-wo-04': { ch: 'We thought about=私たちは考えた（何について？）|*what to say=何を言えばよいか|next=次に', tm: 'what ＋ to do（何を〜すればよいか）', cmp: 'about のような前置詞のあとにも「疑問詞＋to do」を置けます。' },
+    'wh-wo-05': { ch: 'She decided=彼女は決めた（何を？）|*when to apply=いつ申請するか', tm: 'when ＋ to do（いつ〜するか）' },
+    'wh-wo-06': { ch: 'Please tell me=私に教えてください（何を？）|*who to contact=誰に連絡すればよいか', tm: 'who ＋ to do（誰に〜すればよいか）' },
+    'wh-wo-07': { ch: 'He told us=彼は私たちに教えた（何を？）|*which route to take=どの道を通ればよいか', tm: 'which ＋ 名詞 ＋ to do（どの…を〜するか）' },
+    'wh-wo-08': { ch: 'I know=私は分かっている（何を？）|*where to start=どこから始めればよいか', tm: 'where ＋ to do（どこから〜すればよいか）' }
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* ---- data/infinitive-lv2.js ---- */
 /*
  * infinitive-lv2.js — 不定詞 Lv2 の問題バンク（5項目 × 形式・計128問）
@@ -2909,7 +3070,26 @@ details.panel > p { margin-top: 8px; }
       q.explanation = { answer: d.answer === 'x' ? d.correction : d.en, translation: ex.translation || d.ja, chunks: ex.chunks || null,
         point: ex.point || '', term: ex.term || item.term };
     }
+    var more = (EA.lv2Explain || {})[item.key + '-' + fmt + '-' + pad(no)];
+    if (more) addExplain(q, more);
     return q;
+  }
+
+  /* 解説の補足（infinitive-lv2-explain.js）を足す。語句の対応は、つなげると解説の英文になるものだけ使う */
+  function addExplain(q, m) {
+    var e = q.explanation;
+    if (m.tr && !e.translation) e.translation = m.tr;
+    if (m.tm) e.term = m.tm;
+    if (m.cmp) e.also = m.cmp;
+    if (m.ch) {
+      var chunks = m.ch.split('|').map(function (p) {
+        var mark = p.charAt(0) === '*', i = p.indexOf('=');
+        return { en: p.slice(mark ? 1 : 0, i), ja: p.slice(i + 1), mark: mark };
+      });
+      var joined = chunks.map(function (c) { return c.en; }).join(' ');
+      if (joined === e.answer.replace(/\*\*/g, '').replace(/[.?!]$/, '')) e.chunks = chunks;
+      else (EA.lv2ExplainErrors = EA.lv2ExplainErrors || []).push(q.id);
+    }
   }
 
   var bank = {
@@ -5073,7 +5253,18 @@ details.panel > p { margin-top: 8px; }
       (rows ? '<ol class="ex-map" aria-label="どの部分が、どの意味につながるか">' + rows + '</ol>' : '') +
       (e.point ? '<p class="ex-point">' + esc(pointText(qq)) + '</p>' : '') +
       (e.term ? '<p class="ex-term"><span class="label">文法の名前</span>' + esc(e.term) + '</p>' : '') +
+      otherChoicesHtml(qq) +
       '</div>';
+  }
+
+  /** 不定詞 Lv2 の選択問題：正解以外の選択肢と、それがちがう理由（選択肢の説明） */
+  function otherChoicesHtml(qq) {
+    if (qq.set !== 'lv2' || !qq.choices || qq.format !== 'meaning') return '';
+    var rows = qq.choices.filter(function (c) { return c.id !== qq.answer && c.feedback; }).map(function (c) {
+      return '<li><span class="ex-other-choice"' + (qq.formatGroup === 'wo' ? ' lang="en"' : '') + '>' + rich(c.text) + '</span>' +
+        '<span class="ex-other-why">' + esc(c.feedback) + '</span></li>';
+    }).join('');
+    return rows ? '<div class="ex-others"><p class="label">ほかの選択肢がちがう理由</p><ul>' + rows + '</ul></div>' : '';
   }
 
   /**
