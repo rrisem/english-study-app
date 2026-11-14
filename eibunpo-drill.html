@@ -279,7 +279,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 }
 .skill-col { display: grid; gap: 8px; align-content: start; min-width: 0; }
 .tag { justify-self: start; display: inline-block; padding: 3px 12px; border-radius: 8px; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.04em; color: var(--chip-ink); }
-.tag-1 { background: var(--chip-1); } .tag-2 { background: var(--chip-2); } .tag-3 { background: var(--chip-3); }
+.tag-1 { background: var(--chip-1); } .tag-2 { background: var(--chip-2); } .tag-3 { background: var(--chip-3); } .tag-4 { background: var(--accent); color: var(--accent-ink); }
 .skill-open { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; background: none; border: 0; padding: 4px 0; min-height: 44px; cursor: pointer; text-align: left; }
 .skill-open .skill-label { font-size: var(--fs-l); font-weight: 700; }
 .skill-open .icon { color: var(--muted); }
@@ -1046,9 +1046,9 @@ details.panel > p { margin-top: 8px; }
     unit: {
       id: 'infinitive',
       title: '不定詞（基本）',
-      description: 'to＋動詞の原形 の3つの基本の使い方（〜すること／〜するための／〜するために）',
+      description: 'to＋動詞の原形 の基本の使い方（〜すること／〜するための／〜するために）と It is ～ for A to do',
       diagnosticMinutes: 10, // 初回診断の目安の時間（分）。生徒向けの画面には出していない（ホームは問題数だけ）
-      scopeNote: '副詞的用法は「目的（〜するために）」のみ。感情の原因（glad to など）や、疑問詞＋to、It is … to … などはまだ扱いません。'
+      scopeNote: '副詞的用法は「目的（〜するために）」のみ。It is ～ for A to do は基本の形のみ。感情の原因（glad to など）や、疑問詞＋to などはまだ扱いません。'
     },
 
     skills: [
@@ -1079,181 +1079,7 @@ details.panel > p { margin-top: 8px; }
     ],
 
     questions: [
-      /* ============ 初回診断（6問） ============ */
-      {
-        id: 'inf-d1', version: 3, status: 'active', excludedVersions: [1, 2],
-        changes: [{ version: 2, what: '選択肢 plays の説明を、主語の形の説明に修正', oldRecords: '答えの正誤は有効（問題文・正答は同じ）' }, { version: 3, what: '選択肢に to で始まる誤りを加え（正答だけが to で始まらないように）', oldRecords: '版2までは正答だけが to で始まり、形の手がかりだけで選べたため判定に使わない（履歴には残す）' }],
-        role: 'diagnostic', skill: 'inf-noun', format: 'fill',
-        checks: 'want のあとに「したいこと」を to＋動詞の原形 で表せるか',
-        instruction: '日本語に合うように、空所に入るものを選びましょう。',
-        ja: '私は放課後テニスをしたい。',
-        sentence: 'I want ___ tennis after school.',
-        choices: [
-          { id: 'a', text: 'play', feedback: 'want のすぐあとに動詞の原形だけを置くことはできません。' },
-          { id: 'b', text: 'to play' },
-          { id: 'c', text: 'plays', feedback: 'plays は主語が he・she などのときの形です。この文では want のあとに置けません。' },
-          { id: 'd', text: 'to playing', feedback: 'この文では、to のあとに動詞の原形を置きます。 want to play の形にします。' }
-        ],
-        answer: 'b',
-        hint: '「テニスをすること」を want（〜をほしい・望む）の中身にします。',
-        explanation: {
-          answer: 'I want to play tennis after school.',
-          translation: '私は放課後テニスをしたい。',
-          chunks: [
-            { en: 'I want', ja: '私は望む（何を？）' },
-            { en: 'to play tennis', ja: 'テニスをすること', mark: true },
-            { en: 'after school', ja: '放課後に' }
-          ],
-          point: 'want の中身（何をしたいのか）を to play tennis が表します。want to ～ で「～したい」。',
-          term: '名詞的用法（〜すること）'
-        },
-        similar: ['inf-p-n1', 'inf-p-n2']
-      },
-      {
-        id: 'inf-d2', version: 3, status: 'active', excludedVersions: [1, 2],
-        changes: [{ version: 2, what: '選択肢の説明を、この文に限った言い方に修正', oldRecords: '答えの正誤は有効（問題文・正答は同じ）' }, { version: 3, what: '選択肢に to で始まる誤りを加え（正答だけが to で始まらないように）', oldRecords: '版2までは正答だけが to で始まり、形の手がかりだけで選べたため判定に使わない（履歴には残す）' }],
-        role: 'diagnostic', skill: 'inf-adv', format: 'fill',
-        checks: '行動の目的（何のために）を to＋動詞の原形 で表せるか',
-        instruction: '日本語に合うように、空所に入るものを選びましょう。',
-        ja: '彼女は本を借りるために図書館へ行った。',
-        sentence: 'She went to the library ___ some books.',
-        choices: [
-          { id: 'a', text: 'borrow', feedback: 'この文では、went … library のあとに borrow をそのまま続けることはできません。「借りるために」は to borrow です。' },
-          { id: 'b', text: 'to borrowing', feedback: 'この文では、to のあとに動詞の原形を置きます。「借りるために」は to borrow です。' },
-          { id: 'c', text: 'to borrow' },
-          { id: 'd', text: 'borrowed', feedback: '「行って借りた」と言いたいなら and が必要です。ここでは「借りるために」です。' }
-        ],
-        answer: 'c',
-        hint: '彼女は「何のために」図書館へ行ったのでしょう？',
-        explanation: {
-          answer: 'She went to the library to borrow some books.',
-          translation: '彼女は本を借りるために図書館へ行った。',
-          chunks: [
-            { en: 'She went to the library', ja: '彼女は図書館へ行った（何のために？）' },
-            { en: 'to borrow some books', ja: '本を借りるために', mark: true }
-          ],
-          point: '「行った」理由・目的を、文のうしろの to borrow … がつけ加えています。',
-          term: '副詞的用法（目的：〜するために）'
-        },
-        similar: ['inf-p-v1', 'inf-p-v2']
-      },
-      {
-        id: 'inf-d3', version: 2, status: 'active',
-        changes: [{ version: 2, what: '解説の「日本語とは逆に」という一般化を、この文の説明に修正', oldRecords: '答えの正誤は有効（問題文・正答は同じ）' }],
-        role: 'diagnostic', skill: 'inf-adj', format: 'order',
-        checks: '名詞（time）を to＋動詞 があとから説明する語順を作れるか',
-        instruction: '日本語に合うように、語句を並べかえましょう。',
-        ja: '私にはテレビを見る時間がない。',
-        tokens: ['I', "don't", 'have', 'time', 'to', 'watch', 'TV'],
-        answers: ["I don't have time to watch TV"],
-        hint: '「時間」→「どんな時間？」→「テレビを見る（ための）時間」の順に考えます。',
-        explanation: {
-          answer: "I don't have time to watch TV.",
-          translation: '私にはテレビを見る時間がない。',
-          chunks: [
-            { en: "I don't have", ja: '私は持っていない' },
-            { en: 'time', ja: '時間（どんな？）' },
-            { en: 'to watch TV', ja: 'テレビを見る（ための）', mark: true }
-          ],
-          point: 'to watch TV は time を説明しています。この文では、説明の to watch TV が time のうしろに来ます。',
-          term: '形容詞的用法（〜するための）'
-        },
-        similar: ['inf-p-a1', 'inf-p-a3']
-      },
-      {
-        id: 'inf-d4', version: 1, status: 'active',
-        role: 'diagnostic', skill: 'inf-adv', format: 'order',
-        checks: '「場所へ行った」のあとに目的を to＋動詞 で続けられるか',
-        instruction: '日本語に合うように、語句を並べかえましょう。',
-        ja: 'ケンはサッカーをするために公園へ行った。',
-        tokens: ['Ken', 'went', 'to', 'the park', 'to', 'play', 'soccer'],
-        answers: ['Ken went to the park to play soccer'],
-        hint: 'まず「ケンは公園へ行った」を作り、そのあとに「何のために」を続けます。',
-        explanation: {
-          answer: 'Ken went to the park to play soccer.',
-          translation: 'ケンはサッカーをするために公園へ行った。',
-          chunks: [
-            { en: 'Ken went to the park', ja: 'ケンは公園へ行った（何のために？）' },
-            { en: 'to play soccer', ja: 'サッカーをするために', mark: true }
-          ],
-          point: '1つめの to は「〜へ（場所）」、2つめの to は動詞の前について「〜するために」。同じ to でも役割が違います。',
-          term: '副詞的用法（目的：〜するために）'
-        },
-        similar: ['inf-p-v3', 'inf-p-v1']
-      },
-      {
-        id: 'inf-d5', version: 2, status: 'active',
-        changes: [{ version: 2, what: '指示に「to＋動詞の原形を使って」を明記。別の形の答えを「正しい英文」と表示しないよう変更', oldRecords: '答えの正誤は有効。版1の「別の正しい表現」は「指定の形と違う」として扱う' }],
-        role: 'diagnostic', skill: 'inf-noun', format: 'ja2en',
-        checks: '「〜になること」を to＋動詞の原形 で表し、文を作れるか',
-        instruction: 'to＋動詞の原形 を使って、日本語の意味になるように英文を書きましょう。',
-        ja: '私の夢は先生になることです。',
-        accepted: ['my dream is to be a teacher', 'my dream is to become a teacher'],
-        errors: [
-          { pattern: '^my dream is (be|become) a teacher$', result: 'incorrect',
-            feedback: '「なること」には to が必要です。be / become の前に to を入れましょう。' },
-          { pattern: '^my dream is (a |an )?teacher$', result: 'incorrect',
-            feedback: 'この文だと「私の夢は先生（という人）です」となり、「なること」が表せていません。' },
-          { pattern: '^my dream is to (be|become) teacher$', result: 'minor',
-            feedback: 'to be / to become の部分は正しくできています。teacher の前に a が必要です。' },
-          { pattern: '^i dream is to (be|become) a teacher$', result: 'minor',
-            feedback: 'to be / to become の部分は正しくできています。「私の夢」は My dream です。' }
-        ],
-        alternatives: [
-          { pattern: '^my dream is (being|becoming) a teacher$',
-            feedback: 'この問題は to＋動詞の原形 を使う条件です。to be / to become を使って書いてみましょう。' }
-        ],
-        hint: '「なる」は be または become。「なること」をどう表すかがポイントです。',
-        explanation: {
-          answer: 'My dream is to be a teacher.',
-          also: 'My dream is to become a teacher. も正解です。',
-          translation: '私の夢は先生になることです。',
-          chunks: [
-            { en: 'My dream is', ja: '私の夢は〜です（何？）' },
-            { en: 'to be a teacher', ja: '先生になること', mark: true }
-          ],
-          point: '「夢＝先生になること」。to be a teacher が is のあとで夢の中身を表します。My dream is a teacher. とすると「夢＝先生（という人）」という文になります。',
-          term: '名詞的用法（〜すること）'
-        },
-        similar: ['inf-p-n2', 'inf-p-n3']
-      },
-      {
-        id: 'inf-d6', version: 2, status: 'active',
-        changes: [{ version: 2, what: '指示に「to＋動詞の原形を使って」を明記。「bookの前に読むを置けない」という一般化を修正', oldRecords: '答えの正誤は有効（正答は同じ）' }],
-        role: 'diagnostic', skill: 'inf-adj', format: 'ja2en',
-        checks: '「読む本」のように、名詞を to＋動詞 があとから説明する文を作れるか',
-        instruction: 'to＋動詞の原形 を使って、日本語の意味になるように英文を書きましょう。',
-        ja: '私は読む本がほしい。',
-        accepted: [
-          'i want a book to read', 'i want some books to read', 'i want books to read',
-          'i would like a book to read', 'i would like some books to read'
-        ],
-        errors: [
-          { pattern: '^i (want|would like) to read (a |some |the )?books?$', result: 'incorrect',
-            feedback: 'この文は「私は本を読みたい」という意味です。「読む（ための）本がほしい」とは意味が違います。ほしいのは「本」です。' },
-          { pattern: '^i (want|would like) (a |some )?books? read$', result: 'incorrect',
-            feedback: 'read の前に to が必要です。「読むための」は to read で表します。' },
-          { pattern: '^i (want|would like) (a |some )?read(ing)? books?$', result: 'incorrect',
-            feedback: 'この文では、「読む（ための）本」を book のうしろに to read を置いて表します。' },
-          { pattern: '^i (want|would like) book to read$', result: 'minor',
-            feedback: 'to read の部分は正しくできています。book の前に a（または books と複数形）が必要です。' }
-        ],
-        alternatives: [],
-        hint: 'ほしいのは「本」です。「どんな本？」を本のうしろに続けます。',
-        explanation: {
-          answer: 'I want a book to read.',
-          also: 'I want some books to read. / I\'d like a book to read. なども正解です。',
-          translation: '私は読む本がほしい。',
-          chunks: [
-            { en: 'I want', ja: '私はほしい（何が？）' },
-            { en: 'a book', ja: '本（どんな？）' },
-            { en: 'to read', ja: '読む（ための）', mark: true }
-          ],
-          point: 'to read は a book を説明しています。I want to read a book.（本を読みたい）とは意味が違うので注意。',
-          term: '形容詞的用法（〜するための）'
-        },
-        similar: ['inf-p-a2', 'inf-p-a4']
-      },
+      /* 初回診断の問題（以前の inf-d1〜d6 は削除）は、下の data/infinitive-lv1.js で追加する Lv1 の8問 */
 
       /* ============ 類題・復習用 ============ */
       /* --- 〜すること（名詞的用法） --- */
@@ -1975,12 +1801,13 @@ details.panel > p { margin-top: 8px; }
 
 /* ---- data/infinitive-lv1.js ---- */
 /*
- * infinitive-lv1.js — 不定詞 Lv1 の練習問題（8問・決まった順番で全問出題）
+ * infinitive-lv1.js — 不定詞 Lv1 の8問（初回診断の問題）
  *
  * ■ 講師の方へ
- *   - 単元タブの不定詞カードの「Lv1を練習する（8問）」から始めます。初回診断の前でも始められます。
- *   - 回答は「自分で始めた練習」（attemptType: 'self'）として履歴と学習時間に残します。
- *     初回診断の完了状態・類題の選定・確認状況・復習の出題と予定には使いません（不定詞の問題集とは別の単元として持つため）。
+ *   - 不定詞（基本）の問題集に追加します。初回診断は、この8問を書いた順に出します（答えるたびに正誤と解説を表示）。
+ *   - 単元タブの「Lv1を練習する（8問）」でも同じ8問を出します。こちらは「自分で始めた練習」（attemptType: 'self'）として
+ *     履歴と学習時間に残し、初回診断の完了状態・類題の選定・確認状況・復習の出題と予定には使いません。
+ *   - 各問の解き直し用の問題（下の infinitive-lv1-retry.js）は、診断後の類題と、Lv1 の練習の解き直しに使います。
  *   - 文中の **…** は太字で表示します（問題・選択肢・採点後の表示）。履歴などの一覧では ** を外して表示します。
  *   - formatLabel … 問題画面の見出しに出す形式名（用法の分類名は問題画面に出しません）
  *   - fixedStart  … 並べ替えで、先頭に固定表示する語（採点はこの語を含む英文全体で行います）
@@ -1995,25 +1822,21 @@ details.panel > p { margin-top: 8px; }
   var FACT = { format: 'meaning', formatLabel: '英文から分かることを選ぶ', question: FACT_Q, instruction: FACT_Q };
   function mk(base, q) { var o = {}; Object.keys(base).forEach(function (k) { o[k] = base[k]; }); Object.keys(q).forEach(function (k) { o[k] = q[k]; }); return o; }
 
-  EA.registerBank({
-    unit: {
-      id: 'infinitive-lv1',
-      parent: 'infinitive',      // 履歴・単元の表示は「不定詞（基本）」にまとめる
-      practiceOnly: true,        // 自分で始める練習だけに使う（初回診断・復習・確認状況の対象外）
-      title: '不定詞 Lv1（練習問題）',
-      description: '名詞的用法・形容詞的用法・副詞的用法（目的）・It is ～ for A to do を各2問'
-    },
-    skills: [
-      { id: 'lv1-noun', label: 'Lv1 〜すること', term: '名詞的用法', plain: 'to＋動詞 が「〜すること」として、目標・望むことなどの中身を表す' },
-      { id: 'lv1-adj', label: 'Lv1 〜するための・〜すべき', term: '形容詞的用法', plain: 'to＋動詞 が、すぐ前の名詞を後ろから説明する' },
-      { id: 'lv1-adv', label: 'Lv1 〜するために', term: '副詞的用法（目的）', plain: 'to＋動詞 が、行動の目的を表す' },
-      { id: 'lv1-it', label: 'Lv1 形式主語の It', term: 'It is ～ for A to do', plain: 'It is ＋形容詞 のあとに、for A（する人）と to do（何をすることが）を続ける' }
-    ],
-    aliases: {
-      'lv1-preview-1': 'inf-lv1-01', 'lv1-preview-2': 'inf-lv1-02', 'lv1-preview-3': 'inf-lv1-03', 'lv1-preview-4': 'inf-lv1-04',
-      'lv1-preview-5': 'inf-lv1-05', 'lv1-preview-6': 'inf-lv1-06', 'lv1-preview-7': 'inf-lv1-07', 'lv1-preview-8': 'inf-lv1-08'
-    },
-    questions: [
+  var bank = EA.banks.infinitive;
+  // 4つめの項目：It is ～ for A to do（初回診断・確認状況・復習予定の対象）
+  bank.skills.push({
+    id: 'inf-it', label: 'It is ～ for A to do', term: 'It is ～ for A to do（形式主語）',
+    plain: 'It is ＋形容詞 のあとに、for A（する人）と to do（何をすることが）を続ける',
+    basics: { example: 'It is easy for me to swim.', exampleJa: '私にとって泳ぐことは簡単だ。', mark: 'for me to swim',
+      point: 'It is easy（簡単だ）→「だれにとって？」for me →「何をすることが？」to swim。It は to swim を指しています。' }
+  });
+  // 以前の試用版の問題ID → この版の問題ID（古い回答記録を同じ問題として表示する。判定には使わない）
+  bank.aliases = {
+    'lv1-preview-1': 'inf-lv1-01', 'lv1-preview-2': 'inf-lv1-02', 'lv1-preview-3': 'inf-lv1-03', 'lv1-preview-4': 'inf-lv1-04',
+    'lv1-preview-5': 'inf-lv1-05', 'lv1-preview-6': 'inf-lv1-06', 'lv1-preview-7': 'inf-lv1-07', 'lv1-preview-8': 'inf-lv1-08'
+  };
+  var SK = { 'lv1-noun': 'inf-noun', 'lv1-adj': 'inf-adj', 'lv1-adv': 'inf-adv', 'lv1-it': 'inf-it' };
+  [
       mk(USAGE, {
         id: 'inf-lv1-01', version: 1, status: 'active', role: 'lv1', skill: 'lv1-noun',
         checks: '目標の中身を表す to＋動詞 と同じ働きの例文を選べるか',
@@ -2159,7 +1982,12 @@ details.panel > p { margin-top: 8px; }
           term: 'It is ～ for A to do（形式主語の It）'
         }
       })
-    ]
+  ].forEach(function (q) {
+    q.skill = SK[q.skill] || q.skill;
+    q.role = 'diagnostic';      // 初回診断で出す（問題集に書いた順）
+    q.set = 'lv1';              // 「Lv1を練習する（8問）」でも出す
+    q.similar = [1, 2, 3, 4].map(function (n) { return q.id + '-r' + n; }); // 診断後の類題・Lv1の解き直し
+    bank.questions.push(q);
   });
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -2170,19 +1998,20 @@ details.panel > p { margin-top: 8px; }
  * ■ 講師の方へ
  *   - Lv1 の問題を間違えた（「解説をみる」を含む）とき、retryFor が同じ問題の中から、その練習でまだ出していない1問をすぐ次に出します。
  *     しばらく解いていない問題を優先します。解き直しでもつまずいた場合は、それ以上追加しません。
- *   - role: 'lv1-retry' の問題は「Lv1を練習する（8問）」の8問には入りません。
+ *   - 不定詞（基本）の問題集の類題（role: 'practice'）として追加します。初回診断のあとの類題・確認問題・復習でも使います。
+ *   - retryFor のある問題は「Lv1を練習する（8問）」の8問には入りません。
  *   - 文中の **…** は太字で表示します。
  */
 (function (root) {
   'use strict';
   var EA = root.EA = root.EA || {};
-  var bank = EA.banks['infinitive-lv1'];
-  if (!bank) return;
+  var bank = EA.banks.infinitive;
+  var SK = { 'lv1-noun': 'inf-noun', 'lv1-adj': 'inf-adj', 'lv1-adv': 'inf-adv', 'lv1-it': 'inf-it' };
   var USAGE_Q = '基準文の太字部分と同じ用法で不定詞が使われている例文を選びなさい。';
   var FACT_Q = '英文だけから確実に分かることを選びなさい。';
   var TERM = {
-    'lv1-noun': '名詞的用法（〜すること）', 'lv1-adj': '形容詞的用法（〜するための・〜する）',
-    'lv1-adv': '副詞的用法（目的：〜するために）', 'lv1-it': 'It is ～ for A to do（形式主語の It）'
+    'inf-noun': '名詞的用法（〜すること）', 'inf-adj': '形容詞的用法（〜するための・〜する）',
+    'inf-adv': '副詞的用法（目的：〜するために）', 'inf-it': 'It is ～ for A to do（形式主語の It）'
   };
   var HINT = {
     'inf-lv1-01': '基準文の太字部分が、文の中で「何（の中身）」を表しているか考えましょう。',
@@ -2205,26 +2034,26 @@ details.panel > p { margin-top: 8px; }
     return { choices: out, answer: ans };
   }
   function usage(id, retryFor, skill, d) {
-    var c = choices(d.choices);
-    return { id: id, version: 1, status: 'active', role: 'lv1-retry', retryFor: retryFor, skill: skill,
+    skill = SK[skill]; var c = choices(d.choices);
+    return { id: id, version: 1, status: 'active', role: 'practice', retryFor: retryFor, skill: skill,
       format: 'meaning', formatLabel: '同じ用法を選ぶ', baseLabel: '基準文', choicesLang: 'en', question: USAGE_Q, instruction: USAGE_Q,
       checks: d.checks, sentence: d.base, choices: c.choices, answer: c.answer, hint: HINT[retryFor],
       explanation: { answer: d.base.replace(/\*\*/g, ''), translation: d.ja, also: d.also, chunks: d.chunks, point: d.point, term: TERM[skill] } };
   }
   function fact(id, retryFor, skill, d) {
-    var c = choices(d.choices);
-    return { id: id, version: 1, status: 'active', role: 'lv1-retry', retryFor: retryFor, skill: skill,
+    skill = SK[skill]; var c = choices(d.choices);
+    return { id: id, version: 1, status: 'active', role: 'practice', retryFor: retryFor, skill: skill,
       format: 'meaning', formatLabel: '英文から分かることを選ぶ', question: FACT_Q, instruction: FACT_Q,
       checks: d.checks, sentence: d.en, choices: c.choices, answer: c.answer, hint: HINT[retryFor],
       explanation: { answer: d.en, translation: d.ja, chunks: d.chunks, point: d.point, term: TERM[skill] } };
   }
   function order(id, d) {
-    return { id: id, version: 1, status: 'active', role: 'lv1-retry', retryFor: 'inf-lv1-07', skill: 'lv1-it',
+    return { id: id, version: 1, status: 'active', role: 'practice', retryFor: 'inf-lv1-07', skill: 'inf-it',
       format: 'order', formatLabel: '語句を並べ替える', instruction: '日本語に合うように、語句を並べ替えましょう（文頭の It は固定です）。',
       checks: 'It is ＋形容詞＋for A＋to do の語順を組み立てられるか', ja: d.ja, fixedStart: 'It', tokens: d.tokens, answers: [d.answer.replace(/\.$/, '')],
       hint: HINT['inf-lv1-07'],
       explanation: { answer: d.answer, translation: d.ja, chunks: d.chunks,
-        point: 'It is に形容詞 ' + d.adj + ' が続き、' + d.forA + ' は' + d.who + 'を、' + d.toDo + ' は何をすることが' + d.eval + 'かを示す。', term: TERM['lv1-it'] } };
+        point: 'It is に形容詞 ' + d.adj + ' が続き、' + d.forA + ' は' + d.who + 'を、' + d.toDo + ' は何をすることが' + d.eval + 'かを示す。', term: TERM['inf-it'] } };
   }
   var NOUN_ADV = '目的を表しています（副詞的用法）。', NOUN_ADJ = 'を後ろから説明しています（形容詞的用法）。';
 
@@ -2616,6 +2445,7 @@ details.panel > p { margin-top: 8px; }
   /** 問題の不備・開発用の日付で作られた記録など、判定から除外する回答か */
   function isExcluded(attempt, bank) {
     if (attempt.devDated) return true;
+    if (bank.aliases && bank.aliases[attempt.questionId]) return true; // 以前の試用版の記録は表示だけ（判定には使わない）
     var q = EA.findQuestion(bank, attempt.questionId);
     if (!q) return true;
     if (q.status === 'excluded') return true;
@@ -3271,10 +3101,12 @@ details.panel > p { margin-top: 8px; }
     }
     var picks;
     if (rangeId === 'all') {
-      var per = Math.ceil(n / bank.skills.length);
+      // 全範囲：項目を順番に回して1問ずつ選ぶ（項目数で割り切れないときは、多く出す項目を毎回入れ替える）
+      var lists = shuffle(bank.skills).map(function (sk) { return oldest(pool.filter(function (q) { return q.skill === sk.id; }), n); });
       picks = [];
-      bank.skills.forEach(function (sk) { picks = picks.concat(oldest(pool.filter(function (q) { return q.skill === sk.id; }), per)); });
-      picks = picks.slice(0, Math.max(n, bank.skills.length));
+      for (var r = 0; picks.length < n && lists.some(function (l) { return l.length; }); r++) {
+        lists.forEach(function (l) { if (picks.length < n && l.length) picks.push(l.shift()); });
+      }
     } else {
       picks = oldest(pool.filter(function (q) { return q.skill === rangeId; }), n);
     }
@@ -3300,7 +3132,7 @@ details.panel > p { margin-top: 8px; }
    * 進行・採点・保存・結果画面は「もう一度練習する」と同じ（type: 'self'）で、6問の抽出は使わない。
    */
   function buildFixedSetSession(bank, setId, label, now) {
-    var items = activeQuestions(bank).filter(function (q) { return !q.retryFor; }) // 解き直し用の問題は、間違えたときだけ出す
+    var items = activeQuestions(bank).filter(function (q) { return q.set === setId && !q.retryFor; }) // 解き直し用の問題は、間違えたときだけ出す
       .map(function (q) { return { kind: 'question', questionId: q.id, attemptType: 'self' }; });
     return newSession('self', bank.unit.id, items, now, { range: setId, rangeLabel: label, selfStarted: true, practiceSet: setId });
   }
@@ -3324,9 +3156,13 @@ details.panel > p { margin-top: 8px; }
     diagAttempts.forEach(function (a) { used[a.questionId] = true; });
     var items = [];
 
+    // しばらく解いていない類題を優先する（自分で始めた練習の回答は、類題の選び方に影響させないため見ない）
+    var lastAt = {};
+    state.attempts.forEach(function (a) { if (EA.mastery.isSelfPractice(a)) return; if (!(lastAt[a.questionId] >= a.answeredAt)) lastAt[a.questionId] = a.answeredAt; });
     function pickSimilar(q) {
-      var cands = (q.similar || []).map(function (id) { return EA.findQuestion(bank, id); })
-        .concat(activeQuestions(bank).filter(function (x) { return x.role === 'practice' && x.skill === q.skill; }));
+      var listed = (q.similar || []).map(function (id) { return EA.findQuestion(bank, id); }).filter(Boolean)
+        .sort(function (x, y) { return (lastAt[x.id] || 0) - (lastAt[y.id] || 0); });
+      var cands = listed.concat(activeQuestions(bank).filter(function (x) { return x.role === 'practice' && x.skill === q.skill; }));
       for (var i = 0; i < cands.length; i++) {
         var c = cands[i];
         if (c && c.status !== 'excluded' && c.skill === q.skill && !used[c.id]) { used[c.id] = true; return c; }
@@ -3337,9 +3173,8 @@ details.panel > p { margin-top: 8px; }
     var flagged = diagAttempts.filter(function (a) { return needsFollowUp(a) && !EA.mastery.isExcluded(a, bank); });
     var missing = [];
     flagged.forEach(function (a) {
+      // 解説は初回診断で答えるたびに見ているので、ここでは類題（別の問題）だけを出す
       var q = EA.findQuestion(bank, a.questionId);
-      items.push({ kind: 'explain', questionId: q.id, sourceAttemptId: a.id });
-      if (!G.isSkillCorrect(a.result)) items.push({ kind: 'question', questionId: q.id, attemptType: 'retry' });
       var s = pickSimilar(q);
       if (s) items.push({ kind: 'question', questionId: s.id, attemptType: 'similar' });
       else missing.push({ skillId: q.skill, questionId: q.id, why: '別の類題が用意されていないため、次回の復習で確認します' });
@@ -3353,7 +3188,10 @@ details.panel > p { margin-top: 8px; }
         if (q) { used[q.id] = true; items.push({ kind: 'question', questionId: q.id, attemptType: 'similar' }); }
       });
     }
-    return newSession('practice', bank.unit.id, items, now, { optional: optional, unresolved: missing });
+    // 初回診断で解説を見たあとの学習なので、この回の回答は「解説後」として記録する（自力の正解には数えない）
+    var explained = {};
+    bank.skills.forEach(function (sk) { explained[sk.id] = true; });
+    return newSession('practice', bank.unit.id, items, now, { optional: optional, unresolved: missing, explained: explained });
   }
 
   /**
@@ -3469,13 +3307,13 @@ details.panel > p { margin-top: 8px; }
 
   /**
    * ホームに出す「次の課題」
-   * 優先順：途中の学習の再開 → 初回診断 → 解説と類題 → 復習 → （今日は完了）
+   * 優先順：途中の学習の再開 → 初回診断 → 類題 → 復習 → （今日は完了）
    */
   function homeTask(state, bank, now) {
     var u = unitState(state, bank.unit.id);
     var s = state.activeSession;
     if (s) {
-      var label = s.practiceSet === 'lv1' ? '不定詞Lv1の練習' : { diagnostic: '初回診断', practice: '解説と類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習' }[s.type];
+      var label = s.practiceSet === 'lv1' ? '不定詞Lv1の練習' : { diagnostic: '初回診断', practice: '類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習' }[s.type];
       var cur = s.current && s.current.index === s.index ? s.current : null;
       var where = !cur ? '' : cur.phase === 'reason' ? '（意味の問いの回答前）' : cur.phase === 'feedback' ? '（解説の表示中）' : '（回答の途中）';
       // 期限を迎えた復習（いま再開する学習回がその復習なら、その項目は数えない）
@@ -3497,21 +3335,21 @@ details.panel > p { margin-top: 8px; }
         kind: 'diagnostic', title: '不定詞の初回診断',
         detail: n + '問', detailKind: 'size',
         why: '',
-        help: { label: '初回診断とは？', text: '答えに応じて、次に取り組む問題が決まります。結果と解説は、全問に答えたあとに表示されます。' },
+        help: { label: '初回診断とは？', text: '答えるたびに正誤と解説を表示します。答えに応じて、次に取り組む類題が決まります。' },
         cta: '診断をはじめる'
       };
     }
     if (!u.practiceDoneAt && !u.practiceSkippedAt) {
-      var anyFlag = state.attempts.some(function (a) { return a.sessionId === u.diagnosticSessionId && needsFollowUp(a); });
-      // 量の目安：これから始める「解説と類題」の中身（buildPracticeSession と同じ）
+      var anyFlag = state.attempts.some(function (a) { return a.sessionId === u.diagnosticSessionId && needsFollowUp(a) && !EA.mastery.isExcluded(a, bank); });
+      // 量の目安：これから始める「類題」の中身（buildPracticeSession と同じ）
       var pItems = buildPracticeSession(state, bank, now).items;
       var nExplain = pItems.filter(function (x) { return x.kind === 'explain'; }).length;
       var nQ = pItems.length - nExplain;
       return {
-        kind: 'practice', title: anyFlag ? '診断の解説と類題' : '別の問題で確認（任意）',
-        detail: anyFlag ? '解説' + nExplain + '問・問題' + nQ + '問' : '問題' + nQ + '問', detailKind: 'size', detailIcon: 'book',
+        kind: 'practice', title: anyFlag ? '診断の類題' : '別の問題で確認（任意）',
+        detail: '問題' + nQ + '問', detailKind: 'size', detailIcon: 'book',
         why: anyFlag ? '' : '診断は全問自力で正解でした。別の問題でも解けるか確かめます。',
-        cta: '解説と類題へ'
+        cta: '類題へ'
       };
     }
     var due = dueReviews(state, bank, now);
@@ -3560,7 +3398,7 @@ details.panel > p { margin-top: 8px; }
 
 /* ---- js/session.js ---- */
 /*
- * session.js — 学習回（初回診断・解説と類題・復習）の進行（ロジックのみ。画面は扱いません）
+ * session.js — 学習回（初回診断・類題・復習）の進行（ロジックのみ。画面は扱いません）
  *
  * 時刻は t = { app: アプリ内の時刻, real: 実際の時刻 } で受け取ります。
  * （デモモードでは app が日付をずらした時刻。解答時間の計測には real を使います）
@@ -3803,10 +3641,7 @@ details.panel > p { margin-top: 8px; }
     cur.attemptId = a.id;
     cur.hiddenSince = null;
 
-    if (s.type === 'diagnostic') {
-      // 初回診断中は、後の問題の答えにつながらないよう解説を出さずに次へ
-      return { attempt: a, finished: next(state, bank, t, { internal: true }) };
-    }
+    // 初回診断も、答えるたびに正誤と解説を表示する（類題は診断のあとの学習回で出す）
     if (a.reasonDecision && a.reasonDecision.ask) {
       s.reasonsAsked = (s.reasonsAsked || 0) + 1;
       a.reasonPending = true; // 意味の問いに答えるまで、確認状況の根拠にしない
@@ -3926,7 +3761,7 @@ details.panel > p { margin-top: 8px; }
     var attempts = s.attemptIds.map(function (id) { return attemptById(state, id); }).filter(Boolean);
     // 試作の単元・自分で始めた練習（もう一度練習）は復習予定に入れない
     var changes = (s.type === 'trial' || s.type === 'self') ? [] : EA.scheduler.applySession(state.schedule, s.type, attempts, state.attempts, t.app, EA.config, bank);
-    // 単元の状態（初回診断・解説と類題の完了）は、初回診断・解説と類題のときだけ触る（自分で始めた練習・試作では作らない）
+    // 単元の状態（初回診断・類題の完了）は、初回診断・類題のときだけ触る（自分で始めた練習・試作では作らない）
     var u = (s.type === 'diagnostic' || s.type === 'practice') ? EA.planner.unitState(state, s.unitId) : {};
     if (s.type === 'diagnostic') { u.diagnosticDoneAt = t.app; u.diagnosticSessionId = s.id; }
     if (s.type === 'practice') { u.practiceDoneAt = t.app; if (early) u.practiceEndedEarly = true; }
@@ -4211,9 +4046,9 @@ details.panel > p { margin-top: 8px; }
   var TAP_GUARD_MS = 250;
 
   var TYPE_LABEL = { diagnostic: '初回診断', retry: '解き直し', similar: '類題', followup: '確認問題', review: '復習', trial: '試作', self: 'もう一度練習' };
-  var SESSION_LABEL = { diagnostic: '初回診断', practice: '解説と類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習' };
+  var SESSION_LABEL = { diagnostic: '初回診断', practice: '類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習' };
   var FORMAT_LABEL = { fill: '空所補充', order: '並び替え', ja2en: '日本語→英語', meaning: '意味の確認' };
-  var LV1 = EA.banks['infinitive-lv1'];
+  var LV1 = EA.banks.infinitive; // 不定詞 Lv1 の8問は、不定詞（基本）の問題集の set: 'lv1'
   /** 問題の形式名（問題ごとに formatLabel があればそれ。用法の分類名は出さない） */
   function fmtLabel(qq) { return (qq && (qq.formatLabel || FORMAT_LABEL[qq.format])) || ''; }
   /** 回答の種類の表示名（決まった問題の練習は、その名前） */
@@ -4294,7 +4129,7 @@ details.panel > p { margin-top: 8px; }
       render();
       return;
     }
-    firstNoteFor = null; // 再開したときは「結果と解説は全問回答後に表示されます」を繰り返さない
+    firstNoteFor = null; // 再開したときは、最初の案内を繰り返さない
     notice = { tone: 'info', text: '途中経過を保存しました', temp: true }; // 保存に成功したときだけ、一時表示
     go('home');
   }
@@ -4410,7 +4245,7 @@ details.panel > p { margin-top: 8px; }
       var cur = view.name === n[0] || (n[0] === 'history' && view.name === 'question') || (n[0] === 'settings' && view.name === 'teacher-time');
       return '<button type="button" class="nav-item' + (cur ? ' is-current' : '') + '" data-go="' + n[0] + '"' + (cur ? ' aria-current="page"' : '') + '>' + icon(n[2]) + '<span>' + n[1] + '</span></button>';
     }).join('') + '</nav>';
-    // 学習画面の退出は、どの学習回でも「保存してホームへ」1つ（初回診断・解説と類題・復習・試作で同じ）
+    // 学習画面の退出は、どの学習回でも「保存してホームへ」1つ（初回診断・類題・復習・試作で同じ）
     var sessionBtns = inSession ? '<button type="button" class="btn-quiet" data-act="save-home">保存してホームへ</button>' : '';
     var bars = '';
     if (state.mode === 'demo') {
@@ -4449,7 +4284,7 @@ details.panel > p { margin-top: 8px; }
     return '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + ICON_PATH[name] + '</svg>';
   }
 
-  /** 単元の流れ（初回診断 → 解説と類題 → 後日の復習）。記録された事実だけから作る */
+  /** 単元の流れ（初回診断 → 類題 → 後日の復習）。記録された事実だけから作る */
   function unitSteps(task) {
     var u = P.unitState(state, BANK.unit.id);
     var s = state.activeSession;
@@ -4458,7 +4293,7 @@ details.panel > p { margin-top: 8px; }
     if (task.kind === 'resume') { cur = s ? { diagnostic: 0, practice: 1, review: 2 }[s.type] : -1; if (cur === undefined) cur = -1; }
     var steps = [
       { label: '初回診断', done: !!u.diagnosticDoneAt },
-      { label: '解説と類題', done: !!u.practiceDoneAt, skipped: !u.practiceDoneAt && !!u.practiceSkippedAt },
+      { label: '類題', done: !!u.practiceDoneAt, skipped: !u.practiceDoneAt && !!u.practiceSkippedAt },
       { label: '後日の復習', done: reviewed }
     ];
     return { steps: steps, cur: cur, done: steps.filter(function (x) { return x.done; }).length };
@@ -4517,7 +4352,7 @@ details.panel > p { margin-top: 8px; }
       reviewFact = ''; // 「続きから再開」の下の案内（期限を迎えた復習が◯件）と重ねない
     } else if (due.length) {
       reviewFact = '<div class="dash-fact is-due">' + icon('calendar') + '<span>次の復習<strong class="fact-date">今日</strong><span class="fact-sub">' + due.length + '件</span></span>' +
-        (task.kind === 'review' ? '' : '<span class="fact-note">解説と類題のあとに始められます</span>') + '</div>';
+        (task.kind === 'review' ? '' : '<span class="fact-note">類題のあとに始められます</span>') + '</div>';
     } else if (next) {
       reviewFact = '<p class="dash-fact">' + icon('calendar') + '<span>次の復習<strong class="fact-date">' + esc(monthDay(next)) + '</strong></span></p>';
     }
@@ -4579,7 +4414,7 @@ details.panel > p { margin-top: 8px; }
     var u = P.unitState(state, BANK.unit.id);
     var steps = [
       ['初回診断', !!u.diagnosticDoneAt],
-      ['解説と類題', !!u.practiceDoneAt],
+      ['類題', !!u.practiceDoneAt],
       ['1回目の復習', state.sessions.some(function (s) { return s.type === 'review'; })]
     ];
     var canSelf = !!u.diagnosticDoneAt; // 初回の学習（初回診断）を終えた単元だけ
@@ -4625,7 +4460,7 @@ details.panel > p { margin-top: 8px; }
       '</div>';
   }
 
-  function lv1Count() { return LV1 ? LV1.questions.filter(function (x) { return x.status !== 'excluded' && !x.retryFor; }).length : 0; }
+  function lv1Count() { return LV1 ? LV1.questions.filter(function (x) { return x.set === 'lv1' && x.status !== 'excluded' && !x.retryFor; }).length : 0; }
 
   function selfSummaryHtml(rec, atts) {
     var main = atts.filter(function (a) { return !a.retryOf; }), re = atts.filter(function (a) { return a.retryOf; });
@@ -4692,7 +4527,7 @@ details.panel > p { margin-top: 8px; }
     var firstDiag = firstNoteFor === s.id && s.type === 'diagnostic' && s.index === 0 && cur.phase === 'answer';
     var body = '<section class="sheet" aria-live="polite">' +
       '<p class="eyebrow">' + esc(typeLabel) + ' ・ ' + esc(fmtLabel(qq2)) + (typeNote ? '<span class="eyebrow-note">' + esc(typeNote) + '</span>' : '') + '</p>' +
-      (firstDiag ? '<p class="first-note" role="note">' + icon('clock') + '<span>結果と解説は全問回答後に表示されます</span></p>' : '');
+      (firstDiag ? '<p class="first-note" role="note">' + icon('clock') + '<span>答えるたびに、正誤と解説を表示します</span></p>' : '');
 
     if (cur.phase === 'answer') {
       body += questionPromptHtml(qq2, cur.draft, { hideJa: qq2.showJa === 'after' }) + '<div class="answer-area" id="answer-area">' + answerControlHtml(qq2, cur) + '</div>';
@@ -4703,7 +4538,7 @@ details.panel > p { margin-top: 8px; }
         '<button type="button" class="btn-quiet" data-act="hint"' + (cur.hintUsed ? ' disabled' : '') + '>ヒントを見る</button>' +
         '<button type="button" class="btn-quiet" data-act="giveup">' + giveUpLabel(s) + '</button>' +
         '<span class="helpers-note">「自信がない」「ヒントを見る」は押さなくてかまいません。押しても減点はありません（ヒントを見た場合は「ヒントあり」と記録します）。「' + giveUpLabel(s) + '」を押すと、この問題は「わからない」として記録され、正解には数えられません。' +
-          (s.type === 'diagnostic' ? '解説は全問に答えたあとに表示されます。' : '') + '</span>' +
+          '' + '</span>' +
         '</div>' +
         '<div class="actions"><button type="button" class="btn-primary btn-lg" data-act="submit" id="submit-btn"' + (hasDraft(qq2, cur) ? '' : ' disabled') + '>回答を確定</button></div>';
     } else {
@@ -5043,11 +4878,11 @@ details.panel > p { margin-top: 8px; }
   function renderResults() {
     var rec = sessionRecord(view.params.sessionId);
     if (!rec) return renderHome();
-    var atts = rec.attemptIds.map(attemptById).filter(Boolean);
+    var atts = rec.attemptIds.map(attemptById).filter(function (a) { return a && q(a.questionId); }); // 削除した問題の回答は出さない
     var solid = atts.filter(M.isSolid).length;
     var flagged = atts.filter(P.needsFollowUp).length;
     var h = '<p class="eyebrow">初回診断の結果</p><h1 class="page-title">' + atts.length + '問中、ヒントなし・自信がないの申告なしで正解 ' + solid + '問</h1>' +
-      '<p class="lead">この6問だけで不定詞全体の理解は判断できません。気になる回答があった問題の解説を読み、別の問題で確かめます。</p>';
+      '<p class="lead">この' + atts.length + '問だけで不定詞全体の理解は判断できません。気になる回答があった問題は、別の問題（類題）で確かめます。</p>';
     h += '<ol class="result-list">' + atts.map(function (a, i) {
       var qq = q(a.questionId);
       return '<li class="result-row"><div class="result-main"><span class="result-no">' + (i + 1) + '</span>' +
@@ -5057,9 +4892,9 @@ details.panel > p { margin-top: 8px; }
         '<details class="result-detail"><summary>解説を見る</summary>' + (a.feedback ? '<p class="feedback-note">' + esc(a.feedback) + '</p>' : '') + explanationHtml(qq) + '</details></li>';
     }).join('') + '</ol>';
     h += '<div class="actions actions-split">' +
-      '<button type="button" class="btn-primary btn-lg" data-act="task-practice">' + (flagged ? '解説と類題へ（' + flagged + '問）' : '別の問題でも確かめる（3問・任意）') + '</button>' +
+      '<button type="button" class="btn-primary btn-lg" data-act="task-practice">' + (flagged ? '類題へ（' + flagged + '問）' : '別の問題でも確かめる（3問・任意）') + '</button>' +
       // 診断はもう終わっているので、ここは記録を変えずにホームへ戻るだけ
-      '<button type="button" class="btn-quiet" data-act="skip-practice-later">ホームへ戻る（解説と類題はあとで）</button>' +
+      '<button type="button" class="btn-quiet" data-act="skip-practice-later">ホームへ戻る（類題はあとで）</button>' +
       (flagged ? '' : '<button type="button" class="btn-quiet" data-act="skip-practice">確認問題はとばす</button>') +
       '</div>';
     return h;
@@ -5070,7 +4905,7 @@ details.panel > p { margin-top: 8px; }
     var rec = sessionRecord(view.params.sessionId);
     if (!rec) return renderHome();
     var t = now();
-    var atts = rec.attemptIds.map(attemptById).filter(Boolean);
+    var atts = rec.attemptIds.map(attemptById).filter(function (a) { return a && q(a.questionId); }); // 削除した問題の回答は出さない
     var h = '<p class="eyebrow">' + esc(rec.practiceSet === 'lv1' ? '不定詞Lv1の練習' : SESSION_LABEL[rec.type]) + 'のまとめ' + (rec.endedEarly ? '（今日はここまで）' : '') + '</p><h1 class="page-title">おつかれさまでした</h1>';
     if (rec.type === 'trial') return h + trialSummaryHtml(atts);
     if (rec.type === 'self') return h + selfSummaryHtml(rec, atts);
@@ -5120,9 +4955,9 @@ details.panel > p { margin-top: 8px; }
 
   /**
    * 単元の復習の状態。既存の復習判定（planner.dueReviews / buildReviewSession）と、ホームの課題の順番
-   * （途中の学習 → 初回診断 → 解説と類題 → 復習）をそのまま使う。
+   * （途中の学習 → 初回診断 → 類題 → 復習）をそのまま使う。
    *   ready     今すぐ始められる。count は buildReviewSession が実際に出す問題数（一覧の「復習◯問」と一致）
-   *   blocked   期限は来ているが、途中の学習・初回診断・解説と類題が先（why に理由）
+   *   blocked   期限は来ているが、途中の学習・初回診断・類題が先（why に理由）
    *   scheduled 次の復習日が決まっている（next）
    *   none      予定なし（診断前・試作の単元）
    */
@@ -5134,7 +4969,7 @@ details.panel > p { margin-top: 8px; }
     if (due.length) {
       if (state.activeSession) return { kind: 'blocked', why: '途中の学習を最後まで進めると始められます。', resume: true };
       if (!u.diagnosticDoneAt) return { kind: 'blocked', why: '初回診断のあとに始められます。' };
-      if (!u.practiceDoneAt && !u.practiceSkippedAt) return { kind: 'blocked', why: '解説と類題のあとに始められます。' };
+      if (!u.practiceDoneAt && !u.practiceSkippedAt) return { kind: 'blocked', why: '類題のあとに始められます。' };
       var count = P.buildReviewSession(state, bank, t).items.length;
       if (count) return { kind: 'ready', count: count };
     }
@@ -5192,7 +5027,7 @@ details.panel > p { margin-top: 8px; }
         var qq = q(a.questionId);
         return '<li><button type="button" class="att-row" data-act="question" data-q="' + esc(a.questionId) + '">' +
           '<span class="att-type">' + esc(typeLabelOf(a)) + '<span class="muted">' + U.fmtDateTime(a.answeredAt) + '</span></span>' +
-          '<span class="att-q">' + esc(qq ? plain(qq.ja || qq.sentence) : a.questionId) + '<span class="muted att-ans" lang="en">' + esc(a.responseText || '（わからない）') + '</span></span>' +
+          '<span class="att-q">' + esc(qq ? plain(qq.ja || qq.sentence) : '（削除した問題：' + a.questionId + '）') + '<span class="muted att-ans" lang="en">' + esc(a.responseText || '（わからない）') + '</span></span>' +
           '<span class="att-tags">' + resultBadge(a.result) + flagsHtml(a) + '</span></button></li>';
       }).join('') + '</ul>' : '<p class="muted">学習履歴はまだありません</p>') + '</section>';
     return h;
@@ -5265,7 +5100,7 @@ details.panel > p { margin-top: 8px; }
     var h = '<h1 class="page-title">設定</h1>' +
       '<section class="panel"><div class="panel-head"><h2>問題画面</h2></div>' +
         '<label class="check-row"><input type="checkbox" data-act="confirm-explain"' + (confirmExplainOn() ? ' checked' : '') + '>解説を開く前に確認する</label>' +
-        '<p class="field-note">オンにすると、「解説をみる」（初回診断では「わからない（次へ）」）を押したときに確認画面を表示します。</p>' +
+        '<p class="field-note">オンにすると、「解説をみる」を押したときに確認画面を表示します。</p>' +
         '<label class="check-row"><input type="checkbox" data-act="sound-toggle"' + (soundOn() ? ' checked' : '') + '>効果音を鳴らす</label>' +
         '<p class="field-note">回答を確定して正誤を表示したときに、短い音を一度だけ鳴らします（正解は軽い音、不正解は控えめな音）。端末の音量・消音の設定にしたがいます。</p></section>' +
       '<section class="panel"><div class="panel-head"><h2>学習記録の保存について</h2></div><ul class="plain-list">' +
@@ -5307,6 +5142,7 @@ details.panel > p { margin-top: 8px; }
    * 正誤・解説を読んでいる時間、「保存してホームへ」で離れていた時間は含まない。
    */
   var GOAL_OPTIONS = [5, 10, 15, 20, 30];
+  var LEGACY_SKILL = { 'lv1-noun': 'inf-noun', 'lv1-adj': 'inf-adj', 'lv1-adv': 'inf-adv', 'lv1-it': 'inf-it' };
   function countedMs(a) { return Math.min(a.activeMs || 0, EA.config.maxCountedMsPerQuestion); }
   function dur(ms) { return ms > 0 ? U.fmtDuration(ms) : '0分'; }
   function pctOf(ms, goalMin) { return goalMin ? Math.min(100, Math.round(ms / 60000 / goalMin * 100)) : 0; }
@@ -5322,7 +5158,8 @@ details.panel > p { margin-top: 8px; }
       total += ms;
       var x = byDay[d] || (byDay[d] = { ms: 0, n: 0, sessions: {} });
       x.ms += ms; x.n++; x.sessions[a.sessionId] = true;
-      var k = bySkill[a.skillId] || (bySkill[a.skillId] = { ms: 0, n: 0 });
+      var sid = LEGACY_SKILL[a.skillId] || a.skillId; // 以前の Lv1 の項目ID は、不定詞の項目にまとめる
+      var k = bySkill[sid] || (bySkill[sid] = { ms: 0, n: 0 });
       k.ms += ms; k.n++;
       var s = bySession[a.sessionId] || (bySession[a.sessionId] = { id: a.sessionId, type: a.sessionType, ms: 0, away: 0, n: 0, first: a.startedAt || a.answeredAt, last: a.answeredAt });
       s.ms += ms; s.away += a.awayMs || 0; s.n++;
@@ -5610,7 +5447,7 @@ details.panel > p { margin-top: 8px; }
   /* ================= 「解説をみる」（既存の「わからない」の処理で確定） ================= */
   function confirmExplainOn() { return state.settings.confirmBeforeExplain !== false; }
   /** 初回診断は解説をその場で出さず次の問題へ進むので、ボタンと確認画面の文言を変える（処理は同じ） */
-  function giveUpLabel(s) { return s && s.type === 'diagnostic' ? 'わからない（次へ）' : '解説をみる'; }
+  function giveUpLabel(s) { return '解説をみる'; } // 初回診断も、答えるとすぐ解説を表示する
 
   /** 既存の「わからない」と同じ処理で回答を確定し、正誤・解説の表示へ進む */
   function giveUpAndExplain(btn) {
@@ -5634,7 +5471,7 @@ details.panel > p { margin-top: 8px; }
     dlg.className = 'confirm-dialog';
     dlg.setAttribute('aria-labelledby', 'explain-confirm-title');
     dlg.setAttribute('aria-describedby', 'explain-confirm-body');
-    var diag = !!(state.activeSession && state.activeSession.type === 'diagnostic');
+    var diag = false; // 初回診断も解説をすぐ表示するので、確認画面の文言は共通
     dlg.innerHTML = '<h2 id="explain-confirm-title">' + (diag ? '次の問題へ進みますか？' : '解説を開きますか？') + '</h2>' +
       '<p id="explain-confirm-body">この問題は『わからない』として記録され、正解には数えられません。' + (diag ? '解説は全問に答えたあとに表示されます。' : '') + '</p>' +
       '<label class="check-row"><input type="checkbox" id="explain-confirm-skip">次回からこの確認を表示しない</label>' +
@@ -5693,7 +5530,7 @@ details.panel > p { margin-top: 8px; }
         if (state.activeSession) { go('session'); break; }
         startSession(P.buildReviewSession(state, rb, t.app)); break;
       }
-      case 'skip-practice-later': notice = '診断の結果は記録しました。解説と類題はホームから始められます。'; go('home'); break;
+      case 'skip-practice-later': notice = '診断の結果は記録しました。類題はホームから始められます。'; go('home'); break;
       case 'skip-practice': P.unitState(state, BANK.unit.id).practiceSkippedAt = t.app; persist(); go('home'); break;
       case 'save-home': saveAndGoHome(); break;
       case 'choose': selectChoice(el.getAttribute('data-choice')); break;
@@ -5803,12 +5640,37 @@ details.panel > p { margin-top: 8px; }
     } catch (e) { fallback(); }
   }
 
+  /**
+   * 問題データの更新で削除した問題（以前の初回診断 inf-d1〜d6 など）を指している、保存中の途中の学習を直す。
+   *   初回診断 … 新しい初回診断を最初から（途中までの回答は履歴に残る）
+   *   それ以外 … 削除した問題の項目だけを外して続ける（残りがなければ学習回を終える）
+   */
+  function dropDeletedFromActiveSession() {
+    var s = state.activeSession;
+    if (!s) return '';
+    function ok(it) { return !it || !!q(it.questionId); }
+    if (s.items.every(ok)) return '';
+    if (s.type === 'diagnostic') {
+      state.activeSession = null;
+      return '初回診断の問題が新しくなったため、途中だった初回診断は最初からになります（これまでの回答は履歴に残っています）。';
+    }
+    var curOk = ok(s.items[s.index]);
+    var before = s.items.slice(0, s.index).filter(ok).length;
+    s.items = s.items.filter(ok);
+    s.index = before;
+    if (!curOk || !s.current) s.current = null; else s.current.index = s.index;
+    if (s.index >= s.items.length) S.finish(state, EA.banks[s.unitId] || BANK, T());
+    return '問題データの更新で削除された問題を、途中の学習から外しました。';
+  }
+
   function boot() {
     appEl = document.getElementById('app');
     appEl.addEventListener('click', onClick);
     appEl.addEventListener('submit', onPinSubmit);
     S.recover(state); // 前回、計時中のまま閉じていた場合も、閉じていた時間は学習時間に数えない
-    if (loaded.status === 'migrated' || loaded.status === 'new' || loaded.status === 'ok') persist();
+    var fixMsg = dropDeletedFromActiveSession();
+    if (fixMsg) loadMessage = (loadMessage ? loadMessage + ' ' : '') + fixMsg;
+    if (loaded.status === 'migrated' || loaded.status === 'new' || loaded.status === 'ok' || fixMsg) persist();
     if (loaded.status === 'migrated') loadMessage = '記録を新しい形式に引き継ぎました（' + loadMessage + '）。元のデータの控えも保存しています。';
     render();
   }
