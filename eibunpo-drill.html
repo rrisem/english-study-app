@@ -2242,6 +2242,230 @@ details.panel > p { margin-top: 8px; }
   ].forEach(function (q) { bank.questions.push(q); });
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- data/infinitive-fact.js ---- */
+/*
+ * infinitive-fact.js — 「英文だけから確実に分かることを選ぶ」問題（各項目6問・計24問）
+ *
+ * ■ 講師の方へ
+ *   - 和訳そのものではなく、英文の形から「だれがするのか」「何を説明しているのか」「目的なのか結果なのか」
+ *     「評価なのか事実なのか」を読み取れるかを確かめる問題です。
+ *   - 選択肢は3つ：正解（英文から確実に分かること）／だれ・何の取り違えや用法の読み違い／英文に書かれていないこと（結果・事実）。
+ *   - 類題・確認問題・復習・もう一度練習で使います。retryFor の Lv1 の問題を間違えたときの解き直しにも使います。
+ */
+(function (root) {
+  'use strict';
+  var EA = root.EA = root.EA || {};
+  var bank = EA.banks.infinitive;
+  var FACT_Q = '英文だけから確実に分かることを選びなさい。';
+  var TERM = { 'inf-noun': '名詞的用法（〜すること）', 'inf-adj': '形容詞的用法（〜するための・〜する）', 'inf-adv': '副詞的用法（目的：〜するために）', 'inf-it': 'It is ～ for A to do（形式主語の It）' };
+  var RETRY = { 'inf-noun': 'inf-lv1-02', 'inf-adj': 'inf-lv1-04', 'inf-adv': 'inf-lv1-06', 'inf-it': 'inf-lv1-08' };
+  var HINT = {
+    'inf-noun': '動詞のすぐあとの to ～ が「何を（〜すること）」を表しているか考えましょう。実際にしたかどうかは書かれていますか？',
+    'inf-adj': 'to ～ がすぐ前のどの名詞を説明しているか、その動作をするのはだれかを考えましょう。',
+    'inf-adv': 'to ～ が行動の「目的」を表しているか考えましょう。結果は書かれていますか？',
+    'inf-it': 'for A は to ～ の動作をする人です。It is ＋形容詞 は、それについての評価を表します。'
+  };
+  function fact(id, skill, d) {
+    var ans = null;
+    var choices = d.choices.map(function (c, i) {
+      var cid = 'abc'.charAt(i);
+      if (c[1] == null) { ans = cid; return { id: cid, text: c[0] }; }
+      return { id: cid, text: c[0], feedback: c[1] };
+    });
+    return { id: id, version: 1, status: 'active', role: 'practice', skill: skill, retryFor: RETRY[skill],
+      format: 'meaning', formatLabel: '英文から分かることを選ぶ', question: FACT_Q, instruction: FACT_Q,
+      checks: d.checks, sentence: d.en, choices: choices, answer: ans, hint: HINT[skill],
+      explanation: { answer: d.en, translation: d.ja, chunks: d.chunks, point: d.point, term: TERM[skill] } };
+  }
+
+  [
+    /* ===== 名詞的用法（動詞＋to do・be to do・主語の To do） ===== */
+    fact('inf-f-n1', 'inf-noun', { en: 'My sister decided to study in Canada.', ja: '姉はカナダで勉強することに決めた。',
+      checks: 'decided to ～ が「決めた中身」を表し、実際にしたかは分からないと読み取れるか',
+      choices: [['姉は、カナダで勉強することに決めた。', null],
+        ['姉は、カナダで勉強するために、何かを決めた。', 'to study は「勉強するために（目的）」ではなく、decided の中身（何を決めたか）です。'],
+        ['姉は、すでにカナダで勉強している。', '決めたことは分かりますが、もう勉強しているかどうかは書かれていません。']],
+      chunks: [{ en: 'My sister decided', ja: '姉は決めた（何を？）' }, { en: 'to study in Canada', ja: 'カナダで勉強すること', mark: true }],
+      point: 'decided のすぐあとの to study in Canada が、決めた中身を表す。実際に勉強しているかはこの文だけでは分からない。' }),
+    fact('inf-f-n2', 'inf-noun', { en: 'Our plan is to leave at seven.', ja: '私たちの計画は、7時に出発することだ。',
+      checks: 'is のあとの to ～ が計画の中身で、出発したという事実ではないと読み取れるか',
+      choices: [['私たちは、7時に出発するつもりだ。', null],
+        ['私たちは、7時に出発した。', '計画（これからすること）です。出発したとは書かれていません。'],
+        ['私たちは、7時に出発するために計画を立てた。', 'to leave は計画を立てた目的ではなく、計画の中身（何をするか）です。']],
+      chunks: [{ en: 'Our plan is', ja: '私たちの計画は〜だ（何？）' }, { en: 'to leave at seven', ja: '7時に出発すること', mark: true }],
+      point: 'is のあとの to leave at seven が計画の中身を表す。出発したかどうかは分からない。' }),
+    fact('inf-f-n3', 'inf-noun', { en: 'Taro hopes to see the singer someday.', ja: 'タロウは、いつかその歌手に会いたいと思っている。',
+      checks: 'hopes to ～ で、会いたいのはだれか・実際に会ったかを読み取れるか',
+      choices: [['タロウは、いつかその歌手に会いたいと思っている。', null],
+        ['タロウは、その歌手に会ったことがある。', 'hopes は「願っている」です。会ったことがあるとは書かれていません。'],
+        ['その歌手が、いつかタロウに会いたいと思っている。', '会いたいと願っているのは、文の主語のタロウです。']],
+      chunks: [{ en: 'Taro hopes', ja: 'タロウは願っている（何を？）' }, { en: 'to see the singer someday', ja: 'いつかその歌手に会うこと', mark: true }],
+      point: 'hopes の中身が to see the singer。会いたいのはタロウで、会ったかどうかは分からない。' }),
+    fact('inf-f-n4', 'inf-noun', { en: 'To keep a diary every day is not easy.', ja: '毎日日記をつけることは簡単ではない。',
+      checks: '主語の To ～（〜すること）と、not easy という評価を読み取れるか',
+      choices: [['毎日日記をつけ続けるのは、簡単ではない。', null],
+        ['毎日日記をつけることは、まったくできない。', 'not easy は「簡単ではない」です。「できない」とまでは言っていません。'],
+        ['この人は、毎日日記をつけている。', 'だれかが日記をつけているという事実は書かれていません。一般的な評価です。']],
+      chunks: [{ en: 'To keep a diary every day', ja: '毎日日記をつけること（は）', mark: true }, { en: 'is not easy', ja: '簡単ではない' }],
+      point: '文頭の To keep a diary every day が主語（〜すること）。not easy はそれについての評価で、だれかがしている事実ではない。' }),
+    fact('inf-f-n5', 'inf-noun', { en: 'Mika remembered to turn off the lights.', ja: 'ミカは忘れずに明かりを消した。',
+      checks: 'remembered to ～（忘れずに〜した）と remembered ～ing（〜したことを覚えていた）を区別できるか',
+      choices: [['ミカは、忘れずに明かりを消した。', null],
+        ['ミカは、明かりを消したことを覚えていた。', '「消したことを覚えていた」は remembered turning off です。remembered to turn off は「忘れずに消した」です。'],
+        ['ミカは、明かりを消すのを忘れた。', 'remembered（覚えていた）なので、忘れていません。']],
+      chunks: [{ en: 'Mika remembered', ja: 'ミカは覚えていた（何を？）' }, { en: 'to turn off the lights', ja: '明かりを消すこと', mark: true }],
+      point: 'remember to do は「（これからすることを）忘れずにする」。明かりは消している。「消したことを覚えている」は remember doing。' }),
+    fact('inf-f-n6', 'inf-noun', { en: 'Ryo learned to swim last summer.', ja: 'リョウは去年の夏、泳げるようになった。',
+      checks: 'learned to ～ が「身につけたこと」を表し、目的ではないと読み取れるか',
+      choices: [['リョウは去年の夏、泳げるようになった。', null],
+        ['リョウは去年の夏、泳ぐために何かを学んだ。', 'to swim は学んだ目的ではなく、learned の中身（何を身につけたか）です。'],
+        ['リョウは今年の夏も、毎日泳いでいる。', '今年のことは書かれていません。']],
+      chunks: [{ en: 'Ryo learned', ja: 'リョウは身につけた（何を？）' }, { en: 'to swim', ja: '泳ぐこと', mark: true }, { en: 'last summer', ja: '去年の夏に' }],
+      point: 'learned の中身が to swim（泳ぐこと）。learn to do で「〜できるようになる」。' }),
+
+    /* ===== 形容詞的用法（名詞＋to do） ===== */
+    fact('inf-f-a1', 'inf-adj', { en: 'Nana has many friends to help her.', ja: 'ナナには、助けてくれる友だちがたくさんいる。',
+      checks: 'friends to help her で、助けるのはだれか（her はナナ）を読み取れるか',
+      choices: [['ナナには、助けてくれる友だちがたくさんいる。', null],
+        ['ナナには、自分が助けてあげる友だちがたくさんいる。', 'help her の her はナナです。助けるのは友だちで、助けてもらうのがナナです。'],
+        ['ナナは、たくさんの友だちに助けてもらった。', '助けてくれる友だちがいることは分かりますが、助けてもらったという出来事は書かれていません。']],
+      chunks: [{ en: 'Nana has many friends', ja: 'ナナにはたくさんの友だちがいる（どんな？）' }, { en: 'to help her', ja: '彼女（ナナ）を助けてくれる', mark: true }],
+      point: 'to help her が friends を説明する。her はナナなので、助けるのは友だち。' }),
+    fact('inf-f-a2', 'inf-adj', { en: 'There is no water to drink in this room.', ja: 'この部屋には、飲む水がない。',
+      checks: 'water to drink（飲むための水）を読み取り、書かれていない規則と区別できるか',
+      choices: [['この部屋には、飲むための水がない。', null],
+        ['この部屋では、水を飲んではいけない。', '「飲んではいけない」という決まりは書かれていません。飲む水がないということです。'],
+        ['この部屋の人たちは、水を飲みたいと思っている。', 'だれかが飲みたいと思っているとは書かれていません。to drink は water を説明しています。']],
+      chunks: [{ en: 'There is no water', ja: '水がない（どんな？）' }, { en: 'to drink', ja: '飲むための', mark: true }, { en: 'in this room', ja: 'この部屋には' }],
+      point: 'to drink が water を説明し、「飲むための水」。飲んではいけないという意味ではない。' }),
+    fact('inf-f-a3', 'inf-adj', { en: 'I have something to tell you.', ja: '私には、あなたに伝えることがある。',
+      checks: 'something to tell you で、伝えるのはだれか・もう伝えたかを読み取れるか',
+      choices: [['私には、あなたに伝えたいことがある。', null],
+        ['あなたには、私に伝えることがある。', '伝えることを持っているのは I（私）で、伝える相手が you（あなた）です。'],
+        ['私は、あなたに何かをすでに伝えた。', 'to tell は「これから伝える」です。すでに伝えたとは書かれていません。']],
+      chunks: [{ en: 'I have something', ja: '私には何かがある（どんな？）' }, { en: 'to tell you', ja: 'あなたに伝える', mark: true }],
+      point: 'to tell you が something を説明し、「あなたに伝えること」。伝えるのは私で、まだ伝えていない。' }),
+    fact('inf-f-a4', 'inf-adj', { en: 'Ms. Sato gave us a lot of work to finish by Friday.', ja: '佐藤先生は、私たちに金曜日までに終える仕事をたくさん出した。',
+      checks: 'work to finish で、仕事を終えるのはだれか・終えたかを読み取れるか',
+      choices: [['佐藤先生は、私たちが金曜日までに終える仕事をたくさん出した。', null],
+        ['佐藤先生は、金曜日までにたくさんの仕事を終えた。', '仕事を終えるのは、仕事を出された私たちです。'],
+        ['私たちは、金曜日までに仕事をすべて終えた。', '終えたかどうかは書かれていません。to finish は「終えるべき」です。']],
+      chunks: [{ en: 'Ms. Sato gave us a lot of work', ja: '佐藤先生は私たちにたくさんの仕事を出した（どんな？）' }, { en: 'to finish by Friday', ja: '金曜日までに終える（べき）', mark: true }],
+      point: 'to finish by Friday が work を説明する。終えるのは仕事を出された私たちで、終えたかどうかは分からない。' }),
+    fact('inf-f-a5', 'inf-adj', { en: 'We need a place to practice after school.', ja: '私たちには、放課後に練習する場所が必要だ。',
+      checks: 'need a place to ～（〜する場所が必要）と need to ～（〜する必要がある）を区別できるか',
+      choices: [['私たちには、放課後に練習する場所が必要だ。', null],
+        ['私たちは、放課後に練習する必要がある。', '必要なのは a place（場所）です。to practice は場所を説明しています。'],
+        ['私たちは、放課後にいつもの場所で練習した。', '練習したという出来事は書かれていません。']],
+      chunks: [{ en: 'We need a place', ja: '私たちには場所が必要だ（どんな？）' }, { en: 'to practice after school', ja: '放課後に練習する（ための）', mark: true }],
+      point: 'to practice after school が a place を説明する。必要なのは場所。「練習する必要がある」なら need to practice。' }),
+    fact('inf-f-a6', 'inf-adj', { en: 'She was the first student to arrive at school.', ja: '彼女は、学校に最初に着いた生徒だった。',
+      checks: 'the first student to arrive（最初に着いた生徒）を、目的や願望と読み違えないか',
+      choices: [['彼女は、学校に最初に着いた生徒だった。', null],
+        ['彼女は、学校に最初に着くために急いだ。', 'to arrive は目的ではなく、the first student を説明しています。急いだとも書かれていません。'],
+        ['彼女は、学校に最初に着きたいと思っていた。', '「着きたい」という願いではなく、最初に着いた生徒だったという事実です。']],
+      chunks: [{ en: 'She was the first student', ja: '彼女は最初の生徒だった（何の？）' }, { en: 'to arrive at school', ja: '学校に着いた', mark: true }],
+      point: 'to arrive at school が the first student を説明し、「学校に最初に着いた生徒」。' }),
+
+    /* ===== 副詞的用法（目的） ===== */
+    fact('inf-f-v1', 'inf-adv', { en: 'Sho went to the hospital to see his grandfather.', ja: 'ショウは、祖父に会うために病院へ行った。',
+      checks: '目的の to see で、会いに行ったのはだれか・会えたかを読み取れるか',
+      choices: [['ショウは、祖父に会うために病院へ行った。', null],
+        ['ショウの祖父が、ショウに会うために病院へ来た。', '病院へ行ったのはショウで、会う相手が祖父です。'],
+        ['ショウは病院へ行き、祖父に会えた。', '会うために行ったことは分かりますが、会えたかどうかは書かれていません。']],
+      chunks: [{ en: 'Sho went to the hospital', ja: 'ショウは病院へ行った（何のために？）' }, { en: 'to see his grandfather', ja: '祖父に会うために', mark: true }],
+      point: 'to see his grandfather は病院へ行った目的。行ったのはショウで、会えたかどうかは分からない。' }),
+    fact('inf-f-v2', 'inf-adv', { en: 'Emi studies English every day to become a tour guide.', ja: 'エミは、ツアーガイドになるために毎日英語を勉強している。',
+      checks: '目的の to become を、すでにそうである事実や結果と区別できるか',
+      choices: [['エミは、ツアーガイドになるために毎日英語を勉強している。', null],
+        ['エミは、ツアーガイドとして毎日英語を使っている。', 'to become は「なるために」です。もうツアーガイドだとは書かれていません。'],
+        ['エミは毎日英語を勉強したので、ツアーガイドになった。', 'なったという結果は書かれていません。to become は目的です。']],
+      chunks: [{ en: 'Emi studies English every day', ja: 'エミは毎日英語を勉強している（何のために？）' }, { en: 'to become a tour guide', ja: 'ツアーガイドになるために', mark: true }],
+      point: 'to become a tour guide は勉強している目的。もうなっている・なったという事実ではない。' }),
+    fact('inf-f-v3', 'inf-adv', { en: 'I got up early to watch the sunrise.', ja: '私は日の出を見るために早く起きた。',
+      checks: '目的の to watch を、結果や順番と読み違えないか',
+      choices: [['私は、日の出を見るために早く起きた。', null],
+        ['私は早く起きたので、日の出を見ることができた。', '見るために起きたことは分かりますが、見られたかどうかは書かれていません。'],
+        ['私は日の出を見たあとで、早起きをした。', 'to watch は早起きした目的です。起きたあとで見ようとしています。']],
+      chunks: [{ en: 'I got up early', ja: '私は早く起きた（何のために？）' }, { en: 'to watch the sunrise', ja: '日の出を見るために', mark: true }],
+      point: 'to watch the sunrise は早く起きた目的。実際に見られたかは分からない。' }),
+    fact('inf-f-v4', 'inf-adv', { en: 'Dad stopped the car to ask the way.', ja: '父は道をたずねるために車を止めた。',
+      checks: 'stopped … to ask（たずねるために止めた）と stopped asking（たずねるのをやめた）を区別できるか',
+      choices: [['父は、道をたずねるために車を止めた。', null],
+        ['父は、道をたずねるのをやめた。', '「たずねるのをやめた」は stopped asking です。to ask は車を止めた目的です。'],
+        ['父は道をたずねたが、だれも教えてくれなかった。', 'たずねた結果は書かれていません。']],
+      chunks: [{ en: 'Dad stopped the car', ja: '父は車を止めた（何のために？）' }, { en: 'to ask the way', ja: '道をたずねるために', mark: true }],
+      point: 'to ask the way は車を止めた目的。「たずねるのをやめる」は stop asking。' }),
+    fact('inf-f-v5', 'inf-adv', { en: 'Kaito borrowed a dictionary from Mika to do his homework.', ja: 'カイトは宿題をするために、ミカから辞書を借りた。',
+      checks: '目的の to do で、借りたのはだれか・宿題を終えたかを読み取れるか',
+      choices: [['カイトは、宿題をするためにミカから辞書を借りた。', null],
+        ['ミカは、宿題をするためにカイトから辞書を借りた。', '借りたのはカイトで、貸したのがミカです（from Mika）。'],
+        ['カイトは辞書を借りて、宿題を終えた。', '宿題を終えたかどうかは書かれていません。to do は借りた目的です。']],
+      chunks: [{ en: 'Kaito borrowed a dictionary from Mika', ja: 'カイトはミカから辞書を借りた（何のために？）' }, { en: 'to do his homework', ja: '宿題をするために', mark: true }],
+      point: 'to do his homework は辞書を借りた目的。借りたのはカイト。宿題を終えたかは分からない。' }),
+    fact('inf-f-v6', 'inf-adv', { en: 'The students stood up to greet the teacher.', ja: '生徒たちは先生にあいさつするために立ち上がった。',
+      checks: '目的の to greet で、あいさつするのはだれかを読み取り、願望と区別できるか',
+      choices: [['生徒たちは、先生にあいさつするために立ち上がった。', null],
+        ['先生が、生徒たちにあいさつするために立ち上がった。', '立ち上がったのは the students（生徒たち）で、あいさつする相手が先生です。'],
+        ['生徒たちは、先生にあいさつしたいと思っていたが、座っていた。', 'stood up（立ち上がった）と書かれています。to greet は立ち上がった目的です。']],
+      chunks: [{ en: 'The students stood up', ja: '生徒たちは立ち上がった（何のために？）' }, { en: 'to greet the teacher', ja: '先生にあいさつするために', mark: true }],
+      point: 'to greet the teacher は立ち上がった目的。あいさつするのは生徒たち。' }),
+
+    /* ===== It is ～ for A to do ===== */
+    fact('inf-f-i1', 'inf-it', { en: 'It is necessary for you to check your answers.', ja: 'あなたが自分の答えを確認することは必要だ。',
+      checks: 'for you から確認するのはだれか、necessary が評価であることを読み取れるか',
+      choices: [['あなたが自分の答えを確認することは、必要だ。', null],
+        ['だれかがあなたのために答えを確認することは、必要だ。', 'for you は「あなたが（確認する）」です。だれかがあなたのために確認するのではありません。'],
+        ['あなたは、すでに答えを確認した。', 'necessary は「必要だ」という評価です。確認したという事実は書かれていません。']],
+      chunks: [{ en: 'It is necessary', ja: '必要だ（何が？）' }, { en: 'for you', ja: 'あなたにとって（確認する人）' }, { en: 'to check your answers', ja: '自分の答えを確認すること', mark: true }],
+      point: 'for you から、確認するのはあなた。necessary は確認することが必要だという評価。' }),
+    fact('inf-f-i2', 'inf-it', { en: 'It was hard for Yuki to wake up early this morning.', ja: 'ユキにとって、今朝早く起きるのは大変だった。',
+      checks: 'It was hard for A to do が「大変だった」という評価で、できなかったとは限らないと読み取れるか',
+      choices: [['ユキが今朝早く起きるのは、大変だった。', null],
+        ['ユキは今朝、早く起きられなかった。', 'hard は「大変だった」という評価です。起きられなかったとは書かれていません。'],
+        ['だれかがユキのために今朝早く起きるのは、大変だった。', 'for Yuki から、早く起きるのはユキです。']],
+      chunks: [{ en: 'It was hard', ja: '大変だった（何が？）' }, { en: 'for Yuki', ja: 'ユキにとって（起きる人）' }, { en: 'to wake up early this morning', ja: '今朝早く起きること', mark: true }],
+      point: 'for Yuki から、起きるのはユキ。hard は大変だったという評価で、起きられたかどうかは分からない。' }),
+    fact('inf-f-i3', 'inf-it', { en: 'It is exciting for children to visit the zoo.', ja: '子どもたちにとって、動物園に行くのはわくわくすることだ。',
+      checks: 'for children から行くのはだれか、一般的な評価であることを読み取れるか',
+      choices: [['子どもたちが動物園に行くのは、わくわくすることだ。', null],
+        ['子どもたちのために、大人が動物園に行くのはわくわくすることだ。', 'for children から、動物園に行くのは子どもたちです。'],
+        ['子どもたちは、今日動物園に行った。', 'exciting は評価です。今日行ったという出来事は書かれていません。']],
+      chunks: [{ en: 'It is exciting', ja: 'わくわくすることだ（何が？）' }, { en: 'for children', ja: '子どもたちにとって（行く人）' }, { en: 'to visit the zoo', ja: '動物園に行くこと', mark: true }],
+      point: 'for children から、行くのは子どもたち。exciting はそれがわくわくすることだという評価。' }),
+    fact('inf-f-i4', 'inf-it', { en: 'It is impossible for me to finish this book in a day.', ja: '私がこの本を1日で読み終えるのは不可能だ。',
+      checks: 'for me から読み終えるのはだれか、impossible が評価であることを読み取れるか',
+      choices: [['私がこの本を1日で読み終えるのは、不可能だ。', null],
+        ['私はこの本を1日で読み終えた。', 'impossible（不可能だ）と言っているので、読み終えたのではありません。'],
+        ['だれかが私の代わりに、この本を1日で読み終えるのは不可能だ。', 'for me から、読み終えるのは私です。']],
+      chunks: [{ en: 'It is impossible', ja: '不可能だ（何が？）' }, { en: 'for me', ja: '私にとって（読み終える人）' }, { en: 'to finish this book in a day', ja: 'この本を1日で読み終えること', mark: true }],
+      point: 'for me から、読み終えるのは私。impossible は1日で読み終えることが不可能だという評価。' }),
+    fact('inf-f-i5', 'inf-it', { en: 'It is important for us to listen to each other.', ja: '私たちがおたがいの話を聞くことは大切だ。',
+      checks: 'for us から聞くのはだれか、important が評価で事実ではないことを読み取れるか',
+      choices: [['私たちがおたがいの話を聞くことは、大切だ。', null],
+        ['私たちは、いつもおたがいの話を聞いている。', 'important は「大切だ」という評価です。いつも聞いているという事実は書かれていません。'],
+        ['大切なのは、ほかの人が私たちの話を聞いてくれることだ。', 'for us から、話を聞くのは私たちです。']],
+      chunks: [{ en: 'It is important', ja: '大切だ（何が？）' }, { en: 'for us', ja: '私たちにとって（聞く人）' }, { en: 'to listen to each other', ja: 'おたがいの話を聞くこと', mark: true }],
+      point: 'for us から、聞くのは私たち。important はそれが大切だという評価で、いつもしている事実ではない。' }),
+    fact('inf-f-i6', 'inf-it', { en: 'It is dangerous for small children to play near the river.', ja: '小さな子どもが川の近くで遊ぶのは危険だ。',
+      checks: 'for small children から遊ぶのはだれか、dangerous が評価であることを読み取れるか',
+      choices: [['小さな子どもが川の近くで遊ぶのは、危険だ。', null],
+        ['小さな子どもたちが川の近くで遊んで、けがをした。', 'dangerous は「危険だ」という評価です。けがをしたという出来事は書かれていません。'],
+        ['小さな子どものために、大人が川の近くで遊ぶのは危険だ。', 'for small children から、遊ぶのは小さな子どもです。']],
+      chunks: [{ en: 'It is dangerous', ja: '危険だ（何が？）' }, { en: 'for small children', ja: '小さな子どもにとって（遊ぶ人）' }, { en: 'to play near the river', ja: '川の近くで遊ぶこと', mark: true }],
+      point: 'for small children から、遊ぶのは小さな子ども。dangerous はそれが危険だという評価。' })
+  ].forEach(function (q) { bank.questions.push(q); });
+
+  // 和訳（語の意味）だけで答えが決まる以前の問題は、出題を終える（retired）。過去の回答は表示し、判定にもそのまま使う
+  var RETIRE = {
+    'inf-p-n2': '選択肢の違いが be / meet / see などの語の意味（和訳）だけで、用法を読み取る力を確かめられないため',
+    'inf-p-v2': '選択肢の違いが meet / see off などの語の意味（和訳）だけで、用法を読み取る力を確かめられないため',
+    'inf-p-v5': '選択肢の違いが buy / sell / drink などの語の意味（和訳）だけで、用法を読み取る力を確かめられないため',
+    'inf-p-v6': '選択肢の違いが ask / tell などの語の意味（和訳）だけで、用法を読み取る力を確かめられないため'
+  };
+  bank.questions.forEach(function (q) { if (RETIRE[q.id]) { q.retired = true; q.retiredReason = RETIRE[q.id]; } });
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* ---- js/grading.js ---- */
 /*
  * grading.js — 採点（ルールのみ。AIは使いません）
@@ -2991,7 +3215,8 @@ details.panel > p { margin-top: 8px; }
   var G = EA.grading;
 
   function activeQuestions(bank) {
-    return bank.questions.filter(function (q) { return q.status !== 'excluded'; });
+    // retired ＝ 出題を終えた問題（過去の回答の表示と判定には使うが、もう出さない）
+    return bank.questions.filter(function (q) { return q.status !== 'excluded' && !q.retired; });
   }
 
   /** 日本語訳を見せずに出題する問題か（訳なしで意味を確かめられる） */
@@ -3167,7 +3392,7 @@ details.panel > p { margin-top: 8px; }
       var cands = listed.concat(activeQuestions(bank).filter(function (x) { return x.role === 'practice' && x.skill === q.skill; }));
       for (var i = 0; i < cands.length; i++) {
         var c = cands[i];
-        if (c && c.status !== 'excluded' && c.skill === q.skill && !used[c.id]) { used[c.id] = true; return c; }
+        if (c && c.status !== 'excluded' && !c.retired && c.skill === q.skill && !used[c.id]) { used[c.id] = true; return c; }
       }
       return null;
     }
@@ -3703,7 +3928,7 @@ details.panel > p { margin-top: 8px; }
     s.items.forEach(function (x) { used[x.questionId] = true; });
     var last = {};
     state.attempts.forEach(function (x) { if (!(last[x.questionId] >= x.answeredAt)) last[x.questionId] = x.answeredAt; });
-    var cands = bank.questions.filter(function (x) { return x.status !== 'excluded' && x.retryFor === a.questionId && !used[x.id]; });
+    var cands = bank.questions.filter(function (x) { return x.status !== 'excluded' && !x.retired && x.retryFor === a.questionId && !used[x.id]; });
     if (!cands.length) {
       a.followUp = { added: null, trigger: 'error', kind: 'retry', basics: false, why: 'この問題の解き直し用の問題は、この練習ですべて出しました。解説をもう一度読んでから次へ進みましょう。' };
       return;
@@ -5074,7 +5299,7 @@ details.panel > p { margin-top: 8px; }
             var n = state.attempts.filter(function (a) { return a.questionId === x.id; });
             var last = n[n.length - 1];
             return '<li><button type="button" class="att-row" data-act="question" data-q="' + x.id + '"><span class="att-type">' + esc(fmtLabel(x)) + '</span>' +
-              '<span class="att-q">' + esc(plain(x.ja || x.sentence)) + (x.status === 'excluded' ? '（判定から除外中）' : '') + '</span>' +
+              '<span class="att-q">' + esc(plain(x.ja || x.sentence)) + (x.status === 'excluded' ? '（判定から除外中）' : x.retired ? '（出題終了）' : '') + '</span>' +
               '<span class="att-tags">' + (last ? resultBadge(last.result) : '<span class="muted">未回答</span>') + '<span class="muted">' + n.length + '回</span></span></button></li>';
           }).join('') + '</ul></details></section>';
       }).join('');
@@ -5091,7 +5316,8 @@ details.panel > p { margin-top: 8px; }
     return '<button type="button" class="btn-text back" data-act="back-history" data-unit="' + esc(backUnit.unit.id) + '" data-skill="' + qq.skill + '">← ' + esc(backUnit.unit.title) + 'の履歴・復習へ</button>' +
       '<p class="eyebrow">' + esc(skill(qq.skill).label) + ' ・ ' + esc(fmtLabel(qq)) + ' ・ ' + esc(qq.id) + '（版 ' + qq.version + '）</p>' +
       '<section class="sheet">' + questionPromptHtml(qq, null) +
-      '<p class="muted">確認すること：' + esc(qq.checks) + '</p>' + explanationHtml(qq) +
+      '<p class="muted">確認すること：' + esc(qq.checks) + '</p>' +
+      (qq.retired ? '<p class="muted">この問題は出題を終えました（' + esc(qq.retiredReason || '') + '）。過去の回答は判定にそのまま使います。</p>' : '') + explanationHtml(qq) +
       ((qq.changes || []).length ? '<details><summary>問題の修正履歴</summary><ul class="plain-list">' + qq.changes.map(function (c) { return '<li>版' + c.version + '：' + esc(c.what) + '。過去の記録：' + esc(c.oldRecords) + '</li>'; }).join('') + '</ul></details>' : '') +
       '</section>' +
       '<section class="panel"><div class="panel-head"><h2>過去の回答（' + atts.length + '回）</h2></div>' +
