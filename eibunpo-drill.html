@@ -186,7 +186,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .view-home { max-width: 1160px; padding-block: 8px 72px; gap: 28px; }
 .icon { width: 1.15em; height: 1.15em; flex: none; vertical-align: -0.2em; }
 .home { display: grid; gap: clamp(24px, 4vw, 40px); min-width: 0; }
-.home h1, .home h2, .greet-title { font-feature-settings: "palt"; }
+.home h1, .home h2 { font-feature-settings: "palt"; }
 
 /* あいさつ＋背景の丘（飾り） */
 .greet-line { color: var(--muted); font-size: var(--fs-s); letter-spacing: 0.08em; margin: 0 0 -8px; }
@@ -194,7 +194,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 /* 共通の小物 */
 .bar { height: 8px; border-radius: 99px; background: var(--track); overflow: hidden; }
 .bar span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent-2), var(--accent)); }
-.bar-lg { height: 10px; }
 .dash-head { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: var(--fs-m); }
 .dash-icon { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); }
 .dash-icon .icon { width: 19px; height: 19px; }
@@ -226,7 +225,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .hero-due { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 12px 14px; border-radius: var(--r-s); background: var(--hold-soft); color: var(--ink); font-size: var(--fs-s); }
 .hero-due .icon { color: var(--hold); margin-top: 0.2em; }
 .hero-due .num { font-family: var(--font-en); font-size: 1.125rem; margin: 0 2px; }
-.hero-done .dash-icon { background: var(--ok-soft); color: var(--ok); }
 
 .unit-col { grid-template-columns: 96px minmax(0, 1fr); column-gap: 18px; align-items: center; }
 .unit-col > .path, .unit-col > .dash-fact { grid-column: 1 / -1; }
@@ -250,98 +248,32 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .path-step.is-now { color: var(--accent); font-weight: 700; }
 .path-step.is-now .path-mark { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 
-.time-big { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 4px; line-height: 1; margin-top: 6px; }
 /* 学習時間画面：今日の実績と目標・進捗バー・目標を変更 を1枚にまとめる */
-.view-time { max-width: 820px; }
-.time-card { display: grid; gap: 14px; background: var(--surface); border-radius: 22px; box-shadow: var(--shadow); padding: clamp(20px, 3vw, 32px); min-width: 0; }
-.time-card .bar { margin-top: 4px; }
-.time-goal-edit { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
-.time-goal-edit .field-note { margin-top: 0; }
-.time-big .num { font-family: var(--font-en); font-size: 3rem; font-weight: 700; letter-spacing: -0.02em; }
-.time-unit { font-size: var(--fs-l); font-weight: 700; }
-.time-of { font-size: var(--fs-m); color: var(--muted); margin-left: 2px; }
-.time-left { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: var(--fs-s); color: var(--muted); margin-top: 6px; }
-.time-left .icon { color: var(--muted); }
-.time-left strong { color: var(--ink); font-family: var(--font-en); font-size: 1.125rem; }
-.time-left .btn-text { margin-left: auto; }
 
 /* 2. 項目ごとの確認状況（3列） */
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin-bottom: 14px; }
 .section-head h2 { font-size: var(--fs-l); letter-spacing: 0.04em; margin-right: auto; }
-.skills-alert { font-size: var(--fs-s); font-weight: 700; color: var(--ng); }
-.skill-cols { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
-@media (min-width: 760px) {
-  .skill-cols { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
-  .skill-col { padding-inline: clamp(16px, 2.2vw, 28px); }
-  .skill-col:first-child { padding-left: 0; }
-  .skill-col:last-child { padding-right: 0; }
-  .skill-col + .skill-col { border-left: 1px solid var(--line); }
-}
-.skill-col { display: grid; gap: 8px; align-content: start; min-width: 0; }
 .tag { justify-self: start; display: inline-block; padding: 3px 12px; border-radius: 8px; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.04em; color: var(--chip-ink); }
 .tag-1 { background: var(--chip-1); } .tag-2 { background: var(--chip-2); } .tag-3 { background: var(--chip-3); } .tag-4 { background: var(--accent); color: var(--accent-ink); }
-.skill-open { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; background: none; border: 0; padding: 4px 0; min-height: 44px; cursor: pointer; text-align: left; }
-.skill-open .skill-label { font-size: var(--fs-l); font-weight: 700; }
-.skill-open .icon { color: var(--muted); }
-@media (hover: hover) { .skill-open:hover .skill-label { color: var(--accent); } }
-.skill-plain { font-size: var(--fs-s); color: var(--muted); padding-bottom: 6px; }
 .ach-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
 .ach-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-s); }
 .ach-dot { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--muted); flex: none; }
 .ach-list li.is-on .ach-dot { background: var(--accent-2); border-color: var(--accent-2); color: var(--accent-ink); }
 .ach-dot .icon { width: 14px; height: 14px; }
-.skill-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font-size: var(--fs-s); padding-top: 4px; }
 .skill-due { color: var(--muted); white-space: nowrap; }
 .skills-note { margin-top: 12px; }
 
 /* 4. 今週の学習 */
-.week { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px 24px; align-items: center; background: var(--surface); border-radius: 22px; box-shadow: var(--shadow); padding: clamp(18px, 3vw, 28px); }
-.week h2 { font-size: var(--fs-m); display: flex; align-items: center; gap: 8px; }
-.week h2 .icon { color: var(--accent); }
-.week-cell { display: grid; gap: 4px; min-width: 0; }
-.week-cell .muted { font-size: var(--fs-s); }
-.week-title { grid-column: 1 / -1; }
-.week-big { font-weight: 700; font-size: var(--fs-m); line-height: 1.1; }
-.week-big .num { font-family: var(--font-en); font-size: 2rem; margin-right: 2px; }
-.week-cell .bar { margin-top: 6px; }
-.week-streak .icon { color: var(--flame); width: 18px; height: 18px; }
-.week-bars { grid-column: 1 / -1; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; height: 112px; }
-.wb { display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; gap: 6px; min-width: 0; }
-.wb-track { position: relative; width: min(100%, 30px); height: 100%; }
-.wb-fill { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 6px 6px 3px 3px; background: var(--accent-soft); }
-.wb.has .wb-fill { background: color-mix(in srgb, var(--accent-2) 45%, var(--accent-soft)); }
-.wb.is-today .wb-fill { background: linear-gradient(180deg, var(--accent-2), var(--accent)); }
-.wb.is-future .wb-fill { background: transparent; border: 1.5px dashed var(--line); }
-.wb-name { font-size: var(--fs-xs); color: var(--muted); }
-.wb.is-today .wb-name { color: var(--accent); font-weight: 700; }
-}
-@media (max-width: 600px) {
-  .view-home { padding-top: 0; gap: 20px; }
-  .hero .btn-primary { width: 100%; }
-  .unit-col { grid-template-columns: 72px minmax(0, 1fr); }
-  .unit-tile { width: 72px; height: 72px; border-radius: 14px; }
-  .unit-tile [lang="en"] { font-size: 1.625rem; }
-  .time-big .num { font-size: 2.5rem; }
-}
-.home .hero-detail, .home .hero-why, .skill-plain { text-wrap: pretty; }
+.home .hero-detail, .home .hero-why { text-wrap: pretty; }
 
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); padding: 20px clamp(16px, 3vw, 28px); min-width: 0; }
 .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin-bottom: 12px; }
 .panel-head h2 { font-size: var(--fs-l); }
 .panel-note { font-size: var(--fs-xs); color: var(--muted); }
-.skill-list, .att-list, .plan-list, .q-list, .result-list, .plain-list, .evidence, .sched-history { list-style: none; margin: 0; padding: 0; }
-.skill-row {
-  width: 100%; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr) auto; gap: 12px; align-items: center;
-  background: none; border: 0; border-top: 1px solid var(--line); padding: 14px 4px; text-align: left; cursor: pointer; min-height: 60px;
-}
-.skill-list li:first-child .skill-row { border-top: 0; }
-.skill-row:hover { background: var(--surface-2); }
-.skill-name { display: grid; }
+.att-list, .plan-list, .q-list, .result-list, .plain-list, .evidence, .sched-history { list-style: none; margin: 0; padding: 0; }
 .skill-label { font-weight: 700; }
 .skill-term { font-size: var(--fs-xs); color: var(--muted); margin-left: 0; font-weight: 400; }
 h2 .skill-term { margin-left: 10px; }
-.skill-status { display: flex; align-items: center; gap: 10px; font-size: var(--fs-s); }
-.skill-due { font-size: var(--fs-s); color: var(--muted); white-space: nowrap; }
 .meter { display: inline-flex; gap: 3px; flex: none; }
 .meter-seg { width: 14px; height: 14px; border-radius: 3px; border: 2px solid var(--accent); background: transparent; }
 .meter-seg.on { background: var(--accent); }
@@ -441,7 +373,6 @@ h2 .skill-term { margin-left: 10px; }
 .reason { display: grid; gap: 12px; border-top: 1px solid var(--line); padding-top: 16px; }
 .reason .choices { grid-template-columns: 1fr; }
 .reason-q { font-size: var(--fs-l); font-weight: 700; }
-.reason-note { font-size: var(--fs-xs); color: var(--muted); }
 .reason-result { background: var(--surface-2); padding: 12px 16px; border-radius: var(--r-s); display: grid; gap: 4px; }
 .reason-correct { color: var(--muted); font-size: var(--fs-s); }
 
@@ -513,8 +444,6 @@ ul.att-list.panel { padding-block: 8px; }
 .skill-panel-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .skill-panel-head h2 { font-size: var(--fs-l); }
 .skill-panel-due { display: grid; text-align: right; }
-.status-box { background: var(--surface-2); border-radius: var(--r-s); padding: 14px 16px; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: center; }
-.status-box .evidence { grid-column: 1 / -1; font-size: var(--fs-s); color: var(--muted); }
 .evidence li::before, .plain-list li::before { content: "・"; }
 .sched-history li { font-size: var(--fs-s); padding: 4px 0; }
 .back { align-self: flex-start; }
@@ -534,8 +463,6 @@ ul.att-list.panel { padding-block: 8px; }
 
 /* ---------- 画面幅による調整 ---------- */
 @media (max-width: 760px) {
-  .skill-row { grid-template-columns: minmax(0, 1fr) auto; }
-  .skill-status { grid-column: 1 / -1; grid-row: 2; }
   .plan-list li { grid-template-columns: 1fr; gap: 4px; }
   .att-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .skill-panel-due { text-align: left; }
@@ -662,8 +589,6 @@ details.panel > p { margin-top: 8px; }
 .hero-due { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 12px 14px; border-radius: var(--r-s); background: var(--hold-soft); color: var(--ink); font-size: var(--fs-s); }
 .hero-due .icon { color: var(--hold); margin-top: 0.2em; }
 .hero-due .num { font-family: var(--font-en); font-size: 1.125rem; margin: 0 2px; }
-.home-bold .hero-due { background: rgba(255, 255, 255, 0.14); color: #fff; }
-.home-bold .hero-due .icon { color: var(--b-yellow); }
 /* 聞いている部分：太字＋下線＋薄い蛍光（色だけに頼らない） */
 .reason-target { font-weight: 700; text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 0.18em; text-decoration-color: var(--accent); background: linear-gradient(transparent 55%, var(--marker) 55%); color: inherit; padding: 0 2px; }
 .reason-sentence { margin: 0; }
@@ -695,9 +620,6 @@ details.panel > p { margin-top: 8px; }
 .fact-sub { color: var(--muted); }
 .fact-note { flex-basis: 100%; color: var(--muted); font-size: var(--fs-xs); padding-left: 26px; }
 .dash-fact.is-due .fact-date { color: var(--accent); }
-.time-left { justify-content: space-between; min-height: 40px; }
-.time-reached { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-weight: 700; }
-.time-reached .icon { color: var(--ok); }
 
 /* ---------- ホーム：視線の順番（課題名 → 必要な情報 → 開始ボタン → 単元の現在地 → 項目 → 今週） ----------
  * 面積：次にやること 約6割 ｜ 単元 約4割（十分な幅のとき）。狭い幅は課題名と開始ボタンが先の縦並び。
@@ -761,12 +683,6 @@ details.panel > p { margin-top: 8px; }
 .skill-line > .icon { color: var(--muted); margin-left: auto; }
 .skills-note { margin-top: 8px; }
 /* 今週：ホームでは1行。押すと「学習時間」 */
-.week-line { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); cursor: pointer; text-align: left; font-size: var(--fs-s); color: var(--ink); touch-action: manipulation; }
-@media (hover: hover) { .week-line:hover { border-color: var(--accent); } }
-.week-line > .icon:first-child { color: var(--accent); }
-.week-line .num { font-family: var(--font-en); font-size: 1.125rem; font-weight: 700; }
-.week-line-goal { color: var(--muted); }
-.week-line > .icon:last-child { margin-left: auto; color: var(--muted); }
 /* 「解説をみる」の確認画面（表示だけ。チェックを入れて解説を開いたときだけ設定を保存） */
 .confirm-dialog { width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; padding: 24px clamp(18px, 4vw, 28px); border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); color: var(--ink); box-shadow: var(--shadow); font-family: var(--font-ja); }
 .confirm-dialog::backdrop { background: rgba(10, 20, 35, 0.45); }
@@ -830,8 +746,6 @@ details.panel > p { margin-top: 8px; }
 .tf-correction .label { margin: 0; }
 .lv2-practice .seg-item { min-width: 0; }
 /* 学習時間画面の今週 */
-.view-time .week { gap: 20px 24px; }
-.view-time .week h2 { font-size: var(--fs-l); }
 @media (max-width: 600px) {
   .view-home { gap: 16px; }
   .unit-col { grid-template-columns: 56px minmax(0, 1fr); }
@@ -4317,7 +4231,7 @@ details.panel > p { margin-top: 8px; }
  * planner.js — 「次に何をするか」と出題する問題を決める（ルールのみ・表示とは独立）
  *
  * 将来 AI に「回答に応じた問題選び」を任せる場合は、この中の
- * buildPracticeSession / buildReviewSession / pickReviewQuestions / pickFollowUp を差し替えます。
+ * buildReviewSession / pickReviewQuestions / pickFollowUp を差し替えます。
  * ※ 現在はすべて事前に決めたルールで動いており、AI は接続していません。
  */
 (function (root) {
@@ -4546,58 +4460,6 @@ details.panel > p { margin-top: 8px; }
   }
 
   /**
-   * 診断のあとの「解説 → 解き直し → 類題」
-   * ・解説：気になる回答があった問題ごと
-   * ・解き直し（同じ問題）：正解できなかった問題だけ
-   * ・類題（別の問題）：気になる回答があった問題ごとに1問。同じ類題は二度使わない
-   * ・全問を自力で安定して正解した場合は、各項目1問ずつの確認問題（任意）
-   */
-  function buildPracticeSession(state, bank, now) {
-    var u = unitState(state, bank.unit.id);
-    var diagAttempts = state.attempts.filter(function (a) { return a.sessionId === u.diagnosticSessionId; });
-    var used = {};
-    diagAttempts.forEach(function (a) { used[a.questionId] = true; });
-    var items = [];
-
-    // しばらく解いていない類題を優先する（自分で始めた練習の回答は、類題の選び方に影響させないため見ない）
-    var lastAt = {};
-    state.attempts.forEach(function (a) { if (EA.mastery.isSelfPractice(a)) return; if (!(lastAt[a.questionId] >= a.answeredAt)) lastAt[a.questionId] = a.answeredAt; });
-    function pickSimilar(q) {
-      var listed = (q.similar || []).map(function (id) { return EA.findQuestion(bank, id); }).filter(Boolean)
-        .sort(function (x, y) { return (lastAt[x.id] || 0) - (lastAt[y.id] || 0); });
-      var cands = listed.concat(activeQuestions(bank).filter(function (x) { return x.role === 'practice' && x.skill === q.skill; }));
-      for (var i = 0; i < cands.length; i++) {
-        var c = cands[i];
-        if (c && c.status !== 'excluded' && !c.retired && c.skill === q.skill && !used[c.id]) { used[c.id] = true; return c; }
-      }
-      return null;
-    }
-
-    var flagged = diagAttempts.filter(function (a) { return needsFollowUp(a) && !EA.mastery.isExcluded(a, bank); });
-    var missing = [];
-    flagged.forEach(function (a) {
-      // 解説は初回診断で答えるたびに見ているので、ここでは類題（別の問題）だけを出す
-      var q = EA.findQuestion(bank, a.questionId);
-      var s = pickSimilar(q);
-      if (s) items.push({ kind: 'question', questionId: s.id, attemptType: 'similar' });
-      else missing.push({ skillId: q.skill, questionId: q.id, why: '別の類題が用意されていないため、次回の復習で確認します' });
-    });
-
-    var optional = false;
-    if (flagged.length === 0) {
-      optional = true;
-      bank.skills.forEach(function (sk) {
-        var q = activeQuestions(bank).filter(function (x) { return x.role === 'practice' && x.skill === sk.id && x.format !== 'meaning' && !used[x.id]; })[0];
-        if (q) { used[q.id] = true; items.push({ kind: 'question', questionId: q.id, attemptType: 'similar' }); }
-      });
-    }
-    // 初回診断で解説を見たあとの学習なので、この回の回答は「解説後」として記録する（自力の正解には数えない）
-    var explained = {};
-    bank.skills.forEach(function (sk) { explained[sk.id] = true; });
-    return newSession('practice', bank.unit.id, items, now, { optional: optional, unresolved: missing, explained: explained });
-  }
-
-  /**
    * 類題・復習・確認問題で、間違えた（または意味・理由の問いが違った）ときに追加する確認問題を選ぶ。
    * ・同じ skill で、この学習回でまだ使っていない、別の問題
    * ・意味・理由の取り違えのときは、意味の確認問題を優先
@@ -4742,20 +4604,6 @@ details.panel > p { margin-top: 8px; }
         cta: 'Lv1をはじめる'
       };
     }
-    // 以前の「類題」の段階は、Lv1 の中の解き直しに置き換えたのでなくした（Lv1 のあとは後日の復習へ進む）
-    if (false) {
-      var anyFlag = state.attempts.some(function (a) { return a.sessionId === u.diagnosticSessionId && needsFollowUp(a) && !EA.mastery.isExcluded(a, bank); });
-      // 量の目安：これから始める「類題」の中身（buildPracticeSession と同じ）
-      var pItems = buildPracticeSession(state, bank, now).items;
-      var nExplain = pItems.filter(function (x) { return x.kind === 'explain'; }).length;
-      var nQ = pItems.length - nExplain;
-      return {
-        kind: 'practice', title: anyFlag ? '診断の類題' : '別の問題で確認（任意）',
-        detail: '問題' + nQ + '問', detailKind: 'size', detailIcon: 'book',
-        why: anyFlag ? '' : '診断は全問自力で正解でした。別の問題でも解けるか確かめます。',
-        cta: '類題へ'
-      };
-    }
     var due = dueReviews(state, bank, now);
     if (due.length) {
       var take = Math.min(due.length, EA.config.maxReviewSkillsPerSession);
@@ -4790,7 +4638,6 @@ details.panel > p { margin-top: 8px; }
     practiceSetLabel: practiceSetLabel,
     selfPracticeRanges: selfPracticeRanges,
     selfPracticeQuestions: selfPracticeQuestions,
-    buildPracticeSession: buildPracticeSession,
     buildReviewSession: buildReviewSession,
     pickReviewQuestions: pickReviewQuestions,
     reviewPicks: reviewPicks,
@@ -5790,7 +5637,6 @@ details.panel > p { margin-top: 8px; }
   function attemptById(id) { return S.attemptById(state, id); }
 
   function go(name, params) {
-    if (name === 'time') name = 'home'; // 学習時間の画面は生徒向けに表示しない（計測・保存は続ける）
     if (name !== 'teacher-time') { teacherUnlocked = false; teacherForm = null; } // 講師向けの画面を離れたら鍵をかける
     view = { name: name, params: params || {} };
     render();
@@ -7699,15 +7545,12 @@ details.panel > p { margin-top: 8px; }
     switch (act) {
       case 'task-resume': go('session'); break;
       case 'task-diagnostic': startSession(P.buildDiagnosticSession(BANK, t.app)); break;
-      case 'task-practice': startSession(P.buildPracticeSession(state, BANK, t.app)); break;
       case 'task-review': {
         // ホームの課題からは不定詞、履歴・復習の単元の詳細からは選んだ単元（data-unit）の復習を始める
         var rb = EA.banks[el.getAttribute('data-unit')] || BANK;
         if (state.activeSession) { go('session'); break; }
         startSession(P.buildReviewSession(state, rb, t.app)); break;
       }
-      case 'skip-practice-later': notice = '診断の結果は記録しました。類題はホームから始められます。'; go('home'); break;
-      case 'skip-practice': P.unitState(state, BANK.unit.id).practiceSkippedAt = t.app; persist(); go('home'); break;
       case 'save-home': saveAndGoHome(); break;
       case 'choose': selectChoice(el.getAttribute('data-choice')); break;
       case 'toggle-explain': toggleExplanation(el); break;

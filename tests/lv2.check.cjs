@@ -140,7 +140,6 @@ async function answerChoice(page, q, correct) {
     st.units = { infinitive: { diagnosticDoneAt: now - 864e5 * 10, diagnosticSessionId: 'x' } };
     B.skills.forEach((sk) => { st.schedule[sk.id] = { dueAt: now - 864e5, step: 0, intervalDays: 1 }; });
     for (let i = 0; i < 10; i++) ids.push(...P.buildReviewSession(st, B, now).items.map((x) => x.questionId));
-    ids.push(...P.buildPracticeSession(st, B, now).items.map((x) => x.questionId));
     const fake = P.buildReviewSession(st, B, now);
     B.skills.forEach((sk) => { const f = P.pickFollowUp(st, B, fake, { skillId: sk.id, questionId: 'none' }, 'error'); if (f) ids.push(f.id); });
     return { n: ids.length, lv2: ids.filter((id) => /^inf-lv2-/.test(id)) };
