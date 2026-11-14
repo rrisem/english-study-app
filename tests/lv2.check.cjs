@@ -243,7 +243,7 @@ async function answerChoice(page, q, correct) {
         if (q.lv2Format === 'fact') {
           // 回答前は、和訳・解説の欄を出さない（選択肢の中の日本語は除いて確かめる）
           const outside = await page.evaluate(() => { const c = document.querySelector('.sheet').cloneNode(true); c.querySelectorAll('.choices').forEach((x) => x.remove()); return c.innerText; });
-          ok(label + '：回答前に全文の和訳・解説を出さない', (await page.locator('.sheet .ex-translation, .sheet .explain').count()) === 0 && !outside.includes(q.explanation.translation));
+          ok(label + '：回答前に全文の和訳・解説を出さない', (await page.locator('.sheet .ex-translation, .sheet .explain').count()) === 0 && !(q.explanation.translation && outside.includes(q.explanation.translation)));
         }
         if (q.lv2Format === 'wo') ok(label + '：日本語の意味まで含めて選ぶ指示', (await page.locator('.q-question').innerText()).includes('日本語の意味'));
         await answerChoice(page, q, correct);
@@ -260,6 +260,21 @@ async function answerChoice(page, q, correct) {
       await page.evaluate(() => { EA.app.getState().activeSession = null; });
     }
   }
+  // 全128問：正答は正解、誤答は不正解（採点の規則で確かめる。並べ替えは語句の並び、選択式は選択肢ID）
+  const all = await page.evaluate(() => JSON.parse(JSON.stringify(EA.banks['infinitive-lv2'].questions)));
+  const wrongAll = [];
+  for (const q of all) {
+    let good, bad;
+    if (q.format === 'order') {
+      const pieces = q.tokens.filter((t) => !(q.orderKind === 'extra' && t === q.extraToken)).concat(q.orderKind === 'missing' ? [q.missingWord] : []);
+      good = splitAnswer(q, pieces);
+      bad = q.orderKind === 'extra' ? q.tokens.slice() : q.orderKind === 'missing' ? good.filter((t) => t !== q.missingWord).concat([q.missingWord]).reverse() : good.slice().reverse();
+      if (good.length !== pieces.length) wrongAll.push(q.id + '（語句から正答を作れない）');
+    } else { good = q.answer; bad = q.choices.find((c) => c.id !== q.answer).id; }
+    const r = await page.evaluate(([id, g, b]) => { const Q = EA.findQuestion(EA.banks['infinitive-lv2'], id); return [EA.grading.grade(Q, g).result, EA.grading.grade(Q, b).result]; }, [q.id, good, bad]);
+    if (r[0] !== 'correct' || r[1] !== 'incorrect') wrongAll.push(q.id + ' ' + r.join('/'));
+  }
+  ok('全' + all.length + '問：正答を正解、誤答を不正解と採点', wrongAll.length === 0, wrongAll.join('、'));
   // 選択肢の表示順を変えても ID で採点
   await openSessionWith(page, [pick.fact]);
   const orders = await page.evaluate(() => {
