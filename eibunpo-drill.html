@@ -839,6 +839,66 @@ details.panel > p { margin-top: 8px; }
   .unit-tile [lang="en"] { font-size: 1.3rem; }
   .path { font-size: var(--fs-xs); }
 }
+/* ---------- 今日の学習（ホーム上部）・今日の記録・講師の日別確認 ---------- */
+.today-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 22px; box-shadow: var(--shadow); padding: clamp(16px, 2.6vw, 24px) clamp(18px, 3vw, 32px); min-width: 0; }
+.today-main { display: grid; gap: 4px; min-width: 0; }
+.today-card .dash-label .icon { color: var(--accent); }
+.today-big { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; font-weight: 700; font-size: var(--fs-l); line-height: 1.25; margin: 0; }
+.today-big .num { font-family: var(--font-en); font-size: 2.5rem; letter-spacing: -0.02em; color: var(--accent); }
+.today-sep { color: var(--muted); padding: 0 6px; }
+.today-time { font-family: var(--font-en); }
+.today-recovered { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-weight: 700; font-size: var(--fs-m); margin: 0; }
+.today-recovered .num { font-family: var(--font-en); font-size: 1.375rem; }
+.today-empty { font-size: var(--fs-m); color: var(--muted); margin: 0; }
+.today-open { min-height: 52px; padding-inline: 20px; font-weight: 700; }
+.today-open .icon { color: var(--accent); }
+@media (max-width: 600px) { .today-open { width: 100%; justify-content: space-between; } .today-big .num { font-size: 2.125rem; } }
+.rec-summary { display: grid; gap: 12px; }
+.rec-counts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: var(--fs-m); }
+.rec-counts li { display: inline-flex; align-items: baseline; gap: 8px; }
+.rec-counts .num { font-family: var(--font-en); font-size: 1.5rem; font-weight: 700; }
+.rec-row .att-tags .icon { color: var(--muted); margin-left: 4px; }
+.rec-arrow { color: var(--muted); font-size: var(--fs-s); }
+.rec-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0; }
+.rec-title { overflow-wrap: anywhere; }
+.rec-attempt { gap: 14px; }
+.rec-grid { grid-template-columns: max-content minmax(0, 1fr); }
+.rec-grid dd { overflow-wrap: anywhere; font-size: var(--fs-m); }
+.rec-version { background: var(--hold-soft); color: var(--ink); border-left: 4px solid var(--hold); border-radius: 0 var(--r-s) var(--r-s) 0; padding: 10px 14px; font-size: var(--fs-s); margin: 0; }
+.rec-explain > summary { font-weight: 700; }
+.send-panel { display: grid; gap: 8px; }
+.send-panel .field-label { margin: 6px 0 0; }
+.send-name { font-family: var(--font-ja); font-size: var(--fs-m); max-width: 22rem; }
+.view-teacher-time .tabs { margin: 4px 0 8px; }
+.tr-days { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tr-date input { font-family: var(--font-en); font-size: var(--fs-m); min-height: 48px; padding: 8px 12px; width: auto; }
+.tr-daylabel { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-size: var(--fs-l); font-weight: 700; margin: 0; }
+.tr-daylabel .muted { font-size: var(--fs-xs); font-weight: 400; }
+.tr-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.tr-card { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 16px; min-height: 72px; padding: 16px 20px; text-align: left; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); touch-action: manipulation; }
+@media (hover: hover) { .tr-card:hover { border-color: var(--accent); } }
+.tr-card > .icon { grid-column: 2; grid-row: 1; color: var(--muted); }
+.tr-name { grid-column: 1; display: grid; font-size: var(--fs-l); font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+.tr-name .muted { font-size: var(--fs-xs); font-weight: 400; }
+.tr-stats, .tr-none, .tr-sub { grid-column: 1 / -1; }
+.tr-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.tr-stat { display: grid; gap: 2px; background: var(--surface-2); border-radius: var(--r-s); padding: 8px 12px; }
+.tr-num { font-family: var(--font-en); font-size: 1.75rem; font-weight: 700; line-height: 1.1; }
+.tr-lbl { font-size: var(--fs-xs); color: var(--muted); font-weight: 700; }
+.tr-ng .tr-num { color: var(--ng); }
+.tr-hold .tr-num { color: var(--hold); }
+.tr-none { font-weight: 700; color: var(--muted); font-size: var(--fs-m); background: var(--surface-2); border: 1.5px dashed var(--line); border-radius: var(--r-s); padding: 10px 14px; }
+.tr-sub { font-size: var(--fs-s); color: var(--muted); }
+.tr-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.tr-item > summary { min-height: 56px; color: var(--ink); font-size: var(--fs-m); }
+.tr-item-head { display: grid; gap: 4px; min-width: 0; }
+.tr-item-head .muted { font-size: var(--fs-xs); }
+.tr-item-q { font-weight: 700; overflow-wrap: anywhere; }
+.tr-item[open] { display: grid; gap: 12px; }
+.tr-item .rec-attempt { box-shadow: none; padding: 16px; }
+@media (max-width: 520px) { .tr-stats { grid-template-columns: 1fr; } .tr-num { font-size: 1.5rem; } }
 </style>
 <div id="app"><p style="padding:24px">読み込み中…（表示されない場合は、ページを再読み込みしてください）</p></div>
 <script>
@@ -4049,6 +4109,7 @@ details.panel > p { margin-top: 8px; }
  *   ea-study-demo-v1   動作確認用デモモードの記録（通常の記録とは完全に別。デモ終了で削除）
  *   ea-study-mode      'demo' のときデモモード
  *   ea-study-backup-*  更新前・読み込めなかったデータの控え（自動では削除しません）
+ *   ea-teacher-records-v1  講師が取り込んだ生徒の学習記録（生徒ごと。暗証番号で開く講師向けの画面だけで使う）
  *
  * 将来サーバーに保存するときは、この load / save を差し替えます。
  */
@@ -4056,7 +4117,7 @@ details.panel > p { margin-top: 8px; }
   'use strict';
   var EA = root.EA = root.EA || {};
   var KEYS = { normal: 'ea-study-v1', demo: 'ea-study-demo-v1', mode: 'ea-study-mode', backupPrefix: 'ea-study-backup-',
-    teacherPin: 'ea-teacher-pin', teacherPinLock: 'ea-teacher-pin-lock' };
+    teacherPin: 'ea-teacher-pin', teacherPinLock: 'ea-teacher-pin-lock', teacherRecords: 'ea-teacher-records-v1' };
   var SCHEMA = 3;
 
   function ls() { return root.localStorage; }
@@ -4072,6 +4133,8 @@ details.panel > p { margin-top: 8px; }
       // confirmBeforeExplain：「解説をみる」を押したときに確認画面を出すか（未設定は「出す」として扱う）
       // soundEffects：採点結果を表示したときの効果音（未設定は「鳴らす」として扱う）
       settings: { dailyGoalMinutes: (EA.config && EA.config.defaultDailyGoalMinutes) || 10, confirmBeforeExplain: true, soundEffects: true },
+      // profile：講師に送る学習記録のコードに入れる、この記録の持ち主（studentId は端末ごとに自動でつける）
+      profile: { studentId: EA.util.uid('st'), name: '' },
       attempts: [],
       schedule: {},
       units: {},
@@ -4227,6 +4290,14 @@ details.panel > p { margin-top: 8px; }
   }
   function checkTeacherPin(pin) { var r = getTeacherPin(); return !!r && pinHash(pin, r.salt) === r.hash; }
   function clearTeacherPin() { del(KEYS.teacherPinLock); return del(KEYS.teacherPin); }
+  /** 講師が取り込んだ生徒の記録。読めないときは null（上書きしないよう、呼び出し側で保存を止める） */
+  function getTeacherRecords() {
+    var raw = get(KEYS.teacherRecords);
+    if (!raw) return { v: 1, students: {} };
+    try { var r = JSON.parse(raw); return r && r.students ? r : null; } catch (e) { return null; }
+  }
+  function setTeacherRecords(r) { return set(KEYS.teacherRecords, JSON.stringify(r)); }
+  function clearTeacherRecords() { return del(KEYS.teacherRecords); }
   /** 続けて間違えた回数と、次に試せる時刻（再読み込みしても残す） */
   function getPinLock() { try { return JSON.parse(get(KEYS.teacherPinLock) || 'null') || { fails: 0, until: 0 }; } catch (e) { return { fails: 0, until: 0 }; } }
   function setPinLock(v) { return v ? set(KEYS.teacherPinLock, JSON.stringify(v)) : del(KEYS.teacherPinLock); }
@@ -4236,6 +4307,7 @@ details.panel > p { margin-top: 8px; }
     load: load, save: save, migrate: migrate, defaultState: defaultState,
     enterDemo: enterDemo, exitDemo: exitDemo, clearNormal: clearNormal,
     getTeacherPin: getTeacherPin, setTeacherPin: setTeacherPin, checkTeacherPin: checkTeacherPin, clearTeacherPin: clearTeacherPin,
+    getTeacherRecords: getTeacherRecords, setTeacherRecords: setTeacherRecords, clearTeacherRecords: clearTeacherRecords,
     getPinLock: getPinLock, setPinLock: setPinLock
   };
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -4982,6 +5054,8 @@ details.panel > p { margin-top: 8px; }
     if (orderInfo) a.orderInfo = orderInfo;            // 余分な語として残した語句・補った語とその位置
     if (s.practiceSet) a.practiceSet = s.practiceSet; // 決まった問題の練習（例：lv1, lv2）
     if (it.retryOf) a.retryOf = it.retryOf;            // 間違えた問題の解き直し（別の問題）
+    // 回答した時点の問題文と正答（問題集があとで更新されても、当時の内容を振り返れるように）
+    if (EA.daily) a.snapshot = EA.daily.snapshotOf(qq);
     if (s.type !== 'diagnostic') a.reasonDecision = reasonDecision(state, bank, s, qq, it, a);
     state.attempts.push(a);
     s.attemptIds.push(a.id);
@@ -5385,6 +5459,270 @@ details.panel > p { margin-top: 8px; }
   EA.orderWidget = { mount: mount };
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- js/daily.js ---- */
+/*
+ * daily.js — 日ごとの学習記録の集計（生徒のホーム・今日の記録・講師の日別確認で同じルールを使う）と、
+ *            講師に送る「学習記録のコード」の書き出し・取り込み（画面は扱いません）
+ *
+ * ■ 日付
+ *   回答を確定した日時（answeredAt。「解説をみる」で進んだ場合は、そのボタンを押した日時）を、日本時間の日付で数えます。
+ *   コードを書き出した日・取り込んだ日とは関係ありません。answeredAt がない古い記録は、日付を推測せず「日付不明」にします。
+ *
+ * ■ 「取り組んだ問題」
+ *   その日に回答を確定した問題と、「解説をみる」（わからない）で進んだ問題。同じ日に同じ問題を何回解いても1問です。
+ *   間違えたあとの解き直し（同じ形の別の問題。retryOf）は、もとの問題と同じ1問として数えます。
+ *   問題を開いただけ・振り返りで解説を読み返しただけでは、回答の記録ができないので数えません。
+ *
+ * ■ 問題ごとの状態（その日の、その問題の回答を古い順に見る）
+ *   正解           … 最初の回答が正解
+ *   初回は誤答     … 最初の回答が不正解
+ *   解説を読んだ   … 最初に「解説をみる」（わからない）で進んだ
+ *   解き直しで正解 … 最初が不正解で、そのあとの回答（解き直し・別の学習回）で正解。
+ *                    以前の版の「答えを見た直後に同じ問題を解き直す」回答（attemptType: retry）は、正答を見たあとなので数えません。
+ *   講師の「誤答があった問題」＝ その日に不正解の回答が1回でもあった問題（あとで正解していても数える）
+ *   講師の「解説を見て進んだ問題」＝ その日に「解説をみる」で進んだ回答があった問題
+ */
+(function (root) {
+  'use strict';
+  var EA = root.EA = root.EA || {};
+  var G = EA.grading;
+  var JST = 9 * 60 * 60 * 1000, DAY = 24 * 60 * 60 * 1000;
+
+  function isTime(ms) { return typeof ms === 'number' && isFinite(ms) && ms > 0; }
+  /** 日本時間の日付（'2026-11-14'）。日時がない記録は null */
+  function dayKey(ms) { return isTime(ms) ? new Date(ms + JST).toISOString().slice(0, 10) : null; }
+  /** その日（日本時間）の 0:00 の時刻 */
+  function keyStart(key) { var p = key.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]) - JST; }
+  function shiftKey(key, n) { return dayKey(keyStart(key) + n * DAY + 1); }
+  function labelOfKey(key) {
+    var p = key.split('-'), d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+    return (+p[1]) + '月' + (+p[2]) + '日（' + '日月火水木金土'.charAt(d.getUTCDay()) + '）';
+  }
+  /** 日本時間の時:分 */
+  function timeOf(ms) { var d = new Date(ms + JST); return d.getUTCHours() + ':' + String(d.getUTCMinutes()).padStart(2, '0'); }
+  /** 日本時間の 月/日 時:分 */
+  function dateTimeOf(ms) { var d = new Date(ms + JST); return (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + ' ' + timeOf(ms); }
+
+  /** 問題を探す（以前の試用版の問題IDは、いまの問題IDに読みかえる） */
+  function resolveId(id) {
+    for (var k in EA.banks) { var al = EA.banks[k].aliases; if (al && al[id]) return al[id]; }
+    return id;
+  }
+  function findQ(id) {
+    id = resolveId(id);
+    for (var k in EA.banks) { var q = EA.findQuestion(EA.banks[k], id); if (q) return q; }
+    return null;
+  }
+  /** 集計の単位（問題）。解き直しの別の問題は、もとの問題にまとめる */
+  function problemKey(a) { return resolveId(a.retryOf || a.questionId); }
+
+  /** 正答の文 */
+  function correctTextOf(q) {
+    if (!q) return '';
+    if (q.format === 'order') return EA.util.plain(q.explanation && q.explanation.answer ? q.explanation.answer : (q.answers || [''])[0]);
+    if (q.format === 'ja2en') return EA.util.plain(q.explanation ? q.explanation.answer : '');
+    var c = (q.choices || []).filter(function (x) { return x.id === q.answer; })[0];
+    return c ? EA.util.plain(c.text) : '';
+  }
+  function promptTextOf(q) {
+    if (!q) return '';
+    return EA.util.plain(q.format === 'judge' ? q.sentence : (q.ja && q.format !== 'meaning' ? q.ja : (q.sentence || q.ja || '')));
+  }
+  /** 回答した時点の問題の控え（回答の記録に入れる） */
+  function snapshotOf(q) { return { version: q.version, prompt: promptTextOf(q), correct: correctTextOf(q) }; }
+
+  /** 学習時間に数える時間（1問あたりの上限で切る。講師向けの「学習時間」と同じ数え方） */
+  function countedMs(a) { return Math.min(a.activeMs || 0, (EA.config && EA.config.maxCountedMsPerQuestion) || 300000); }
+
+  function isWrong(a) { return !a.gaveUp && a.result === 'incorrect'; }
+  function isCorrect(a) { return !a.gaveUp && G.isSkillCorrect(a.result); }
+  function kindOf(a) { return a.gaveUp || a.result === 'gaveup' ? 'explained' : a.result === 'incorrect' ? 'wrong' : G.isSkillCorrect(a.result) ? 'correct' : 'hold'; }
+
+  var PRIMARY = { correct: { label: '正解', tone: 'ok' }, wrong: { label: '初回は誤答', tone: 'ng' },
+    explained: { label: '解説を読んだ', tone: 'hold' }, hold: { label: '採点保留', tone: 'hold' } };
+
+  /** その日の回答を、問題ごとにまとめる（古い順） */
+  function dayGroups(attempts, key) {
+    var byKey = {}, order = [];
+    attempts.filter(function (a) { return !a.devDated && dayKey(a.answeredAt) === key; })
+      .sort(function (x, y) { return x.answeredAt - y.answeredAt; })
+      .forEach(function (a) {
+        var k = problemKey(a);
+        if (!byKey[k]) { byKey[k] = []; order.push(k); }
+        byKey[k].push(a);
+      });
+    return order.map(function (k) {
+      var list = byKey[k], first = list[0], fk = kindOf(first);
+      var later = list.slice(1).filter(function (a) { return a.attemptType !== 'retry'; });
+      var laterCorrect = later.some(isCorrect);
+      var recovered = fk === 'wrong' && laterCorrect;
+      var hadWrong = list.some(isWrong);
+      var tags = [PRIMARY[fk]];
+      if (list.length > 1) {
+        if (recovered) tags.push({ label: '解き直しで正解', tone: 'ok' });
+        else if (laterCorrect && fk !== 'correct') tags.push({ label: 'その後 正解', tone: 'ok' });
+        else if (fk === 'correct' && hadWrong) tags.push({ label: 'のちに誤答', tone: 'ng' });
+        else if (fk !== 'correct') tags.push({ label: '解き直しも未正解', tone: 'ng' });
+      }
+      return {
+        key: k, attempts: list, first: first, firstKind: fk, recovered: recovered, laterCorrect: laterCorrect,
+        hadWrong: hadWrong, gaveUp: list.some(function (a) { return a.gaveUp || a.result === 'gaveup'; }),
+        tags: tags, ms: list.reduce(function (s, a) { return s + countedMs(a); }, 0),
+        firstAt: first.answeredAt, lastAt: list[list.length - 1].answeredAt
+      };
+    });
+  }
+
+  function summarize(groups) {
+    return {
+      problems: groups.length,
+      recovered: groups.filter(function (g) { return g.recovered; }).length,
+      wrong: groups.filter(function (g) { return g.hadWrong; }).length,
+      explained: groups.filter(function (g) { return g.gaveUp; }).length,
+      ms: groups.reduce(function (s, g) { return s + g.ms; }, 0)
+    };
+  }
+  function undated(attempts) { return attempts.filter(function (a) { return !isTime(a.answeredAt); }).length; }
+  /** 記録がある日付（新しい順） */
+  function daysWithRecords(attempts) {
+    var seen = {};
+    attempts.forEach(function (a) { var k = !a.devDated && dayKey(a.answeredAt); if (k) seen[k] = true; });
+    return Object.keys(seen).sort().reverse();
+  }
+  /** 学習時間の表示（分）。1分未満は「1分未満」 */
+  function minutesText(ms) { return ms <= 0 ? '0分' : ms < 60000 ? '1分未満' : Math.floor(ms / 60000) + '分'; }
+
+  /* ================= 学習記録のコード（生徒 → 講師） ================= */
+  var PREFIX_Z = 'EAREC1Z.', PREFIX_P = 'EAREC1P.';
+  var KEEP = ['id', 'questionId', 'questionVersion', 'unitId', 'skillId', 'format', 'attemptType', 'sessionId', 'sessionType',
+    'practiceSet', 'retryOf', 'response', 'responseText', 'result', 'confidence', 'hintUsed', 'gaveUp', 'afterExplanation',
+    'choiceOrder', 'orderInfo', 'startedAt', 'answeredAt', 'activeMs', 'awayMs', 'snapshot', 'devDated', 'demo', 'reasonPending'];
+  function compact(a) {
+    var o = {};
+    KEEP.forEach(function (k) { if (a[k] != null && a[k] !== false) o[k] = a[k]; });
+    if (a.reason) o.reason = { correct: a.reason.correct, choiceText: a.reason.choiceText, answerText: a.reason.answerText, prompt: a.reason.prompt, independent: a.reason.independent };
+    return o;
+  }
+
+  /**
+   * 書き出す内容。days を指定すると、直近 days 日（日本時間・今日を含む）の回答だけ。
+   * from〜to は「この期間の回答はすべて入っている」範囲（講師の画面の「記録未受領」と「0問」の区別に使う）
+   */
+  function buildPayload(state, opts) {
+    var now = opts.now, all = state.attempts;
+    var earliest = all.reduce(function (m, a) { return isTime(a.answeredAt) && a.answeredAt < m ? a.answeredAt : m; }, state.createdAt || now);
+    var from = Math.min(state.createdAt || now, earliest);
+    var list = all;
+    if (opts.days) {
+      var rs = keyStart(shiftKey(dayKey(now), -(opts.days - 1)));
+      from = Math.max(from, rs);
+      list = all.filter(function (a) { return isTime(a.answeredAt) && a.answeredAt >= rs; });
+    }
+    return {
+      kind: 'ea-records', v: 1, exportId: EA.util.uid('x'), studentId: state.profile.studentId, name: state.profile.name || '',
+      mode: state.mode, exportedAt: now, from: from, to: now, days: opts.days || null, attempts: list.map(compact)
+    };
+  }
+
+  function b64(bytes) {
+    var s = '';
+    for (var i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function unb64(str) {
+    var s = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    var bin = atob(s), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function pipe(bytes, stream) {
+    var res = new Response(new Blob([bytes]).stream().pipeThrough(stream));
+    return res.arrayBuffer().then(function (b) { return new Uint8Array(b); });
+  }
+  /** コードにする（圧縮できる端末では圧縮して短くする） */
+  function encode(payload) {
+    var bytes = new TextEncoder().encode(JSON.stringify(payload));
+    if (typeof CompressionStream === 'undefined') return Promise.resolve(PREFIX_P + b64(bytes));
+    return pipe(bytes, new CompressionStream('deflate')).then(function (z) { return PREFIX_Z + b64(z); },
+      function () { return PREFIX_P + b64(bytes); });
+  }
+  /** コードを読む。読めないときは Error（message は画面に出せる文） */
+  function decode(text) {
+    var s = String(text || '').replace(/\s+/g, '');
+    var i = s.indexOf('EAREC1');
+    if (i < 0) return Promise.reject(new Error('学習記録のコードが見つかりません。生徒から届いた文字を、最初から最後まで貼り付けてください。'));
+    s = s.slice(i);
+    var zipped = s.indexOf(PREFIX_Z) === 0, body = s.slice(PREFIX_Z.length);
+    if (!zipped && s.indexOf(PREFIX_P) !== 0) return Promise.reject(new Error('コードの形式が違います。'));
+    var bytes;
+    try { bytes = unb64(body); } catch (e) { return Promise.reject(new Error('コードが途中で切れているか、文字が変わっています。')); }
+    var p;
+    if (zipped) {
+      if (typeof DecompressionStream === 'undefined') return Promise.reject(new Error('この端末のブラウザでは、このコードを読めません。ブラウザを新しくしてください。'));
+      p = pipe(bytes, new DecompressionStream('deflate'));
+    } else p = Promise.resolve(bytes);
+    return p.then(function (raw) {
+      var o = JSON.parse(new TextDecoder().decode(raw));
+      if (!o || o.kind !== 'ea-records' || !o.studentId || !Array.isArray(o.attempts)) throw new Error('x');
+      return o;
+    }).catch(function (e) {
+      throw new Error('コードを読めませんでした。途中で切れていないか確かめて、もう一度貼り付けてください。');
+    });
+  }
+
+  /* ================= 講師の端末：取り込んだ記録（生徒ごと） ================= */
+  /**
+   * 取り込む。同じ回答（回答ID）は1件として持つので、同じコードを何度取り込んでも件数は増えません。
+   * 戻り値：{ student, added, updated, same, again }（again ＝ 同じコードを前にも取り込んだ）
+   */
+  function mergeImport(store, payload, importedAt) {
+    var st = store.students[payload.studentId];
+    if (!st) st = store.students[payload.studentId] = { studentId: payload.studentId, name: '', demo: payload.mode === 'demo', imports: [], attempts: {} };
+    if (!st.lastExportedAt || payload.exportedAt >= st.lastExportedAt) {
+      st.name = payload.name || st.name; st.lastExportedAt = payload.exportedAt;
+    }
+    st.demo = st.demo || payload.mode === 'demo';
+    var again = st.imports.some(function (x) { return x.exportId === payload.exportId; });
+    if (!again) st.imports.push({ exportId: payload.exportId, exportedAt: payload.exportedAt, importedAt: importedAt, from: payload.from, to: payload.to, count: payload.attempts.length });
+    var added = 0, updated = 0, same = 0;
+    payload.attempts.forEach(function (a) {
+      if (!a || !a.id) return;
+      var old = st.attempts[a.id];
+      if (!old) { st.attempts[a.id] = a; added++; }
+      else if (JSON.stringify(old) !== JSON.stringify(a)) { st.attempts[a.id] = a; updated++; }
+      else same++;
+    });
+    st.lastImportedAt = importedAt;
+    return { student: st, added: added, updated: updated, same: same, again: again };
+  }
+  function studentAttempts(st) { return Object.keys(st.attempts).map(function (k) { return st.attempts[k]; }); }
+  /**
+   * その日の記録が届いているか。
+   *   full    … その日の終わりより後に書き出したコードがあり、その日の回答はすべて届いている（0問なら「0問」と確かめられる）
+   *   partial … その日の途中で書き出したコードだけ（asOf の時刻までの記録）
+   *   none    … 記録未受領
+   */
+  function coverage(st, key) {
+    var ks = keyStart(key), ke = ks + DAY, best = null, full = false;
+    (st.imports || []).forEach(function (x) {
+      if (!isTime(x.from) || !isTime(x.to) || dayKey(x.from) > key) return;
+      if (x.to >= ke) full = true;
+      else if (x.to >= ks && (!best || x.to > best)) best = x.to;
+    });
+    return full ? { kind: 'full' } : best ? { kind: 'partial', asOf: best } : { kind: 'none' };
+  }
+
+  EA.daily = {
+    dayKey: dayKey, keyStart: keyStart, shiftKey: shiftKey, labelOfKey: labelOfKey, timeOf: timeOf, dateTimeOf: dateTimeOf,
+    findQ: findQ, problemKey: problemKey, correctTextOf: correctTextOf, promptTextOf: promptTextOf, snapshotOf: snapshotOf,
+    countedMs: countedMs, dayGroups: dayGroups, summarize: summarize, undated: undated, daysWithRecords: daysWithRecords,
+    minutesText: minutesText, kindOf: kindOf,
+    buildPayload: buildPayload, encode: encode, decode: decode,
+    mergeImport: mergeImport, studentAttempts: studentAttempts, coverage: coverage
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* ---- js/app.js ---- */
 /*
  * app.js — 画面の表示と操作だけを扱います（判定・出題・保存のルールは他のファイル）
@@ -5657,7 +5995,8 @@ details.panel > p { margin-top: 8px; }
     var inSession = view.name === 'session' && state.activeSession;
     var navItems = [['home', 'ホーム', 'home'], ['units', '単元', 'book'], ['history', '履歴・復習', 'chart'], ['settings', '設定', 'gear']];
     var nav = inSession ? '' : '<nav class="nav" aria-label="メニュー">' + navItems.map(function (n) {
-      var cur = view.name === n[0] || (n[0] === 'history' && view.name === 'question') || (n[0] === 'settings' && view.name === 'teacher-time');
+      var cur = view.name === n[0] || (n[0] === 'history' && view.name === 'question') || (n[0] === 'settings' && view.name === 'teacher-time') ||
+        (n[0] === 'home' && (view.name === 'today' || view.name === 'record'));
       return '<button type="button" class="nav-item' + (cur ? ' is-current' : '') + '" data-go="' + n[0] + '"' + (cur ? ' aria-current="page"' : '') + '>' + icon(n[2]) + '<span>' + n[1] + '</span></button>';
     }).join('') + '</nav>';
     // 学習画面の退出は、どの学習回でも「保存してホームへ」1つ（初回診断・類題・復習・試作で同じ）
@@ -5759,6 +6098,9 @@ details.panel > p { margin-top: 8px; }
     // あいさつは小さな一行だけ（課題名がホームで最も大きい見出し）
     h += '<p class="greet-line">' + (state.attempts.length ? 'おかえりなさい' : 'ようこそ') + '</p>';
 
+    // 0. 今日の学習（取り組んだ量と解き直しの成果。誤答の内訳は「今日の記録」で見る）
+    h += todayCardHtml();
+
     // 1. 次にやること ｜ 単元の進み具合（1枚のカード）
     // 復習の予定は、日付が決まってから出す（予定がない間は行ごと省く）。期限を迎えたら件数と、復習を始められるときは「次にやること」のボタン
     var reviewFact = '';
@@ -5820,6 +6162,131 @@ details.panel > p { margin-top: 8px; }
       '<p class="panel-note skills-note">実績 ＝ これまでの確認（アプリ内の記録で、習得の保証ではありません）。項目を押すと詳しい実績を確認できます。</p></section>';
 
     return h + '</div>';
+  }
+
+  /* ================= 今日の学習（ホーム）・今日の記録（振り返り） ================= */
+  var D = EA.daily;
+  function todayKey() { return D.dayKey(now()); }
+
+  /** ホーム上部の「今日の学習」：取り組んだ問題数・学習時間・解き直しで正解した数（集計は daily.js） */
+  function todayCardHtml() {
+    var sum = D.summarize(D.dayGroups(state.attempts, todayKey()));
+    if (!sum.problems) {
+      return '<section class="today-card is-empty" aria-labelledby="today-title"><div class="today-main">' +
+        '<p class="dash-label" id="today-title">' + icon('clock') + '今日の学習</p>' +
+        '<p class="today-empty">今日の学習記録はまだありません</p></div></section>';
+    }
+    return '<section class="today-card" aria-labelledby="today-title"><div class="today-main">' +
+      '<p class="dash-label" id="today-title">' + icon('clock') + '今日の学習</p>' +
+      '<p class="today-big"><span class="num">' + sum.problems + '</span>問取り組んだ<span class="today-sep" aria-hidden="true">·</span>' +
+        '<span class="today-time">' + esc(D.minutesText(sum.ms)) + '</span></p>' +
+      (sum.recovered ? '<p class="today-recovered">' + icon('check') + '<span>解き直しで <strong class="num">' + sum.recovered + '</strong>問 正解</span></p>' : '') +
+      '</div><button type="button" class="btn-quiet today-open" data-act="today-open">今日の記録を見る' + icon('chevron') + '</button></section>';
+  }
+
+  function tagsHtml(g) {
+    return g.tags.map(function (t, i) {
+      return (i ? '<span class="rec-arrow" aria-hidden="true">→</span>' : '') + '<span class="badge tone-' + t.tone + '">' + esc(t.label) + '</span>';
+    }).join('');
+  }
+  /** 問題の一覧に出す文（もとの問題。問題集にない場合は回答時の控え） */
+  function groupPrompt(g) {
+    var qq = D.findQ(g.key);
+    if (qq) return promptTextOf(qq);
+    var snap = g.first.retryOf ? null : g.first.snapshot;
+    return snap ? snap.prompt : '（問題データが見つかりません：' + g.key + '）';
+  }
+
+  /** 生徒：今日の記録（その日に取り組んだ問題の一覧。閲覧用） */
+  function renderToday() {
+    var key = view.params.day || todayKey();
+    var groups = D.dayGroups(state.attempts, key), sum = D.summarize(groups);
+    var isToday = key === todayKey();
+    var n = { correct: 0, wrong: 0, explained: 0, hold: 0 };
+    groups.forEach(function (g) { if (!g.recovered) n[g.firstKind]++; });
+    var h = '<button type="button" class="btn-text back" data-go="home">← ホームに戻る</button>' +
+      '<p class="eyebrow">' + (isToday ? '今日の記録' : '学習の記録') + '</p><h1 class="page-title">' + esc(D.labelOfKey(key)) + '</h1>';
+    if (!groups.length) {
+      return h + '<p class="lead">' + (isToday ? '今日の学習記録はまだありません。' : 'この日の学習記録はありません。') + '</p>' +
+        '<div class="actions actions-split"><button type="button" class="btn-primary btn-lg" data-go="home">ホームへ</button></div>';
+    }
+    h += '<section class="panel rec-summary"><p class="today-big"><span class="num">' + sum.problems + '</span>問取り組んだ<span class="today-sep" aria-hidden="true">·</span>' +
+      '<span class="today-time">' + esc(D.minutesText(sum.ms)) + '</span></p>' +
+      '<ul class="rec-counts" aria-label="内訳">' +
+        '<li><span class="badge tone-ok">正解</span><span class="num">' + n.correct + '</span>問</li>' +
+        '<li><span class="badge tone-ok">解き直しで正解</span><span class="num">' + sum.recovered + '</span>問</li>' +
+        '<li><span class="badge tone-ng">初回は誤答</span><span class="num">' + n.wrong + '</span>問</li>' +
+        '<li><span class="badge tone-hold">解説を読んだ</span><span class="num">' + n.explained + '</span>問</li>' +
+        (n.hold ? '<li><span class="badge tone-hold">採点保留</span><span class="num">' + n.hold + '</span>問</li>' : '') +
+      '</ul><p class="panel-note">同じ日に同じ問題を何回解いても1問と数えます。間違えたあとの解き直し（同じ形の別の問題）は、もとの問題にまとめています。</p></section>';
+    h += '<section aria-labelledby="rec-list-title"><h2 id="rec-list-title" class="section-title">問題ごとの結果</h2><ul class="att-list panel rec-list">' +
+      groups.map(function (g) {
+        return '<li><button type="button" class="att-row rec-row" data-act="record-open" data-day="' + esc(key) + '" data-key="' + esc(g.key) + '">' +
+          '<span class="att-type">' + esc(D.timeOf(g.firstAt)) + (g.attempts.length > 1 ? '<span class="muted">回答 ' + g.attempts.length + '回</span>' : '') + '</span>' +
+          '<span class="att-q">' + esc(groupPrompt(g)) + '</span>' +
+          '<span class="att-tags">' + tagsHtml(g) + icon('chevron') + '</span></button></li>';
+      }).join('') + '</ul></section>' +
+      '<p class="panel-note">この画面は振り返り用です。次の学習は、ホームの「次にやること」や単元から始められます。</p>' +
+      '<div class="actions actions-split"><button type="button" class="btn-primary btn-lg" data-go="home">ホームへ</button></div>';
+    return h;
+  }
+
+  /** 生徒：問題1つの振り返り（英文・設問・自分の回答・正答・解説。最初の回答と解き直しの両方） */
+  function renderRecord() {
+    var key = view.params.day || todayKey();
+    var g = D.dayGroups(state.attempts, key).filter(function (x) { return x.key === view.params.key; })[0];
+    if (!g) { view = { name: 'today', params: { day: key } }; return renderToday(); }
+    return '<button type="button" class="btn-text back" data-act="today-open" data-day="' + esc(key) + '">← ' + esc(D.labelOfKey(key)) + 'の記録に戻る</button>' +
+      '<p class="eyebrow">' + esc(D.labelOfKey(key)) + 'の記録</p><h1 class="page-title rec-title">' + esc(groupPrompt(g)) + '</h1>' +
+      '<p class="rec-tags">' + tagsHtml(g) + '</p>' +
+      g.attempts.map(function (a, i) { return attemptDetailHtml(a, i, g); }).join('') +
+      '<div class="actions actions-split"><button type="button" class="btn-primary btn-lg" data-act="today-open" data-day="' + esc(key) + '">一覧に戻る</button>' +
+      '<button type="button" class="btn-quiet" data-go="home">ホームへ</button></div>';
+  }
+
+  /**
+   * 回答1つの詳細（生徒の振り返り・講師の確認で共通）。
+   * 正答は、回答したときに保存した控え（snapshot）を優先する。控えがなく、問題の版が変わっている場合はその旨を書く。
+   */
+  function attemptDetailHtml(a, i, g, opts) {
+    opts = opts || {};
+    var qq = D.findQ(a.questionId);
+    var known = typeof a.questionVersion === 'number';
+    var same = !!qq && known && a.questionVersion === qq.version;
+    var snap = a.snapshot;
+    var head = i === 0 ? (g.attempts.length > 1 ? '1回目（最初の回答）' : '回答') :
+      a.retryOf ? '解き直し（同じ形の別の問題）' : a.attemptType === 'retry' ? '解説のあとに同じ問題を解き直し' : (i + 1) + '回目';
+    var h = '<section class="sheet rec-attempt"><p class="eyebrow">' + esc(head) +
+      '<span class="eyebrow-note">' + esc(D.timeOf(a.answeredAt)) + ' ・ ' + esc(typeLabelOf(a)) + (qq ? ' ・ ' + esc(fmtLabel(qq)) : '') + '</span></p>';
+    var showChoices = false;
+    if (qq) {
+      h += questionPromptHtml(qq, qq.format === 'fill' && same ? a.response : null, { noInstruction: qq.format !== 'meaning' && qq.format !== 'judge' });
+      showChoices = same && !!qq.choices && (qq.format === 'fill' || qq.format === 'meaning' || qq.format === 'judge');
+      if (showChoices) h += resultChoicesHtml(qq, a, { choiceOrder: a.choiceOrder || null });
+    } else {
+      h += '<p class="q-sentence">' + esc(snap ? snap.prompt : '（問題データが見つかりません：' + a.questionId + '）') + '</p>';
+    }
+    var correct = snap && snap.correct ? snap.correct : (qq ? D.correctTextOf(qq) : '');
+    h += '<dl class="status-grid rec-grid">';
+    if (!showChoices) h += '<dt>自分の回答</dt><dd lang="en">' + (a.gaveUp ? '<span lang="ja">（解説をみる で進んだ）</span>' : esc(a.responseText || '（なし）')) + '</dd>';
+    h += '<dt>正答</dt><dd lang="en">' + (correct ? esc(correct) : '<span lang="ja" class="muted">確認できません</span>') + '</dd>' +
+      '<dt>結果</dt><dd>' + resultBadge(a.result) + flagsHtml(a) + (a.reasonPending ? '<span class="flag">意味の問い 未回答</span>' : '') + '</dd>';
+    if (opts.teacher) {
+      h += '<dt>自信</dt><dd>' + (a.confidence === 'unsure' ? '「自信がない」を押した' : '申告なし') + '</dd>' +
+        '<dt>ヒント</dt><dd>' + (a.hintUsed ? '使った' : '使っていない') + '</dd>';
+    }
+    if (a.reason) h += '<dt>意味の問い</dt><dd>' + (a.reason.correct ? '○' : '×') + (a.reason.choiceText ? ' 選んだもの：' + esc(a.reason.choiceText) : '') +
+      (!a.reason.correct && a.reason.answerText ? '（この文では：' + esc(a.reason.answerText) + '）' : '') + '</dd>';
+    h += '</dl>';
+    // 当時の内容を確認できるか
+    var notes = [];
+    if (!qq) notes.push('この問題は、いまの問題集にありません。' + (snap ? '問題文と正答は、回答したときに保存した内容です。解説は表示できません。' : '当時の問題文・正答・解説を確認できません。'));
+    else if (!known) notes.push('回答したときの問題の版が記録されていないため、表示している問題・解説が当時と同じか確認できません（いまの版 ' + qq.version + ' を表示しています）。');
+    else if (!same) notes.push('回答したのは版 ' + a.questionVersion + ' の問題です。' + (snap ? '正答は回答したときに保存した内容です。' : '当時の正答・選択肢は保存されていないため、') +
+      '問題文・解説はいまの版（版 ' + qq.version + '）のものです。');
+    if (notes.length) h += '<p class="rec-version" role="note">' + esc(notes.join(' ')) + '</p>';
+    if (qq) h += '<details class="rec-explain"><summary>解説を見る</summary>' + explanationHtml(qq, { bare: true }) + '</details>';
+    return h + '</section>';
   }
 
 
@@ -6649,15 +7116,16 @@ details.panel > p { margin-top: 8px; }
       '<li>同じiPadを複数の人が使うと、記録は1人分として混ざります。</li>' +
       '<li>Safari の「履歴とWebサイトデータを消去」やプライベートブラウズでは、記録が消えることがあります。</li>' +
       '<li>現在の記録' + (demo ? '（デモ）' : '') + '：回答 ' + state.attempts.length + '件 ・ 学習 ' + state.sessions.length + '回</li></ul>' +
-      '<div class="actions-inline"><button type="button" class="btn-quiet" data-act="export">記録を書き出す（講師に送る用）</button></div>' +
+      '<div class="actions-inline"><button type="button" class="btn-text" data-act="export">詳しい記録（JSON）を書き出す</button></div>' +
       (p.exported ? '<label class="field-label" for="export-box">下の文字をすべてコピーして送ってください</label><textarea id="export-box" class="text-input mono" rows="6" readonly>' + esc(JSON.stringify({ exportedAt: new Date().toISOString(), mode: state.mode, schemaVersion: state.schemaVersion, attempts: state.attempts, schedule: state.schedule, sessions: state.sessions, migrations: state.migrations }, null, 1)) + '</textarea>' +
         '<div class="actions-inline"><button type="button" class="btn-quiet" data-act="copy-export">コピー</button><span class="muted" id="copy-msg"></span></div>' : '') +
-      '</section>';
+      '</section>' + sendPanelHtml();
 
     // 講師向け：学習時間（生徒向けの画面には出さないため、閉じた状態の項目の中に置く）
     h += '<details class="panel dev"><summary>講師向け：記録の確認</summary>' +
-      '<p>この端末に保存されている学習時間（日ごと・学習回ごと・項目ごと）と、毎日の目標を確認できます。開くには講師用の暗証番号が必要です' + (EA.storage.getTeacherPin() ? '' : '（はじめて開くときに設定します）') + '。</p>' +
-      '<div class="actions-inline"><button type="button" class="btn-quiet" data-act="teacher-time">' + icon('clock') + '学習時間を確認する</button></div></details>';
+      '<p>生徒から届いた学習記録のコードを取り込み、日付ごとに生徒の記録を確認できます。この端末の学習時間（日ごと・学習回ごと・項目ごと）と、毎日の目標も確認できます。開くには講師用の暗証番号が必要です' + (EA.storage.getTeacherPin() ? '' : '（はじめて開くときに設定します）') + '。</p>' +
+      '<div class="actions-inline"><button type="button" class="btn-quiet" data-act="teacher-records">' + icon('chart') + '生徒の記録を確認する</button>' +
+      '<button type="button" class="btn-quiet" data-act="teacher-time">' + icon('clock') + '学習時間を確認する</button></div></details>';
 
     if (demo) {
       h += '<section class="panel dev"><div class="panel-head"><h2>デモモード：日付を進める</h2><p class="panel-note">後日の復習が出るかを確かめるための機能です。通常の記録には影響しません。</p></div>' +
@@ -6669,7 +7137,7 @@ details.panel > p { margin-top: 8px; }
         '<p>デモモードでは、通常とは別の保存領域を使い、日付を進めて復習の動きを確かめられます。通常の学習記録は変わりません。デモを終えると、デモの記録は消えます。</p>' +
         '<div class="actions-inline"><button type="button" class="btn-quiet" data-act="demo-enter">デモモードを始める</button></div></details>';
       h += '<section class="panel danger"><div class="panel-head"><h2>記録をすべて消す</h2></div>' +
-        (p.confirmReset ? '<p><strong>本当に消しますか？</strong>回答・復習予定・途中の学習と、講師用の暗証番号がすべて消え、元に戻せません。</p><div class="actions-inline"><button type="button" class="btn-danger" data-act="reset-do">すべて消す</button><button type="button" class="btn-quiet" data-act="reset-cancel">やめる</button></div>'
+        (p.confirmReset ? '<p><strong>本当に消しますか？</strong>回答・復習予定・途中の学習と、講師用の暗証番号・講師が取り込んだ生徒の記録がすべて消え、元に戻せません。</p><div class="actions-inline"><button type="button" class="btn-danger" data-act="reset-do">すべて消す</button><button type="button" class="btn-quiet" data-act="reset-cancel">やめる</button></div>'
           : '<div class="actions-inline"><button type="button" class="btn-quiet" data-act="reset-ask">記録を消す…</button></div>') +
         '</section>';
     }
@@ -6713,7 +7181,7 @@ details.panel > p { margin-top: 8px; }
     var studyDays = Object.keys(byDay).length;
 
     var h = '<div class="tt-top"><button type="button" class="btn-text back" data-act="teacher-back">← 設定に戻る</button>' +
-      '<button type="button" class="btn-quiet" data-act="teacher-lock">' + icon('lock') + '鍵をかけて閉じる</button></div>' +
+      '<button type="button" class="btn-quiet" data-act="teacher-lock">' + icon('lock') + '鍵をかけて閉じる</button></div>' + teacherTabs() +
       '<p class="eyebrow">講師向け</p><h1 class="page-title" tabindex="-1" id="tt-title">学習時間</h1>' +
       '<p class="lead">この端末・このブラウザに保存されている記録' + (state.mode === 'demo' ? '（デモモードの記録）' : '') + 'です。生徒向けの画面には表示していません。</p>';
 
@@ -6783,9 +7251,174 @@ details.panel > p { margin-top: 8px; }
       '<li>正誤・解説を読んでいる時間、「保存してホームへ」でホームに戻っていた時間、ほかのアプリに切り替えていた時間は含めません。</li>' +
       '<li>1問あたり ' + Math.round(cap / 60000) + '分を上限にしています（開いたまま放置した時間を除くため）。上限で切った回答：' + capped + '問。</li>' +
       '<li>「もう一度練習」・試作の問題の時間も含みます。答えた日の日付で数えます。</li>' +
-      '<li>元のデータは、設定の「記録を書き出す」にも含まれています（回答ごとの activeMs・awayMs・elapsedMs）。</li></ul></section>';
+      '<li>元のデータは、設定の「詳しい記録（JSON）を書き出す」にも含まれています（回答ごとの activeMs・awayMs・elapsedMs）。</li></ul></section>';
     return h;
   }
+
+  /* ================= 講師に記録を送る（生徒）・生徒の記録（講師） ================= */
+  var sendCode = null, sendMsg = '', importMsg = null;
+  var SEND_RANGES = [{ days: 7, label: '直近7日分' }, { days: 0, label: 'すべて' }];
+
+  function sendPanelHtml() {
+    var name = (state.profile && state.profile.name) || '';
+    var days = view.params.sendDays != null ? view.params.sendDays : 7;
+    var h = '<section class="panel send-panel" aria-labelledby="send-title"><div class="panel-head"><h2 id="send-title">講師に学習記録を送る</h2></div>' +
+      '<p>「コードを作る」を押すと、学習記録が1つの長い文字（コード）になります。全部をコピーして、講師に送ってください。</p>' +
+      '<label class="field-label" for="profile-name">名前（講師が見る名前）</label>' +
+      '<input id="profile-name" class="text-input send-name" type="text" autocomplete="off" maxlength="30" value="' + esc(name) + '" placeholder="例：山田 花子">' +
+      '<p class="field-label" id="send-range-label">送る範囲</p><div class="seg" role="radiogroup" aria-labelledby="send-range-label">' +
+      SEND_RANGES.map(function (r) {
+        var on = r.days === days;
+        return '<button type="button" role="radio" aria-checked="' + on + '" class="seg-item' + (on ? ' is-current' : '') + '" data-act="send-range" data-days="' + r.days + '">' + r.label + '</button>';
+      }).join('') + '</div>' +
+      '<p class="field-note">同じ記録を何度送っても、講師の画面で数が増えることはありません。毎日の学習のあとに送ると、講師がその日の記録を確認できます。</p>' +
+      (sendMsg ? '<p class="toast toast-error" role="alert">' + esc(sendMsg) + '</p>' : '') +
+      '<div class="actions-inline"><button type="button" class="btn-primary" data-act="send-make">コードを作る</button></div>';
+    if (sendCode) {
+      h += '<label class="field-label" for="send-box">コード（' + esc(sendCode.label) + '・回答 ' + sendCode.n + '件・' + D.dateTimeOf(sendCode.at) + ' 作成）</label>' +
+        '<textarea id="send-box" class="text-input mono" rows="5" readonly>' + esc(sendCode.code) + '</textarea>' +
+        '<div class="actions-inline"><button type="button" class="btn-primary" data-act="send-copy">コピー</button>' +
+        (navigator.share ? '<button type="button" class="btn-quiet" data-act="send-share">共有…</button>' : '') +
+        '<span class="muted" id="send-copy-msg" role="status"></span></div>';
+    }
+    sendMsg = '';
+    return h + '</section>';
+  }
+
+  function makeSendCode() {
+    var input = document.getElementById('profile-name');
+    var name = input ? input.value.trim() : (state.profile.name || '');
+    state.profile.name = name;
+    persist();
+    if (!name) { sendMsg = '名前を入力してから、コードを作ってください。'; render(); var f = document.getElementById('profile-name'); if (f) f.focus(); return; }
+    var days = view.params.sendDays != null ? view.params.sendDays : 7;
+    var payload = D.buildPayload(state, { now: now(), days: days || null });
+    D.encode(payload).then(function (code) {
+      sendCode = { code: code, n: payload.attempts.length, at: payload.exportedAt, label: days ? '直近' + days + '日分' : 'すべて' };
+      render();
+      var box = document.getElementById('send-box'); if (box) box.focus({ preventScroll: false });
+    }, function () { sendMsg = 'コードを作れませんでした。'; render(); });
+  }
+  function copySendCode() {
+    var box = document.getElementById('send-box'), msg = document.getElementById('send-copy-msg');
+    function fallback() { box.focus(); box.select(); msg.textContent = '選択しました。端末の「コピー」を押してください。'; }
+    try { navigator.clipboard.writeText(box.value).then(function () { msg.textContent = 'コピーしました。講師に送ってください。'; }, fallback); }
+    catch (e) { fallback(); }
+  }
+
+  function teacherTabs() {
+    var tab = view.params.tab === 'records' ? 'records' : 'time';
+    return '<div class="tabs" role="tablist" aria-label="講師向けの画面">' +
+      [['records', '生徒の記録（日別）'], ['time', 'この端末の学習時間']].map(function (t) {
+        var on = t[0] === tab;
+        return '<button type="button" role="tab" class="tab' + (on ? ' is-current' : '') + '" aria-selected="' + on + '" data-act="teacher-tab" data-tab="' + t[0] + '">' + t[1] + '</button>';
+      }).join('') + '</div>';
+  }
+
+  function coverageText(cov) {
+    return cov.kind === 'full' ? '' : cov.kind === 'partial' ? D.timeOf(cov.asOf) + ' までの記録' : '記録未受領';
+  }
+  function studentName(st) {
+    return (st.name || '名前なし') + (st.demo ? '（デモ）' : '') ;
+  }
+
+  /** 講師：生徒の記録（日付を切り替えて、生徒ごとに取り組んだ問題・誤答・解説で進んだ問題を見る） */
+  function renderTeacherRecords() {
+    var store = EA.storage.getTeacherRecords();
+    var key = view.params.day || todayKey();
+    var h = '<div class="tt-top"><button type="button" class="btn-text back" data-act="teacher-back">← 設定に戻る</button>' +
+      '<button type="button" class="btn-quiet" data-act="teacher-lock">' + icon('lock') + '鍵をかけて閉じる</button></div>' +
+      teacherTabs() + '<p class="eyebrow">講師向け</p><h1 class="page-title" tabindex="-1" id="tt-title">生徒の記録</h1>';
+    if (!store) return h + '<p class="toast toast-error" role="alert">取り込んだ記録を読み込めませんでした。上書きしないよう、取り込みを止めています。</p>';
+    var ids = Object.keys(store.students).sort(function (a, b) {
+      return studentName(store.students[a]).localeCompare(studentName(store.students[b]), 'ja');
+    });
+    var stId = view.params.student && store.students[view.params.student] ? view.params.student : null;
+
+    // 日付の切り替え
+    var isToday = key === todayKey();
+    h += '<div class="tr-days" role="group" aria-label="日付">' +
+      '<button type="button" class="btn-quiet" data-act="tr-day" data-day="' + D.shiftKey(key, -1) + '" aria-label="前の日">← 前の日</button>' +
+      '<label class="tr-date"><span class="sr">日付を選ぶ</span><input type="date" id="tr-date" class="text-input" value="' + key + '" max="' + todayKey() + '"></label>' +
+      '<button type="button" class="btn-quiet" data-act="tr-day" data-day="' + D.shiftKey(key, 1) + '"' + (isToday ? ' disabled' : '') + ' aria-label="次の日">次の日 →</button>' +
+      '<button type="button" class="btn-text" data-act="tr-day" data-day="' + todayKey() + '"' + (isToday ? ' disabled' : '') + '>今日</button></div>' +
+      '<p class="tr-daylabel">' + esc(D.labelOfKey(key)) + (isToday ? '（今日）' : '') + '<span class="muted">日本時間の日付で、回答した日時ごとに数えています</span></p>';
+
+    if (stId) return h + teacherStudentHtml(store.students[stId], key);
+
+    if (!ids.length) h += '<p class="lead">まだ記録を取り込んでいません。生徒に「設定 → 講師に学習記録を送る」でコードを作ってもらい、下に貼り付けてください。</p>';
+    else {
+      h += '<ul class="tr-list" aria-label="生徒">' + ids.map(function (id) {
+        var st = store.students[id], cov = D.coverage(st, key);
+        var groups = D.dayGroups(D.studentAttempts(st), key), sum = D.summarize(groups);
+        var none = cov.kind === 'none' && !groups.length;
+        var stat = function (n, label, tone) { return '<span class="tr-stat' + (tone ? ' tr-' + tone : '') + '"><span class="tr-num num">' + n + '</span><span class="tr-lbl">' + label + '</span></span>'; };
+        return '<li><button type="button" class="tr-card" data-act="tr-student" data-student="' + esc(id) + '">' +
+          '<span class="tr-name">' + esc(studentName(st)) + '<span class="muted">最終受領 ' + (st.lastExportedAt ? D.dateTimeOf(st.lastExportedAt) + ' 作成のコード' : '—') + '</span></span>' +
+          (none ? '<span class="tr-none">記録未受領</span>' :
+            '<span class="tr-stats">' + stat(sum.problems, '取り組んだ問題', '') + stat(sum.wrong, '誤答があった', sum.wrong ? 'ng' : '') +
+              stat(sum.explained, '解説を見て進んだ', sum.explained ? 'hold' : '') + '</span>' +
+            '<span class="tr-sub">' + esc(D.minutesText(sum.ms)) + (sum.recovered ? ' ・ 解き直しで正解 ' + sum.recovered + '問' : '') +
+              (cov.kind === 'partial' ? ' ・ <strong>' + esc(coverageText(cov)) + '</strong>（その後の記録はまだ届いていません）' : '') + '</span>') +
+          icon('chevron') + '</button></li>';
+      }).join('') + '</ul>';
+    }
+
+    // 取り込み
+    var im = importMsg; importMsg = null;
+    h += '<section class="panel" aria-labelledby="tr-import-title"><div class="panel-head"><h2 id="tr-import-title">生徒の記録を取り込む</h2></div>' +
+      '<label class="field-label" for="tr-code">生徒から届いたコードを貼り付け</label>' +
+      '<textarea id="tr-code" class="text-input mono" rows="4" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="EAREC1… で始まる文字"></textarea>' +
+      (im ? '<p class="toast' + (im.error ? ' toast-error' : '') + '" role="' + (im.error ? 'alert' : 'status') + '">' + esc(im.text) + '</p>' : '') +
+      '<div class="actions-inline"><button type="button" class="btn-primary" data-act="tr-import">取り込む</button></div>' +
+      '<p class="field-note">同じコードや、期間が重なるコードを取り込んでも、同じ回答は1件として扱うので件数は増えません。取り込んだ記録は、この端末に生徒ごとに保存します。</p></section>';
+    return h;
+  }
+
+  function teacherStudentHtml(st, key) {
+    var atts = D.studentAttempts(st), cov = D.coverage(st, key);
+    var groups = D.dayGroups(atts, key), sum = D.summarize(groups);
+    var h = '<button type="button" class="btn-text back" data-act="tr-student" data-student="">← 生徒の一覧に戻る</button>' +
+      '<h2 class="section-title tr-student-name">' + esc(studentName(st)) + '</h2>';
+    if (cov.kind === 'none' && !groups.length) {
+      return h + '<p class="lead"><strong>記録未受領</strong>：この日の記録を含むコードは、まだ届いていません。</p>';
+    }
+    h += '<section class="panel rec-summary"><ul class="rec-counts tr-counts">' +
+      '<li><span class="num">' + sum.problems + '</span>問 取り組んだ</li>' +
+      '<li><span class="num">' + sum.wrong + '</span>問 誤答があった</li>' +
+      '<li><span class="num">' + sum.explained + '</span>問 解説を見て進んだ</li>' +
+      '<li><span class="num">' + sum.recovered + '</span>問 解き直しで正解</li>' +
+      '<li>学習時間 ' + esc(D.minutesText(sum.ms)) + '</li></ul>' +
+      (cov.kind === 'partial' ? '<p class="panel-note"><strong>' + esc(coverageText(cov)) + '</strong>です。それより後の記録はまだ届いていません。</p>' : '') +
+      (D.undated(atts) ? '<p class="panel-note">回答日時のない古い記録が ' + D.undated(atts) + '件あります（日付を推測せず、どの日にも数えていません）。</p>' : '') + '</section>';
+    if (!groups.length) return h + '<p class="lead">この日は <strong>0問</strong> です（記録を確認できています）。</p>';
+    // 誤答・解説で進んだ問題を先に、それ以外はあとに（どちらも回答した順）
+    var order = groups.filter(function (g) { return g.hadWrong || g.gaveUp; }).concat(groups.filter(function (g) { return !g.hadWrong && !g.gaveUp; }));
+    h += '<ul class="tr-items">' + order.map(function (g) {
+      var qq = D.findQ(g.key);
+      return '<li><details class="panel tr-item"' + (view.params.open === g.key ? ' open' : '') + '><summary>' +
+        '<span class="tr-item-head"><span class="muted">' + esc(D.timeOf(g.firstAt)) + (qq ? ' ・ ' + esc(skill(qq.skill) ? skill(qq.skill).label : '') : '') + '</span>' +
+        '<span class="tr-item-q">' + esc(groupPrompt(g)) + '</span><span class="att-tags">' + tagsHtml(g) + '</span></span></summary>' +
+        g.attempts.map(function (a, i) { return attemptDetailHtml(a, i, g, { teacher: true }); }).join('') + '</details></li>';
+    }).join('') + '</ul>';
+    return h;
+  }
+
+  function importRecords() {
+    var box = document.getElementById('tr-code');
+    var text = box ? box.value : '';
+    D.decode(text).then(function (payload) {
+      var store = EA.storage.getTeacherRecords();
+      if (!store) throw new Error('取り込んだ記録を読み込めないため、取り込みを止めました。');
+      var r = D.mergeImport(store, payload, Date.now());
+      if (!EA.storage.setTeacherRecords(store)) throw new Error('この端末に保存できませんでした（容量不足など）。');
+      importMsg = { text: studentName(r.student) + 'の記録を取り込みました：新しい回答 ' + r.added + '件' +
+        (r.updated ? '・更新 ' + r.updated + '件' : '') + (r.same ? '・取り込み済み ' + r.same + '件' : '') +
+        (r.again ? '（このコードは前にも取り込んでいます。件数は増えていません）' : '') };
+      render();
+    }).catch(function (e) { importMsg = { error: true, text: e.message }; render(); var b = document.getElementById('tr-code'); if (b) b.value = text; });
+  }
+
 
   /* ---- 講師用の暗証番号 ---- */
   var PIN_MAX_FAILS = 5, PIN_WAIT_MS = 30 * 1000;
@@ -6900,7 +7533,9 @@ details.panel > p { margin-top: 8px; }
       case 'history': main = renderHistory(); break;
       case 'question': main = renderQuestion(); break;
       case 'settings': main = renderSettings(); break;
-      case 'teacher-time': main = teacherUnlocked ? renderTeacherTime() : renderTeacherLock(); break;
+      case 'today': main = renderToday(); break;
+      case 'record': main = renderRecord(); break;
+      case 'teacher-time': main = teacherUnlocked ? (view.params.tab === 'records' ? renderTeacherRecords() : renderTeacherTime()) : renderTeacherLock(); break;
       default: main = renderHome();
     }
     var n = !notice ? '' : typeof notice === 'string' ? '<div class="toast" role="status">' + esc(notice) + '</div>'
@@ -7166,6 +7801,17 @@ details.panel > p { margin-top: 8px; }
       case 'demo-exit': reloadFrom(EA.storage.exitDemo()); notice = 'デモモードを終えました。デモの記録は消え、通常の記録に戻りました。'; go('home'); break;
       case 'dismiss-load': loadMessage = ''; render(); break;
       case 'teacher-time': go('teacher-time'); break;
+      case 'teacher-records': go('teacher-time', { tab: 'records' }); break;
+      case 'teacher-tab': go('teacher-time', { tab: el.getAttribute('data-tab') }); var tb = appEl.querySelector('[data-act="teacher-tab"][aria-selected="true"]'); if (tb) tb.focus({ preventScroll: true }); break;
+      case 'tr-day': go('teacher-time', { tab: 'records', day: el.getAttribute('data-day'), student: view.params.student }); break;
+      case 'tr-student': go('teacher-time', { tab: 'records', day: view.params.day, student: el.getAttribute('data-student') || null }); break;
+      case 'tr-import': importRecords(); break;
+      case 'today-open': go('today', el.getAttribute('data-day') ? { day: el.getAttribute('data-day') } : {}); break;
+      case 'record-open': go('record', { day: el.getAttribute('data-day'), key: el.getAttribute('data-key') }); break;
+      case 'send-range': view.params.sendDays = +el.getAttribute('data-days'); sendCode = null; render(); var sr2 = appEl.querySelector('[data-act="send-range"][aria-checked="true"]'); if (sr2) sr2.focus({ preventScroll: true }); break;
+      case 'send-make': makeSendCode(); break;
+      case 'send-copy': copySendCode(); break;
+      case 'send-share': try { navigator.share({ text: sendCode.code }).catch(function () { /* 無視 */ }); } catch (e) { /* 無視 */ } break;
       case 'teacher-lock': teacherUnlocked = false; notice = '講師向けの画面に鍵をかけました。'; go('settings'); break;
       case 'pin-change-open': teacherForm = teacherForm === 'change' ? null : 'change'; render(); var pc = appEl.querySelector(teacherForm ? '#pin-new' : '[data-act="pin-change-open"]'); if (pc) pc.focus({ preventScroll: true }); break;
       case 'teacher-back': go('settings'); break;
@@ -7180,7 +7826,7 @@ details.panel > p { margin-top: 8px; }
       case 'reset-ask': view.params.confirmReset = true; render(); break;
       case 'reset-cancel': view.params.confirmReset = false; render(); break;
       case 'reset-do':
-        EA.storage.clearNormal(); EA.storage.clearTeacherPin(); state = EA.storage.defaultState('normal'); syncClock();
+        EA.storage.clearNormal(); EA.storage.clearTeacherPin(); EA.storage.clearTeacherRecords(); sendCode = null; state = EA.storage.defaultState('normal'); syncClock();
         notice = persist() ? '記録をすべて消しました。' : '記録を消しましたが、新しい記録を保存できない状態です。'; go('home'); break;
     }
   }
@@ -7225,6 +7871,14 @@ details.panel > p { margin-top: 8px; }
     appEl = document.getElementById('app');
     appEl.addEventListener('click', onClick);
     appEl.addEventListener('submit', onPinSubmit);
+    appEl.addEventListener('input', function (ev) {
+      if (ev.target.id === 'profile-name') { state.profile.name = ev.target.value.trim(); sendCode = null; schedulePersist(); }
+    });
+    appEl.addEventListener('change', function (ev) {
+      if (ev.target.id === 'tr-date' && /^\d{4}-\d{2}-\d{2}$/.test(ev.target.value)) {
+        go('teacher-time', { tab: 'records', day: ev.target.value > todayKey() ? todayKey() : ev.target.value, student: view.params.student });
+      }
+    });
     S.recover(state); // 前回、計時中のまま閉じていた場合も、閉じていた時間は学習時間に数えない
     var fixMsg = dropDeletedFromActiveSession();
     if (fixMsg) loadMessage = (loadMessage ? loadMessage + ' ' : '') + fixMsg;
