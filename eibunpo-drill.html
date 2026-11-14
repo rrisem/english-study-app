@@ -2960,6 +2960,250 @@ details.panel > p { margin-top: 8px; }
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* ---- data/infinitive-lv3-source.js ---- */
+/*
+ * 不定詞 Lv3 の原本（4項目 × 3形式 × 8問 ＝ 96問）。
+ *   形式：ord（A 並べ替え。第7問は余分な1語を除く、第8問は不足語を1語補う）/ fact（B 英文から確実に分かること）/ wo（C 正しい語順を選ぶ）
+ *   同じ番号の A・B・C は同じ英文を扱う組（sourceGroup: lv3-<項目>-<番号>）。同じ組の問題は同じ回には出しません。
+ *
+ * ■ 講師の方へ（書き方）
+ *   項目ごとに、組（第1〜8問）を1件ずつ書きます。
+ *     ja      日本語（A・C の問題文、B の解説の和訳）
+ *     en      英文（A の正答・B の問題文・C の正解）
+ *     start   A で文頭に固定して表示する部分　 tokens  A で並べ替える語句　 extra / missing  A の余分な語・不足語
+ *     order   A の解説の語順（「語順は「…」です。」の中身）
+ *     point   解説の本文（原本）。A は「語順は…です。」を前に、C は項目の決まり（rule）を後ろに付けて表示します。
+ *     b       B の選択肢 [日本語, ちがう理由 or null(=正解)]（原本の A・B・C の順）
+ *     c       C の選択肢 [英文, ちがう理由の記号 or null(=正解)]。記号の文は項目の why に書きます。
+ *     ch / tm / cmp  解説の補足（語句と意味の対応・文法の名前・比べてみよう）。書き方は infinitive-lv2-explain.js と同じ。
+ */
+(function (root) {
+  'use strict';
+  var EA = root.EA = root.EA || {};
+  EA.lv3Source = EA.lv3Source || {
+    /* LV3-SOURCE-BEGIN */
+    made: {
+      rule: '受動態では be made の直後に to＋原形を置く。be の後ろは過去分詞 made。',
+      why: { make: 'be の後ろは過去分詞 made です（was / were make は誤り）。', noTo: '受動態では made の後ろに to が必要です（to のない形は能動態 make＋人＋原形）。' },
+      groups: [
+        { ja: '選手たちはもう1周走らされた。', en: 'The players were made to run another lap.', start: 'The players', tokens: ['to run', 'made', 'another lap', 'were'],
+          order: 'were made → to run → another lap', point: 'were made to run は使役の受動態。走るのは主語の the players。誰が走らせたかは英文に書かれていない。',
+          b: [['選手たちはもう1周走るよう強いられた。', null], ['選手たちはほかの人にもう1周走らせた。', '走らせたのではなく、走らされた側です（受動態）。'], ['選手たちは自分からもう1周走ると言い出した。', 'were made to run は「強いられた」で、自分から言い出したのではありません。']],
+          c: [['The players were make to run another lap.', 'make'], ['The players were made to run another lap.', null], ['The players were made run another lap.', 'noTo']],
+          ch: 'The players=選手たちは|*were made to run=走らされた（強いられた）|another lap=もう1周', tm: 'be made ＋ to do（〜させられる：使役の受動態）',
+          cmp: '比べてみよう：The coach made the players run.（能動態：to なし）／The players were made to run.（受動態：to が必要）' },
+        { ja: '私は報告書を書き直させられた。', en: 'I was made to rewrite the report.', start: 'I', tokens: ['made', 'to rewrite', 'the report', 'was'],
+          order: 'was made → to rewrite → the report', point: 'was made to rewrite は「書き直すよう強いられた」。許可なら was allowed to rewrite。能動態では Someone made me rewrite the report. のように to がない。',
+          b: [['私は報告書を書き直す許可をもらった。', '許可なら was allowed to rewrite です。was made to は「強いられた」。'], ['私は誰かに報告書を書き直させた。', '書き直させたのではなく、書き直させられた側です（受動態）。'], ['私は報告書を書き直すよう強いられた。', null]],
+          c: [['I was made rewrite the report.', 'noTo'], ['I was made to rewrite the report.', null], ['I was make to rewrite the report.', 'make']],
+          ch: 'I=私は|*was made to rewrite=書き直させられた（強いられた）|the report=報告書を', tm: 'be made ＋ to do（〜させられる：使役の受動態）',
+          cmp: '比べてみよう：was made to rewrite（強いられた）／was allowed to rewrite（許可された）' },
+        { ja: '候補者たちは外で待たされた。', en: 'The candidates were made to wait outside.', start: 'The candidates', tokens: ['to wait', 'made', 'were', 'outside'],
+          order: 'were made → to wait → outside', point: 'wait outside は「外で待つ」。待った長さは示されていない。were は複数主語 the candidates に対応する。',
+          b: [['候補者たちは外で待つよう強いられた。', null], ['候補者たちは外で30分待たされた。', '待った長さ（30分）は英文に書かれていません。'], ['候補者たちは外にいる人を待たせた。', '待たせたのではなく、待たされた側です（受動態）。']],
+          c: [['The candidates were made wait outside.', 'noTo'], ['The candidates were make to wait outside.', 'make'], ['The candidates were made to wait outside.', null]],
+          ch: 'The candidates=候補者たちは|*were made to wait=待たされた（強いられた）|outside=外で', tm: 'be made ＋ to do（〜させられる：使役の受動態）',
+          cmp: '主語が複数（the candidates）なので were made。主語が1人なら was made。' },
+        { ja: 'マヤは自分の決定を説明させられた。', en: 'Maya was made to explain her decision.', start: 'Maya', tokens: ['to explain', 'her decision', 'made', 'was'],
+          order: 'was made → to explain → her decision', point: 'was made to explain の動作主は Maya。her decision は explain の目的語で、説明した結果までは示されない。',
+          b: [['マヤは自分の決定を説明するよう強いられた。', null], ['マヤは誰かに決定を説明させた。', '説明させたのではなく、説明させられた側です（受動態）。'], ['マヤの説明で全員が納得した。', '説明した結果（納得したか）は英文に書かれていません。']],
+          c: [['Maya was make to explain her decision.', 'make'], ['Maya was made explain her decision.', 'noTo'], ['Maya was made to explain her decision.', null]],
+          ch: 'Maya=マヤは|*was made to explain=説明させられた（強いられた）|her decision=自分の決定を', tm: 'be made ＋ to do（〜させられる：使役の受動態）',
+          cmp: '比べてみよう：Maya was made to explain.（マヤが説明させられた）／Maya made him explain.（マヤが彼に説明させた）' },
+        { ja: '研修生たちはすべての数値を確認させられた。', en: 'The interns were made to check every figure.', start: 'The interns', tokens: ['every figure', 'to check', 'were', 'made'],
+          order: 'were made → to check → every figure', point: 'every figure は確認する対象。数値に誤りがあったかは不明。受動態では made と check の間に to が必要。',
+          b: [['研修生たちはすべての数値に誤りを見つけた。', '誤りがあったかどうかは英文に書かれていません。'], ['研修生たちはすべての数値を確認するよう強いられた。', null], ['研修生たちはほかの人に数値を確認させた。', '確認させたのではなく、確認させられた側です（受動態）。']],
+          c: [['The interns were make to check every figure.', 'make'], ['The interns were made check every figure.', 'noTo'], ['The interns were made to check every figure.', null]],
+          ch: 'The interns=研修生たちは|*were made to check=確認させられた（強いられた）|every figure=すべての数値を', tm: 'be made ＋ to do（〜させられる：使役の受動態）',
+          cmp: '比べてみよう：Someone made the interns check every figure.（能動態：to なし）／The interns were made to check every figure.（受動態：to が必要）' },
+        { ja: 'レオは機材を返却させられた。', en: 'Leo was made to return the equipment.', start: 'Leo', tokens: ['the equipment', 'made', 'was', 'to return'],
+          order: 'was made → to return → the equipment', point: 'return the equipment をするのは Leo。返却の理由は述べられていない。能動態なら Someone made Leo return the equipment.。',
+          b: [['レオは壊した機材を返却させられた。', '機材を壊したこと（返却の理由）は英文に書かれていません。'], ['レオは誰かに機材を返却させた。', '返却させたのではなく、返却させられた側です（受動態）。'], ['レオは機材を返却するよう強いられた。', null]],
+          c: [['Leo was make to return the equipment.', 'make'], ['Leo was made to return the equipment.', null], ['Leo was made return the equipment.', 'noTo']],
+          ch: 'Leo=レオは|*was made to return=返却させられた（強いられた）|the equipment=機材を', tm: 'be made ＋ to do（〜させられる：使役の受動態）',
+          cmp: '比べてみよう：Someone made Leo return the equipment.（能動態：to なし）／Leo was made to return the equipment.（受動態：to が必要）' },
+        { ja: '証人はその発言を繰り返させられた。', en: 'The witness was made to repeat the statement.', start: 'The witness', tokens: ['was', 'to repeat', 'made', 'the statement', 'to'], extra: 'to',
+          order: 'was made → to repeat → the statement', point: 'repeat は同じ発言を繰り返すこと。撤回したという意味はない。made はここで「作った」という意味ではなく使役を表す。',
+          b: [['証人はその発言を繰り返すよう強いられた。', null], ['証人は発言の内容を撤回させられた。', 'repeat は「繰り返す」で、「撤回する」ではありません。'], ['証人は誰かに発言を繰り返させた。', '繰り返させたのではなく、繰り返させられた側です（受動態）。']],
+          c: [['The witness was make to repeat the statement.', 'make'], ['The witness was made repeat the statement.', 'noTo'], ['The witness was made to repeat the statement.', null]],
+          ch: 'The witness=証人は|*was made to repeat=繰り返させられた（強いられた）|the statement=その発言を', tm: 'be made ＋ to do（〜させられる：使役の受動態）',
+          cmp: 'to は made と repeat の間に1つだけ。2つ目の to は余分です。' },
+        { ja: '来訪者たちは建物から出るよう強いられた。', en: 'The visitors were made to leave the building.', start: 'The visitors', tokens: ['leave', 'the building', 'made', 'were'], missing: 'to',
+          order: 'were made → to leave → the building', point: 'leave the building の動作主は the visitors。火事などの理由は書かれていない。',
+          b: [['来訪者たちは建物から出るよう強いられた。', null], ['来訪者たちは建物から誰かを追い出した。', '追い出したのではなく、出させられた側です（受動態）。'], ['来訪者たちは火事のために建物から出された。', '火事などの理由は英文に書かれていません。']],
+          c: [['The visitors were made leave the building.', 'noTo'], ['The visitors were make to leave the building.', 'make'], ['The visitors were made to leave the building.', null]],
+          ch: 'The visitors=来訪者たちは|*were made to leave=出させられた（強いられた）|the building=建物から', tm: 'be made ＋ to do（〜させられる：使役の受動態）',
+          cmp: '不足している to を were made と leave の間に補います（受動態では to が必要）。' }
+      ]
+    },
+    too: {
+      rule: 'too は形容詞・副詞の直前に置く。enough を使う場合は形容詞・副詞の後ろに置き、「十分に〜」と意味が変わる。',
+      why: { after: 'too は形容詞・副詞の直前に置きます。後ろに置く語順は誤りです。', enough: 'enough は形容詞・副詞の後ろに置きます。また enough は「十分に〜」の意味になり、「〜すぎる」という日本語と合いません。' },
+      groups: [
+        { ja: 'その箱は重すぎて私には持ち上げられなかった。', en: 'The box was too heavy for me to lift.', start: 'The box', tokens: ['to lift', 'was', 'too heavy', 'for me'],
+          order: 'was → too heavy → for me → to lift', point: 'too heavy for me to lift は、私が持ち上げるには重すぎたという意味。for me が持ち上げる人を限定している。',
+          b: [['私は重い箱を何とか持ち上げた。', 'too 〜 to lift は「持ち上げるには重すぎた（持ち上げられなかった）」です。'], ['箱は私が持ち上げられる重さを超えていた。', null], ['箱は誰にも持ち上げられなかった。', 'for me なので、分かるのは「私には」だけです。ほかの人のことは書かれていません。']],
+          c: [['The box was heavy too for me to lift.', 'after'], ['The box was enough heavy for me to lift.', 'enough'], ['The box was too heavy for me to lift.', null]],
+          ch: 'The box was=その箱は〜だった|*too heavy=重すぎる（どのくらい？）|for me=私が（持ち上げる人）|to lift=持ち上げるには', tm: 'too ＋ 形容詞 ＋ for A ＋ to do（A が〜するには…すぎる）',
+          cmp: '比べてみよう：too heavy to lift（重すぎて持ち上げられない）／light enough to lift（持ち上げられるほど軽い）' },
+        { ja: '文字が小さすぎてアヤには読めなかった。', en: 'The print was too small for Aya to read.', start: 'The print', tokens: ['was', 'to read', 'too small', 'for Aya'],
+          order: 'was → too small → for Aya → to read', point: 'too small は読める範囲を下回る小ささ。for Aya は読む人を指定し、ほかの人が読めたかは示さない。',
+          b: [['アヤ以外なら全員が読めた。', 'for Aya は読む人をアヤに限っているだけで、ほかの人が読めたかは書かれていません。'], ['アヤが読むには文字が小さすぎた。', null], ['文字が小さかったのでアヤは拡大して読んだ。', 'too 〜 to read は「読めなかった」です。拡大したことも書かれていません。']],
+          c: [['The print was too small for Aya to read.', null], ['The print was enough small for Aya to read.', 'enough'], ['The print was small too for Aya to read.', 'after']],
+          ch: 'The print was=文字は〜だった|*too small=小さすぎる（どのくらい？）|for Aya=アヤが（読む人）|to read=読むには', tm: 'too ＋ 形容詞 ＋ for A ＋ to do（A が〜するには…すぎる）',
+          cmp: 'to read の後ろに it は置きません。読む対象は主語の the print です。' },
+        { ja: 'その橋は狭すぎてトラックが渡れない。', en: 'The bridge is too narrow for trucks to cross.', start: 'The bridge', tokens: ['to cross', 'too narrow', 'is', 'for trucks'],
+          order: 'is → too narrow → for trucks → to cross', point: 'for trucks は渡る主体。幅の制約を述べていて、歩行者の通行や実際の走行は述べていない。',
+          b: [['トラックが渡るには橋が狭すぎる。', null], ['トラックは橋の途中まで渡った。', '実際に渡ったかどうかは書かれていません。橋の幅の話です。'], ['橋は歩行者も渡れない。', 'for trucks なので、分かるのはトラックについてだけです。']],
+          c: [['The bridge is enough narrow for trucks to cross.', 'enough'], ['The bridge is too narrow for trucks to cross.', null], ['The bridge is narrow too for trucks to cross.', 'after']],
+          ch: 'The bridge is=その橋は〜だ|*too narrow=狭すぎる（どのくらい？）|for trucks=トラックが（渡るもの）|to cross=渡るには', tm: 'too ＋ 形容詞 ＋ for A ＋ to do（A が〜するには…すぎる）',
+          cmp: '比べてみよう：too narrow for trucks to cross（トラックには狭すぎる）／wide enough for trucks to cross（トラックが渡れるほど広い）' },
+        { ja: 'スープは熱すぎて食べられなかった。', en: 'The soup was too hot to eat.', start: 'The soup', tokens: ['was', 'to eat', 'too hot'],
+          order: 'was → too hot → to eat', point: 'too hot to eat は食べるには温度が高すぎたという意味。eat の対象は主語の the soup。後で冷めたかは不明。',
+          b: [['スープは冷ましたあとも食べられなかった。', '冷ましたあとのことは書かれていません。'], ['そのとき、食べるにはスープが熱すぎた。', null], ['スープは飲み込めたが熱かった。', 'too hot to eat は「熱すぎて食べられなかった」です。']],
+          c: [['The soup was enough hot to eat.', 'enough'], ['The soup was too hot to eat.', null], ['The soup was hot too to eat.', 'after']],
+          ch: 'The soup was=スープは〜だった|*too hot=熱すぎる（どのくらい？）|to eat=食べるには', tm: 'too ＋ 形容詞 ＋ to do（〜するには…すぎる）',
+          cmp: 'to eat の後ろに it は置きません。食べる対象は主語の the soup です（× too hot to eat it）。' },
+        { ja: '彼は話すのが速すぎて私たちはついていけなかった。', en: 'He spoke too quickly for us to follow.', start: 'He', tokens: ['spoke', 'for us', 'too quickly', 'to follow'],
+          order: 'spoke → too quickly → for us → to follow', point: 'too は副詞 quickly を修飾する。for us はついていく人を指すので、ほかの聞き手まで判断できない。',
+          b: [['彼の話に誰もついていけなかった。', 'for us なので、分かるのは「私たちは」だけです。ほかの聞き手のことは書かれていません。'], ['私たちが話についていくには彼の話し方が速すぎた。', null], ['私たちは話の内容をすべて理解できた。', 'too 〜 to follow は「速すぎてついていけなかった」です。']],
+          c: [['He spoke too quickly for us to follow.', null], ['He spoke enough quickly for us to follow.', 'enough'], ['He spoke quickly too for us to follow.', 'after']],
+          ch: 'He spoke=彼は話した|*too quickly=速すぎる（どのくらい？）|for us=私たちが（ついていく人）|to follow=ついていくには', tm: 'too ＋ 副詞 ＋ for A ＋ to do（A が〜するには…すぎる）',
+          cmp: 'too は形容詞だけでなく副詞（quickly）にも付きます。' },
+        { ja: '注文を取り消すには遅すぎた。', en: 'It was too late to cancel the order.', start: 'It', tokens: ['too late', 'to cancel', 'the order', 'was'],
+          order: 'was → too late → to cancel → the order', point: 'too late to cancel は取り消せる時期を過ぎていたこと。商品が届いたかは書かれていない。',
+          b: [['その時点では注文を取り消すには遅すぎた。', null], ['注文はすでに届いていた。', '商品が届いたかどうかは書かれていません。'], ['注文を取り消すにはまだ間に合った。', 'too late は「遅すぎた」で、間に合わなかったことを表します。']],
+          c: [['It was late too to cancel the order.', 'after'], ['It was too late to cancel the order.', null], ['It was enough late to cancel the order.', 'enough']],
+          ch: 'It was=（その時は）〜だった|*too late=遅すぎる|to cancel the order=注文を取り消すには', tm: 'It is too ＋ 形容詞 ＋ to do（〜するには…すぎる）',
+          cmp: 'It は時期・時間を表す主語です。「それ」と訳しません。' },
+        { ja: 'その道路は凍りすぎてバスが通れなかった。', en: 'The road was too icy for the bus to use.', start: 'The road', tokens: ['for the bus', 'too icy', 'was', 'to use', 'such'], extra: 'such',
+          order: 'was → too icy → for the bus → to use', point: 'too icy は道路の状態が通行の妨げになること。the road と the bus の範囲を他の道路や車両に広げない。',
+          b: [['すべての道路が凍っていて通れなかった。', 'the road（その道路）のことだけで、すべての道路ではありません。'], ['バスが通るにはその道路が凍りすぎていた。', null], ['バスはその道路で事故を起こした。', '事故のことは書かれていません。']],
+          c: [['The road was enough icy for the bus to use.', 'enough'], ['The road was too icy for the bus to use.', null], ['The road was icy too for the bus to use.', 'after']],
+          ch: 'The road was=その道路は〜だった|*too icy=凍りすぎている（どのくらい？）|for the bus=バスが（通るもの）|to use=通るには', tm: 'too ＋ 形容詞 ＋ for A ＋ to do（A が〜するには…すぎる）',
+          cmp: 'such は名詞の前に置く語（such an icy road）で、この文には入りません（余分な語）。' },
+        { ja: 'その部屋はうるさすぎて私には集中できない。', en: 'The room is too noisy for me to concentrate.', start: 'The room', tokens: ['for me', 'is', 'noisy', 'to', 'concentrate'], missing: 'too',
+          order: 'is → too noisy → for me → to concentrate', point: 'too noisy for me to concentrate は私にとって集中できる程度を超えた騒音を表す。concentrate に目的語を補う必要はない。',
+          b: [['私が集中するにはその部屋はうるさすぎる。', null], ['その部屋では誰も集中できない。', 'for me なので、分かるのは「私には」だけです。'], ['私はその部屋で集中できた。', 'too 〜 to concentrate は「うるさすぎて集中できない」です。']],
+          c: [['The room is too noisy for me to concentrate.', null], ['The room is enough noisy for me to concentrate.', 'enough'], ['The room is noisy too for me to concentrate.', 'after']],
+          ch: 'The room is=その部屋は〜だ|*too noisy=うるさすぎる（どのくらい？）|for me=私が（集中する人）|to concentrate=集中するには', tm: 'too ＋ 形容詞 ＋ for A ＋ to do（A が〜するには…すぎる）',
+          cmp: '不足している too を noisy の直前に補います。to（不定詞の to）と too（〜すぎる）を区別します。' }
+      ]
+    },
+    forget: {
+      rule: 'forget の直後の形で、忘れたのが用事か経験の記憶かを判断する。',
+      why: { ing: 'forget doing は「〜したことを忘れる（経験の記憶）」で、日本語と合いません。用事を忘れたなら forget to do です。',
+        to: 'forget to do は「〜するのを忘れる（用事）」で、日本語と合いません。したことの記憶なら forget doing です。',
+        order: '語順が誤っています。forget の直後に to do / doing を置きます。' },
+      groups: [
+        { ja: '私はファイルを添付し忘れた。', en: 'I forgot to attach the file.', start: 'I', tokens: ['the file', 'to attach', 'forgot'],
+          order: 'forgot → to attach → the file', point: 'forget to do は、するべき行動が頭から抜けたこと。この文では添付しそびれた。forget doing なら行動自体の記憶の話になる。',
+          b: [['私はファイルを忘れず添付した。', 'forgot to attach は「添付し忘れた」で、添付していません。'], ['私は添付したことを忘れた。', 'それは forgot attaching の意味です。'], ['私はファイルを添付するのを忘れた。', null]],
+          c: [['I forgot attaching the file.', 'ing'], ['I forgot to attach the file.', null], ['I to attach forgot the file.', 'order']],
+          ch: 'I forgot=私は忘れた（何を？）|*to attach=添付すること（するべき用事）|the file=ファイルを', tm: 'forget ＋ to do（〜するのを忘れる）',
+          cmp: '比べてみよう：forgot to attach（添付し忘れた）／forgot attaching（添付したことを忘れた）' },
+        { ja: '彼女は電気を消し忘れた。', en: 'She forgot to turn off the lights.', start: 'She', tokens: ['forgot', 'the lights', 'to turn off'],
+          order: 'forgot → to turn off → the lights', point: 'to turn off は忘れた用事。電気を消さなかったことは、意図的な決定とは異なる。',
+          b: [['彼女は電気を消さないことに決めた。', 'それは decided not to turn off の意味です。forgot は「うっかり忘れた」。'], ['彼女は電気を消すのを忘れた。', null], ['彼女は電気を消したことを忘れた。', 'それは forgot turning off の意味です。']],
+          c: [['She forgot turning off the lights.', 'ing'], ['She to turn off forgot the lights.', 'order'], ['She forgot to turn off the lights.', null]],
+          ch: 'She forgot=彼女は忘れた（何を？）|*to turn off=消すこと（するべき用事）|the lights=電気を', tm: 'forget ＋ to do（〜するのを忘れる）',
+          cmp: '比べてみよう：forgot to turn off（消し忘れた）／decided not to turn off（消さないことにした）' },
+        { ja: '私は以前彼に会ったことを忘れていた。', en: 'I had forgotten meeting him before.', start: 'I', tokens: ['meeting', 'him before', 'forgotten', 'had'],
+          order: 'had forgotten → meeting → him before', point: 'forget meeting は会ったという出来事の記憶を失うこと。had forgotten は過去のある時点までに忘れていたことを表す。',
+          b: [['以前彼に会ったことがなかった。', '会ったことはあり、その記憶を忘れていたという意味です。'], ['以前彼に会ったことが記憶から抜けていた。', null], ['以前彼に会いに行くのを忘れた。', 'それは forgot to meet の意味です。']],
+          c: [['I had forgotten meeting him before.', null], ['I meeting had forgotten him before.', 'order'], ['I had forgotten to meet him before.', 'to']],
+          ch: 'I had forgotten=私は忘れていた（何を？）|*meeting him=彼に会ったこと（経験の記憶）|before=以前', tm: 'forget ＋ -ing（〜したことを忘れる）',
+          cmp: '比べてみよう：had forgotten meeting him（会ったことを忘れていた）／had forgotten to meet him（会うのを忘れていた）' },
+        { ja: 'リナは私にその本を貸したことを忘れていた。', en: 'Lina had forgotten lending me the book.', start: 'Lina', tokens: ['lending', 'forgotten', 'had', 'me the book'],
+          order: 'had forgotten → lending → me the book', point: 'lending me the book の貸し手は Lina。me は借り手。forget to lend とは異なり、本を貸したことが前提。',
+          b: [['リナは私に本を貸したという記憶を失っていた。', null], ['リナは私に本を貸しそびれた。', 'それは forgot to lend の意味です。'], ['私はリナに本を貸したことを忘れていた。', '貸したのはリナ、忘れていたのもリナです。']],
+          c: [['Lina had forgotten to lend me the book.', 'to'], ['Lina lending had forgotten me the book.', 'order'], ['Lina had forgotten lending me the book.', null]],
+          ch: 'Lina had forgotten=リナは忘れていた（何を？）|*lending=貸したこと（経験の記憶）|me the book=私にその本を', tm: 'forget ＋ -ing（〜したことを忘れる）',
+          cmp: '比べてみよう：forgotten lending（貸したことを忘れていた）／forgotten to lend（貸すのを忘れていた）' },
+        { ja: '忘れずにドアに鍵をかけてください。', en: 'Don’t forget to lock the door.', start: 'Don’t', tokens: ['to lock', 'the door', 'forget'],
+          order: 'forget → to lock → the door', point: 'Don’t は forget を否定する。lock を否定しているわけではないので、求めている行動は施錠。',
+          b: [['これからドアに鍵をかけるのを忘れないよう求めている。', null], ['ドアに鍵をかけないよう求めている。', 'Don’t が否定しているのは forget です。鍵をかけることは求めています。'], ['すでに鍵をかけた場面を思い出すよう求めている。', 'to lock はこれからする用事です。過去の場面ではありません。']],
+          c: [['Don’t to lock forget the door.', 'order'], ['Don’t forget locking the door.', 'ing'], ['Don’t forget to lock the door.', null]],
+          ch: 'Don’t forget=忘れないで（何を？）|*to lock=鍵をかけること（これからの用事）|the door=ドアに', tm: 'Don’t forget ＋ to do（忘れずに〜して）',
+          cmp: '比べてみよう：Don’t forget to lock.（忘れずに鍵をかけて）／Don’t lock.（鍵をかけないで）' },
+        { ja: '彼は定期券を更新し忘れた。', en: 'He forgot to renew his pass.', start: 'He', tokens: ['forgot', 'his pass', 'to renew'],
+          order: 'forgot → to renew → his pass', point: 'to renew は忘れた用事。忘れた原因や外部から更新を禁止されたかは示されていない。',
+          b: [['彼は定期券の更新を忘れていた。', null], ['彼は定期券を更新できないと告げられた。', '更新を断られたことは書かれていません。自分で忘れたのです。'], ['彼は定期券を更新した記憶を失った。', 'それは forgot renewing の意味です。']],
+          c: [['He forgot to renew his pass.', null], ['He forgot renewing his pass.', 'ing'], ['He to renew forgot his pass.', 'order']],
+          ch: 'He forgot=彼は忘れた（何を？）|*to renew=更新すること（するべき用事）|his pass=定期券を', tm: 'forget ＋ to do（〜するのを忘れる）',
+          cmp: '比べてみよう：forgot to renew（更新し忘れた）／forgot renewing（更新したことを忘れた）' },
+        { ja: 'あの景色を見たことは決して忘れない。', en: 'I’ll never forget seeing that view.', start: 'I’ll', tokens: ['never', 'that view', 'forget', 'to', 'seeing'], extra: 'to',
+          order: 'never forget → seeing → that view', point: 'seeing はすでに体験した出来事。will が未来にかかるのは「忘れない」ことで、景色を見る時期ではない。',
+          b: [['これからあの景色を見に行くのを忘れないという意味。', 'それは never forget to see の意味です。'], ['あの景色を見たことがないという意味。', 'seeing は見た経験を表します。見たことはあります。'], ['あの景色を見た記憶は決して忘れないという意味。', null]],
+          c: [['I’ll never forget to see that view.', 'to'], ['I’ll seeing never forget that view.', 'order'], ['I’ll never forget seeing that view.', null]],
+          ch: 'I’ll never forget=私は決して忘れない（何を？）|*seeing=見たこと（経験の記憶）|that view=あの景色を', tm: 'forget ＋ -ing（〜したことを忘れる）',
+          cmp: 'will（’ll）がかかるのは forget（忘れない）です。景色を見るのは過去の経験です。to は余分な語。' },
+        { ja: 'ミアはケンにその知らせを伝えたことを忘れていた。', en: 'Mia had forgotten telling Ken the news.', start: 'Mia', tokens: ['Ken the news', 'forgotten', 'had'], missing: 'telling',
+          order: 'had forgotten → telling → Ken the news', point: 'telling の動作主は Mia。Ken は伝えた相手。forget to tell なら伝えるべきことを忘れたという意味。',
+          b: [['ミアはケンに知らせるのを忘れた。', 'それは forgot to tell の意味です。'], ['ミアはケンに知らせを伝えたという記憶を失っていた。', null], ['ケンはミアに知らせを伝えたことを忘れていた。', '伝えたのはミア、忘れていたのもミアです。']],
+          c: [['Mia telling had forgotten Ken the news.', 'order'], ['Mia had forgotten telling Ken the news.', null], ['Mia had forgotten to tell Ken the news.', 'to']],
+          ch: 'Mia had forgotten=ミアは忘れていた（何を？）|*telling=伝えたこと（経験の記憶）|Ken the news=ケンにその知らせを', tm: 'forget ＋ -ing（〜したことを忘れる）',
+          cmp: '比べてみよう：had forgotten telling（伝えたことを忘れていた）／had forgotten to tell（伝えるのを忘れていた）' }
+      ]
+    },
+    bare: {
+      rule: 'この形では、目的語のすぐ後ろに to を付けず動詞の原形を置く。',
+      why: { to: 'この形では目的語の後ろに to を付けません。動詞の原形をそのまま置きます。', order: '語順が誤っています。「動詞 → 目的語 → 動詞の原形」の順に置きます。' },
+      groups: [
+        { ja: 'コーチは私たちにもう1周走らせた。', en: 'The coach made us run another lap.', start: 'The coach', tokens: ['another lap', 'made', 'us', 'run'],
+          order: 'made → us → run → another lap', point: '能動態の make＋目的語＋原形。us が run の動作主。受動態で Us を主語にすると We were made to run … になる。',
+          b: [['私たちがコーチにもう1周走らせた。', '走らせたのはコーチ、走ったのは私たち（us）です。'], ['コーチが私たちと一緒にもう1周走った。', 'コーチが一緒に走ったとは書かれていません。走ったのは us です。'], ['コーチが私たちにもう1周走らせた。', null]],
+          c: [['The coach made us run another lap.', null], ['The coach made run us another lap.', 'order'], ['The coach made us to run another lap.', 'to']],
+          ch: 'The coach=コーチは|*made us run=私たちを走らせた（強制）|another lap=もう1周', tm: 'make ＋ 目的語 ＋ 動詞の原形（〜させる）',
+          cmp: '比べてみよう：The coach made us run.（能動態：to なし）／We were made to run.（受動態：to が必要）' },
+        { ja: '両親は私にその講座を選ばせてくれた。', en: 'My parents let me choose the course.', start: 'My parents', tokens: ['the course', 'me', 'choose', 'let'],
+          order: 'let → me → choose → the course', point: 'let＋目的語＋原形は許可。choose するのは me であり、強制を表す make とは意味が違う。',
+          b: [['両親が私の代わりにその講座を選んだ。', '選んだのは me（私）です。両親は許可しただけです。'], ['両親は私がその講座を選ぶことを認めた。', null], ['両親は私にその講座を選ぶよう強制した。', '強制なら made me choose です。let は許可。']],
+          c: [['My parents let choose me the course.', 'order'], ['My parents let me choose the course.', null], ['My parents let me to choose the course.', 'to']],
+          ch: 'My parents=両親は|*let me choose=私に選ばせてくれた（許可）|the course=その講座を', tm: 'let ＋ 目的語 ＋ 動詞の原形（〜させてやる：許可）',
+          cmp: '比べてみよう：let me choose（選ばせてくれた＝許可）／made me choose（選ばせた＝強制）' },
+        { ja: '私はレナが通りを渡るのを見た。', en: 'I saw Lena cross the street.', start: 'I', tokens: ['cross', 'Lena', 'the street', 'saw'],
+          order: 'saw → Lena → cross → the street', point: 'see＋目的語＋原形は動作をひとまとまりとして捉える。Lena が cross の動作主。crossing なら進行中の場面に焦点が当たる。',
+          b: [['私はレナが通りを渡るのを見た。', null], ['私はレナと一緒に通りを渡った。', '渡ったのは Lena です。私は見ていただけです。'], ['私はレナが通りを渡る音を聞いた。', 'saw は「見た」です。聞いたなら heard。']],
+          c: [['I saw Lena to cross the street.', 'to'], ['I saw Lena cross the street.', null], ['I saw cross Lena the street.', 'order']],
+          ch: 'I=私は|*saw Lena cross=レナが渡るのを見た（知覚動詞＋人＋原形）|the street=通りを', tm: 'see ＋ 目的語 ＋ 動詞の原形（〜が…するのを見る）',
+          cmp: '比べてみよう：saw Lena cross（渡るのを始めから終わりまで見た）／saw Lena crossing（渡っている途中を見た）' },
+        { ja: '私たちは誰かが2回ノックするのを聞いた。', en: 'We heard someone knock twice.', start: 'We', tokens: ['knock', 'someone', 'twice', 'heard'],
+          order: 'heard → someone → knock → twice', point: 'hear＋目的語＋原形で、聞いたのは knock という動作。twice はノックの回数を示し、人の正体は示さない。',
+          b: [['私たちはノックした人を見た。', 'heard は「聞いた」です。見たとは書かれていません。'], ['私たちが誰かのために2回ノックした。', 'ノックしたのは someone（誰か）です。私たちは聞いただけです。'], ['私たちは誰かのノックを2回聞いた。', null]],
+          c: [['We heard someone to knock twice.', 'to'], ['We heard knock someone twice.', 'order'], ['We heard someone knock twice.', null]],
+          ch: 'We=私たちは|*heard someone knock=誰かがノックするのを聞いた（知覚動詞＋人＋原形）|twice=2回', tm: 'hear ＋ 目的語 ＋ 動詞の原形（〜が…するのを聞く）',
+          cmp: 'twice はノックの回数です。ノックした人が誰かは書かれていません。' },
+        { ja: '彼女は飛行機が離陸するのを見た。', en: 'She watched the plane take off.', start: 'She', tokens: ['take off', 'watched', 'the plane'],
+          order: 'watched → the plane → take off', point: 'watch＋目的語＋原形。take off は「離陸する」のまとまりで、the plane が動作主。彼女が乗っていたとは書かれていない。',
+          b: [['彼女は飛行機に乗って離陸した。', '離陸したのは the plane です。彼女が乗っていたとは書かれていません。'], ['彼女は飛行機が着陸するのを見た。', 'take off は「離陸する」です。着陸なら land。'], ['彼女が見た動作は飛行機の離陸だった。', null]],
+          c: [['She watched take off the plane.', 'order'], ['She watched the plane take off.', null], ['She watched the plane to take off.', 'to']],
+          ch: 'She=彼女は|*watched the plane take off=飛行機が離陸するのを見た（知覚動詞＋目的語＋原形）', tm: 'watch ＋ 目的語 ＋ 動詞の原形（〜が…するのを見る）',
+          cmp: 'take off は2語で「離陸する」。原形のまとまりとして目的語 the plane の後ろに置きます。' },
+        { ja: 'その冗談でみんなが笑った。', en: 'The joke made everyone laugh.', start: 'The joke', tokens: ['laugh', 'everyone', 'made'],
+          order: 'made → everyone → laugh', point: '使役の make は人が強制する場合に限らず、出来事が反応を引き起こす場合にも使う。laugh の動作主は everyone。',
+          b: [['みんなは冗談を言うよう頼まれた。', '冗談を言ったのではなく、冗談で笑ったのです。'], ['冗談をきっかけにみんなが笑った。', null], ['みんなは笑う許可をもらった。', '許可なら let です。made は「（冗談が）笑わせた」。']],
+          c: [['The joke made everyone to laugh.', 'to'], ['The joke made everyone laugh.', null], ['The joke made laugh everyone.', 'order']],
+          ch: 'The joke=その冗談は|*made everyone laugh=みんなを笑わせた（make＋人＋原形）', tm: 'make ＋ 目的語 ＋ 動詞の原形（〜させる）',
+          cmp: '主語が人でなくても（The joke）make＋人＋原形を使えます。「その冗談でみんなが笑った」と訳すと自然です。' },
+        { ja: '彼らは犬を庭で走らせてやった。', en: 'They let the dog run in the yard.', start: 'They', tokens: ['run', 'to', 'the dog', 'let', 'in the yard'], extra: 'to',
+          order: 'let → the dog → run → in the yard', point: 'let の目的語 the dog が run の動作主。in the yard は走る場所を示す。',
+          b: [['彼らは自分たちが庭で走るのを犬に許してもらった。', '許したのは They（彼ら）、走ったのは the dog です。'], ['彼らは犬が庭で走るのを許した。', null], ['彼らは犬が庭から出るのを許した。', 'in the yard は「庭で」です。庭から出たのではありません。']],
+          c: [['They let run the dog in the yard.', 'order'], ['They let the dog run in the yard.', null], ['They let the dog to run in the yard.', 'to']],
+          ch: 'They=彼らは|*let the dog run=犬を走らせてやった（許可）|in the yard=庭で', tm: 'let ＋ 目的語 ＋ 動詞の原形（〜させてやる：許可）',
+          cmp: 'let の後ろの原形には to を付けません。to は余分な語です。' },
+        { ja: '私は床が揺れるのを感じた。', en: 'I felt the floor shake.', start: 'I', tokens: ['the floor', 'felt'], missing: 'shake',
+          order: 'felt → the floor → shake', point: 'feel＋目的語＋原形。shake するのは the floor。揺れの原因は示されていない。',
+          b: [['私は自分で床を揺らした。', '揺れたのは the floor で、私が揺らしたのではありません。'], ['私は床が揺れたことを感覚で捉えた。', null], ['私は床が揺れた原因を突き止めた。', '揺れの原因は書かれていません。']],
+          c: [['I felt the floor to shake.', 'to'], ['I felt the floor shake.', null], ['I felt shake the floor.', 'order']],
+          ch: 'I=私は|*felt the floor shake=床が揺れるのを感じた（知覚動詞＋目的語＋原形）', tm: 'feel ＋ 目的語 ＋ 動詞の原形（〜が…するのを感じる）',
+          cmp: '不足している原形 shake を、目的語 the floor の後ろに補います。' }
+      ]
+    }
+    /* LV3-SOURCE-END */
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* ---- data/infinitive-lv2.js ---- */
 /*
  * infinitive-lv2.js — 不定詞 Lv2 の問題バンク（5項目 × 形式・計128問）
@@ -2987,16 +3231,18 @@ details.panel > p { margin-top: 8px; }
   'use strict';
   var EA = root.EA = root.EA || {};
 
-  var ITEMS = [
-    { key: 'gi', label: '動名詞 or 不定詞', term: '動名詞 or 不定詞', plain: '動詞のあとに続くのが to do か doing かを見分ける' },
-    { key: 'not', label: 'not to do', term: 'not to do', plain: '不定詞を否定するときは not を to の直前に置く' },
-    { key: 'enough', label: 'enough to do', term: 'enough to do', plain: '形容詞・副詞 ＋ enough ＋ to do（〜するのに十分…）' },
-    { key: 'inorder', label: 'in order to do', term: 'in order to do', plain: '目的をはっきり示す in order to do / in order not to do' },
-    { key: 'wh', label: '疑問詞＋不定詞', term: '疑問詞＋不定詞', plain: 'what / how / where / when / which ＋ to do（何を・どう〜すればよいか）' }
-  ];
-  // 項目 × 形式ごとの収録数（原本の範囲表）。検査（EA.lv2.check）で使います
-  var PLAN = { ord: 8, fact: 8, wo: 8, tf: { gi: 8 } };
-
+  /*
+   * 範囲を選んで練習する問題集（不定詞 Lv2・Lv3）を、原本のデータから作る。
+   *   cfg.set（'lv2' など）… 問題の set・学習項目 ID の頭（<set>-<項目>）・練習の名前に使う
+   *   cfg.items / cfg.plan / cfg.formats … 項目・形式ごとの収録数・形式の並び
+   *   cfg.source … 項目 → 形式 → 問題の配列　　cfg.idOf(item, fmt, d, no) … 問題 ID（省略時 inf-<set>-<項目>-<形式>-<番号>）
+   *   cfg.explain … 解説の補足（項目-形式-番号 → { tr, ch, tm, cmp }）。問題の more に書いたものが優先
+   */
+  function makeLevelBank(cfg) {
+  var SET = cfg.set, FMTS = cfg.formats || ['ord', 'fact', 'wo', 'tf'];
+  var ITEMS = cfg.items, PLAN = cfg.plan, LV2 = cfg.source || {};
+  return buildLevelBank();
+  function buildLevelBank() {
   var FORMAT = {
     ord: { label: '並べ替え', group: 'ord' },
     'ord-extra': { label: '並べ替え（余分な語あり）', group: 'ord' },
@@ -3013,11 +3259,6 @@ details.panel > p { margin-top: 8px; }
   };
   var WRONG = { grammar: '文法', meaning: '意味', both: '文法と意味' };
 
-  /*
-   * 原本の問題（項目 → 形式 → 問題番号順）。
-   * ※ 原本の問題セットの取り込み待ち。ここに LV2.gi.ord = [ {…第1問}, … {…第8問} ] のように追加します。
-   */
-  var LV2 = EA.lv2Source || {};
 
   function choices(list) {
     var ans = null;
@@ -3031,8 +3272,8 @@ details.panel > p { margin-top: 8px; }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
 
   function build(item, fmt, d, no) {
-    var id = 'inf-lv2-' + item.key + '-' + fmt + '-' + pad(no);
-    var q = { id: id, version: d.version || 1, status: d.status || 'active', role: 'lv2', set: 'lv2', skill: 'lv2-' + item.key,
+    var id = cfg.idOf ? cfg.idOf(item, fmt, d, no) : 'inf-' + SET + '-' + item.key + '-' + fmt + '-' + pad(no);
+    var q = { id: id, version: d.version || 1, status: d.status || 'active', role: SET, set: SET, skill: SET + '-' + item.key, levelSet: true,
       no: no, lv2Format: fmt, checks: d.checks || (item.label + '・' + FORMAT[fmt].label + ' 第' + no + '問'), hint: d.hint || null,
       changes: d.changes || [], source: d.source || null };
     var ex = d.explain || {};
@@ -3070,7 +3311,9 @@ details.panel > p { margin-top: 8px; }
       q.explanation = { answer: d.answer === 'x' ? d.correction : d.en, translation: ex.translation || d.ja, chunks: ex.chunks || null,
         point: ex.point || '', term: ex.term || item.term };
     }
-    var more = (EA.lv2Explain || {})[item.key + '-' + fmt + '-' + pad(no)];
+    if (d.sourceGroup) q.sourceGroup = d.sourceGroup; // 同じ英文を扱う組（同じ回には出さない）
+    if (d.sourceId) q.sourceId = d.sourceId;
+    var more = d.more || (cfg.explain || {})[item.key + '-' + fmt + '-' + pad(no)];
     if (more) addExplain(q, more);
     return q;
   }
@@ -3093,16 +3336,12 @@ details.panel > p { margin-top: 8px; }
   }
 
   var bank = {
-    unit: {
-      id: 'infinitive-lv2', parent: 'infinitive', practiceSet: 'lv2', practiceLabel: '不定詞Lv2の練習',
-      title: '不定詞 Lv2', description: '動名詞 or 不定詞・not to do・enough to do・in order to do・疑問詞＋不定詞',
-      scopeNote: '単元タブの「Lv2を練習する」だけで出題します。確認状況・復習予定には反映しません。'
-    },
-    skills: ITEMS.map(function (it) { return { id: 'lv2-' + it.key, label: it.label, term: it.term, plain: it.plain }; }),
+    unit: cfg.unit,
+    skills: ITEMS.map(function (it) { return { id: SET + '-' + it.key, label: it.label, term: it.term, plain: it.plain }; }),
     questions: []
   };
   ITEMS.forEach(function (item) {
-    ['ord', 'fact', 'wo', 'tf'].forEach(function (fmt) {
+    FMTS.forEach(function (fmt) {
       ((LV2[item.key] || {})[fmt] || []).forEach(function (d, i) { bank.questions.push(build(item, fmt, d, i + 1)); });
     });
   });
@@ -3166,9 +3405,9 @@ details.panel > p { margin-top: 8px; }
       }
     });
     ITEMS.forEach(function (it) {
-      ['ord', 'fact', 'wo', 'tf'].forEach(function (f) {
-        var want = typeof PLAN[f] === 'number' ? PLAN[f] : (PLAN[f][it.key] || 0);
-        var have = counts['lv2-' + it.key + '/' + f] || 0;
+      FMTS.forEach(function (f) {
+        var want = typeof PLAN[f] === 'number' ? PLAN[f] : ((PLAN[f] || {})[it.key] || 0);
+        var have = counts[SET + '-' + it.key + '/' + f] || 0;
         if (have !== want) errs.push(it.label + ' / ' + FORMAT[f].label + '：' + have + '問（予定 ' + want + '問）');
       });
     });
@@ -3176,8 +3415,70 @@ details.panel > p { margin-top: 8px; }
     return { ok: !errs.length, errors: errs, total: total, counts: counts };
   }
 
-  EA.lv2 = { check: check, items: ITEMS, formats: FORMAT, canBuild: canBuild, words: words };
-  EA.registerBank(bank);
+  return { bank: bank, check: check, formats: FORMAT, canBuild: canBuild, words: words };
+  }
+  }
+
+  /* ---- 不定詞 Lv2（5項目 × 形式・計128問） ---- */
+  var lv2 = makeLevelBank({
+    set: 'lv2', source: EA.lv2Source, explain: EA.lv2Explain,
+    items: [
+      { key: 'gi', label: '動名詞 or 不定詞', term: '動名詞 or 不定詞', plain: '動詞のあとに続くのが to do か doing かを見分ける' },
+      { key: 'not', label: 'not to do', term: 'not to do', plain: '不定詞を否定するときは not を to の直前に置く' },
+      { key: 'enough', label: 'enough to do', term: 'enough to do', plain: '形容詞・副詞 ＋ enough ＋ to do（〜するのに十分…）' },
+      { key: 'inorder', label: 'in order to do', term: 'in order to do', plain: '目的をはっきり示す in order to do / in order not to do' },
+      { key: 'wh', label: '疑問詞＋不定詞', term: '疑問詞＋不定詞', plain: 'what / how / where / when / which ＋ to do（何を・どう〜すればよいか）' }
+    ],
+    // 項目 × 形式ごとの収録数（原本の範囲表）。検査（EA.lv2.check）で使います
+    plan: { ord: 8, fact: 8, wo: 8, tf: { gi: 8 } },
+    unit: {
+      id: 'infinitive-lv2', parent: 'infinitive', practiceSet: 'lv2', practiceLabel: '不定詞Lv2の練習',
+      title: '不定詞 Lv2', description: '動名詞 or 不定詞・not to do・enough to do・in order to do・疑問詞＋不定詞',
+      scopeNote: '単元タブの「Lv2を練習する」だけで出題します。確認状況・復習予定には反映しません。'
+    }
+  });
+  EA.lv2 = { check: lv2.check, items: lv2.bank.skills, formats: lv2.formats, canBuild: lv2.canBuild, words: lv2.words };
+  EA.registerBank(lv2.bank);
+
+  /* ---- 不定詞 Lv3（4項目 × 3形式 × 8問 ＝ 96問）。原本は infinitive-lv3-source.js（同じ番号の A・B・C は同じ英文の組） ---- */
+  var L3 = EA.lv3Source || {};
+  var L3_ITEMS = [
+    { key: 'made', no: 1, label: 'be made to do', term: 'be made to do（使役の受動態）', plain: '「〜させられる」は be made ＋ to do（受動態では to が必要）' },
+    { key: 'too', no: 2, label: 'too ～ to do', term: 'too ～ to do', plain: 'too ＋ 形容詞・副詞 ＋ (for A) ＋ to do（〜するには…すぎる）' },
+    { key: 'forget', no: 3, label: 'forget to do と forget doing', term: 'forget to do / forget doing', plain: 'forget to do は用事を忘れる、forget doing はしたことを忘れる' },
+    { key: 'bare', no: 4, label: '原形不定詞', term: '原形不定詞', plain: 'make / let / see / hear ＋ 目的語 ＋ 動詞の原形（to を付けない）' }
+  ];
+  var L3_LETTER = { ord: 'a', fact: 'b', wo: 'c' };
+  var l3src = {};
+  L3_ITEMS.forEach(function (it) {
+    var src = L3[it.key]; if (!src) return;
+    var o = l3src[it.key] = { ord: [], fact: [], wo: [] };
+    src.groups.forEach(function (g, i) {
+      var n = pad(i + 1), group = 'lv3-' + it.no + '-' + n;
+      var more = { tr: g.ja, ch: g.ch, tm: g.tm, cmp: g.cmp };
+      var base = { sourceGroup: group, more: more };
+      function sid(f) { return 'lv3-' + it.no + '-' + L3_LETTER[f] + n; }
+      o.ord.push(assign({}, base, { sourceId: sid('ord'), ja: g.ja, fixedStart: g.start, tokens: g.tokens, answer: g.en, extra: g.extra, missing: g.missing,
+        explain: { point: '語順は「' + g.order + '」です。' + g.point } }));
+      o.fact.push(assign({}, base, { sourceId: sid('fact'), en: g.en, choices: g.b, explain: { point: g.point } }));
+      o.wo.push(assign({}, base, { sourceId: sid('wo'), ja: g.ja,
+        choices: g.c.map(function (c) { return [c[0], c[1] == null ? null : (src.why[c[1]] || '')]; }),
+        explain: { point: g.point + ' ' + src.rule } }));
+    });
+  });
+  function assign(t) { for (var i = 1; i < arguments.length; i++) for (var k in arguments[i]) if (arguments[i][k] !== undefined) t[k] = arguments[i][k]; return t; }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  var lv3 = makeLevelBank({
+    set: 'lv3', source: l3src, items: L3_ITEMS, formats: ['ord', 'fact', 'wo'], plan: { ord: 8, fact: 8, wo: 8 },
+    idOf: function (item, fmt, d) { return 'inf-' + d.sourceId; }, // 原本の問題番号のまま（例：inf-lv3-1-a01）
+    unit: {
+      id: 'infinitive-lv3', parent: 'infinitive', practiceSet: 'lv3', practiceLabel: '不定詞Lv3の練習',
+      title: '不定詞 Lv3', description: 'be made to do・too ～ to do・forget to do と forget doing・原形不定詞',
+      scopeNote: '単元タブの「Lv3を練習する」だけで出題します。確認状況・復習予定には反映しません。'
+    }
+  });
+  EA.lv3 = { check: lv3.check };
+  EA.registerBank(lv3.bank);
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* ---- js/grading.js ---- */
@@ -4103,7 +4404,7 @@ details.panel > p { margin-top: 8px; }
   }
 
   /**
-   * 範囲を選んで始める問題バンクの練習（不定詞 Lv2）。
+   * 範囲を選んで始める問題バンクの練習（不定詞 Lv2・Lv3）。
    *   範囲：'all'（全範囲）と、問題集の項目（skill）ごと。名前は項目名そのまま。
    *   問題数：既存の自主練習の設定（selfPracticeQuestions）。問題が足りないときはある分だけ。
    *   全範囲：各項目から1問ずつ選んでから、残りの枠を全項目の中から埋める。
@@ -4116,7 +4417,10 @@ details.panel > p { margin-top: 8px; }
   function practiceSetCount(bank, rangeId) {
     var n = (EA.config && EA.config.selfPracticeQuestions) || 6;
     var pool = activeQuestions(bank).filter(function (q) { return rangeId === 'all' || q.skill === rangeId; });
-    return Math.min(n, pool.length);
+    // 同じ英文を扱う組（sourceGroup）は1回に1問だけなので、組の数が上限
+    var groups = {}, k = 0;
+    pool.forEach(function (q) { var g = q.sourceGroup || q.id; if (!groups[g]) { groups[g] = true; k++; } });
+    return Math.min(n, k);
   }
   function practiceSetQuestions(state, bank, rangeId) {
     var n = practiceSetCount(bank, rangeId);
@@ -4125,7 +4429,9 @@ details.panel > p { margin-top: 8px; }
     var pool = activeQuestions(bank).filter(function (q) { return rangeId === 'all' || q.skill === rangeId; });
     function byOldest(list) { return shuffle(list).sort(function (a, b) { return (last[a.id] || 0) - (last[b.id] || 0); }); }
     var picks = [], used = {};
-    function take(q) { if (q && !used[q.id] && picks.length < n) { used[q.id] = true; picks.push(q); } }
+    // 同じ組（sourceGroup：形式違いで同じ英文を扱う問題。不定詞 Lv3）の問題は、同じ回に出さない
+    function take(q) { var g = q && (q.sourceGroup || q.id); if (q && !used[g] && picks.length < n) { used[g] = true; picks.push(q); return true; } return false; }
+    function takeFrom(l) { while (l.length && picks.length < n) if (take(l.shift())) return; } // 同じ組で出せない問題は飛ばして次へ
     // 1回目に回すまとまり：全範囲は項目、項目別は形式
     var keyOf = rangeId === 'all' ? function (q) { return q.skill; } : function (q) { return q.formatGroup || q.format; };
     var groups = {}, keys = [];
@@ -4138,11 +4444,11 @@ details.panel > p { margin-top: 8px; }
     });
     var lists = keys.map(function (k) { return byOldest(groups[k]); });
     if (rangeId === 'all') {
-      lists.forEach(function (l) { take(l[0]); });                 // 各項目から1問ずつ
-      byOldest(pool.filter(function (q) { return !used[q.id]; })).forEach(take); // 残りの枠
+      lists.forEach(function (l) { takeFrom(l.slice()); });         // 各項目から1問ずつ
+      byOldest(pool).forEach(take);                                // 残りの枠（選んだ問題・組は take が飛ばす）
     } else {
       while (picks.length < n && lists.some(function (l) { return l.length; })) {
-        lists.forEach(function (l) { take(l.shift()); });          // 形式を順番に回す
+        lists.forEach(takeFrom);                                   // 形式を順番に回す
       }
     }
     return shuffle(picks);
@@ -5116,8 +5422,11 @@ details.panel > p { margin-top: 8px; }
   var SESSION_LABEL = { diagnostic: '不定詞 Lv1', practice: '類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習' };
   var FORMAT_LABEL = { fill: '空所補充', order: '並び替え', ja2en: '日本語→英語', meaning: '意味の確認' };
   var LV1 = EA.banks.infinitive; // 不定詞 Lv1 の8問は、不定詞（基本）の問題集の set: 'lv1'
-  var LV2 = EA.banks['infinitive-lv2']; // 不定詞 Lv2 は別の問題集（範囲を選んで練習する。親の単元は不定詞）
-  var SET_SHORT = { lv1: 'Lv1練習', lv2: 'Lv2練習' };
+  var LV2 = EA.banks['infinitive-lv2']; // 不定詞 Lv2・Lv3 は別の問題集（範囲を選んで練習する。親の単元は不定詞）
+  var LEVELS = { lv2: LV2, lv3: EA.banks['infinitive-lv3'] };
+  var LEVEL_NAME = { lv2: 'Lv2', lv3: 'Lv3' };
+  function isLevelSet(setId) { return !!LEVELS[setId]; }
+  var SET_SHORT = { lv1: 'Lv1練習', lv2: 'Lv2練習', lv3: 'Lv3練習' };
   /** 問題の形式名（問題ごとに formatLabel があればそれ。用法の分類名は出さない） */
   function fmtLabel(qq) { return (qq && (qq.formatLabel || FORMAT_LABEL[qq.format])) || ''; }
   /** 回答の種類の表示名（決まった問題の練習は、その名前） */
@@ -5257,9 +5566,9 @@ details.panel > p { margin-top: 8px; }
       '</div>';
   }
 
-  /** 不定詞 Lv2 の選択問題：正解以外の選択肢と、それがちがう理由（選択肢の説明） */
+  /** 不定詞 Lv2・Lv3 の選択問題：正解以外の選択肢と、それがちがう理由（選択肢の説明） */
   function otherChoicesHtml(qq) {
-    if (qq.set !== 'lv2' || !qq.choices || qq.format !== 'meaning') return '';
+    if (!isLevelSet(qq.set) || !qq.choices || qq.format !== 'meaning') return '';
     var rows = qq.choices.filter(function (c) { return c.id !== qq.answer && c.feedback; }).map(function (c) {
       return '<li><span class="ex-other-choice"' + (qq.formatGroup === 'wo' ? ' lang="en"' : '') + '>' + rich(c.text) + '</span>' +
         '<span class="ex-other-why">' + esc(c.feedback) + '</span></li>';
@@ -5335,7 +5644,7 @@ details.panel > p { margin-top: 8px; }
   }
   /** 並べ替えの固定部分の案内（Lv2。Lv1 は指示文に書いてある） */
   function fixedNote(qq) {
-    if (qq.format !== 'order' || qq.set !== 'lv2' || (!qq.fixedStart && !qq.fixedEnd)) return '';
+    if (qq.format !== 'order' || !isLevelSet(qq.set) || (!qq.fixedStart && !qq.fixedEnd)) return '';
     var p = [];
     if (qq.fixedStart) p.push('文頭の「' + qq.fixedStart + '」');
     if (qq.fixedEnd) p.push('文末の「' + qq.fixedEnd + '」');
@@ -5523,19 +5832,20 @@ details.panel > p { margin-top: 8px; }
     ];
     var canSelf = !!u.diagnosticDoneAt; // 初回の学習（不定詞 Lv1）を終えた単元だけ
     var selfOpen = canSelf && !!view.params.selfOpen;
-    var lv2Open = !!LV2 && !!view.params.lv2Open; // Lv2 は初回診断の前でも開ける
+    var lvOpen = {}; ['lv2', 'lv3'].forEach(function (k) { lvOpen[k] = !!LEVELS[k] && !!view.params[k + 'Open']; }); // Lv2・Lv3 は初回診断の前でも開ける
     return '<h1 class="page-title">単元</h1>' +
       '<section class="panel unit-card"><div class="unit-head"><div><p class="eyebrow">利用できます</p><h2>' + esc(BANK.unit.title) + '</h2>' +
       '<p>' + esc(BANK.unit.description) + '</p></div>' +
       '<div class="unit-btns"><button type="button" class="btn-primary" data-go="home">ホームの課題へ</button>' +
       // 初回の Lv1 はホームの課題。終えたあとは、確認状況・復習予定に反映しない「Lv1をもう一度」として出す
       (LV1 && canSelf ? '<button type="button" class="btn-quiet" data-act="lv1-start"' + (state.activeSession ? ' disabled aria-describedby="lv1-busy"' : '') + '>' + icon('repeat') + 'Lv1をもう一度（' + lv1Count() + '問）</button>' : '') +
-      (LV2 ? '<button type="button" class="btn-quiet" data-act="lv2-open" aria-expanded="' + lv2Open + '" aria-controls="lv2-practice">' + icon('play') + 'Lv2を練習する</button>' : '') +
+      ['lv2', 'lv3'].map(function (k) { return LEVELS[k] ? '<button type="button" class="btn-quiet" data-act="' + k + '-open" aria-expanded="' + lvOpen[k] + '" aria-controls="' + k + '-practice">' + icon('play') + LEVEL_NAME[k] + 'を練習する</button>' : ''; }).join('') +
       (canSelf ? '<button type="button" class="btn-quiet" data-act="self-open" aria-expanded="' + selfOpen + '" aria-controls="self-practice">' + icon('repeat') + 'もう一度練習する</button>' : '') +
       '</div></div>' +
       (LV1 && canSelf && state.activeSession ? '<div class="lv1-busy" id="lv1-busy"><p class="unit-scope">途中の学習が保存されているため、Lv1の練習はいま始められません（途中の学習を上書きしないため）。続きを最後まで進めてから始めてください。</p>' +
         '<div class="actions-inline"><button type="button" class="btn-primary" data-act="task-resume">途中の学習を再開</button></div></div>' : '') +
-      (lv2Open ? lv2PracticeHtml() : '') +
+      (lvOpen.lv2 ? levelPracticeHtml('lv2') : '') +
+      (lvOpen.lv3 ? levelPracticeHtml('lv3') : '') +
       (selfOpen ? selfPracticeHtml(BANK) : '') +
       '<ol class="steps">' + steps.map(function (s) { return '<li class="' + (s[1] ? 'done' : '') + '"><span class="step-mark" aria-hidden="true">' + (s[1] ? '✓' : '') + '</span>' + s[0] + '<span class="sr">' + (s[1] ? '（済み）' : '（まだ）') + '</span></li>'; }).join('') + '</ol>' +
       // 扱う範囲は既存の用法ラベルで示す（詳しい範囲の説明 scopeNote は問題集に残し、出題範囲は変えない）
@@ -5569,28 +5879,29 @@ details.panel > p { margin-top: 8px; }
   }
 
   /**
-   * 「Lv2を練習する」：範囲（全範囲＋5項目）を選んで始める。問題数は既存の自主練習の設定で、始める前に実際の出題数を示す。
+   * 「Lv2を練習する」「Lv3を練習する」：範囲（全範囲＋項目）を選んで始める。問題数は既存の自主練習の設定で、始める前に実際の出題数を示す。
    * 途中の学習が保存されているときは、上書きしないよう始められない（再開へ案内する）。
    */
-  function lv2PracticeHtml() {
-    var ranges = P.practiceSetRanges(LV2);
-    var sel = view.params.lv2Range || 'all';
+  function levelPracticeHtml(k) {
+    var B = LEVELS[k], name = LEVEL_NAME[k];
+    var ranges = P.practiceSetRanges(B);
+    var sel = view.params[k + 'Range'] || 'all';
     if (!ranges.some(function (r) { return r.id === sel; })) sel = 'all';
-    var n = P.practiceSetCount(LV2, sel);
+    var n = P.practiceSetCount(B, sel);
     var label = ranges.filter(function (r) { return r.id === sel; })[0].label;
     var busy = !!state.activeSession;
-    return '<div class="self-practice lv2-practice" id="lv2-practice">' +
-      '<p class="field-label" id="lv2-range-label">Lv2：練習する範囲</p>' +
-      '<div class="seg" role="radiogroup" aria-labelledby="lv2-range-label">' + ranges.map(function (r) {
+    return '<div class="self-practice lv2-practice" id="' + k + '-practice">' +
+      '<p class="field-label" id="' + k + '-range-label">' + name + '：練習する範囲</p>' +
+      '<div class="seg" role="radiogroup" aria-labelledby="' + k + '-range-label">' + ranges.map(function (r) {
         var on = r.id === sel;
-        return '<button type="button" role="radio" aria-checked="' + on + '" class="seg-item' + (on ? ' is-current' : '') + '" data-act="lv2-range" data-range="' + esc(r.id) + '">' + esc(r.label) + '</button>';
+        return '<button type="button" role="radio" aria-checked="' + on + '" class="seg-item' + (on ? ' is-current' : '') + '" data-act="' + k + '-range" data-range="' + esc(r.id) + '">' + esc(r.label) + '</button>';
       }).join('') + '</div>' +
-      '<p class="field-note" id="lv2-count">' + esc(label) + '：<strong class="num">' + n + '</strong>問を出題します。' +
+      '<p class="field-note" id="' + k + '-count">' + esc(label) + '：<strong class="num">' + n + '</strong>問を出題します。' +
         (sel === 'all' ? '各項目から1問ずつ選び、残りをしばらく解いていない問題から選びます。' : 'この項目の形式を混ぜて、しばらく解いていない問題から選びます。') +
         '自分で始めた練習として履歴に残し、確認状況・復習予定は変えません。</p>' +
       (busy ? '<p class="toast toast-error" role="note">途中の学習が保存されているため、いまは始められません（途中の学習を上書きしないため）。続きを最後まで進めてから始めてください。</p>' +
         '<div class="actions-inline"><button type="button" class="btn-primary" data-act="task-resume">途中の学習を再開</button></div>'
-        : '<div class="actions-inline"><button type="button" class="btn-primary" data-act="lv2-start"' + (n ? '' : ' disabled') + '>Lv2の練習をはじめる（' + n + '問）' + icon('chevron') + '</button></div>') +
+        : '<div class="actions-inline"><button type="button" class="btn-primary" data-act="' + k + '-start"' + (n ? '' : ' disabled') + '>' + name + 'の練習をはじめる（' + n + '問）' + icon('chevron') + '</button></div>') +
       '</div>';
   }
 
@@ -5600,13 +5911,13 @@ details.panel > p { margin-top: 8px; }
     var main = atts.filter(function (a) { return !a.retryOf; }), re = atts.filter(function (a) { return a.retryOf; });
     var ok = main.filter(function (a) { return G.isSkillCorrect(a.result); }).length;
     var reOk = re.filter(function (a) { return G.isSkillCorrect(a.result); }).length;
-    var isLv2 = rec.practiceSet === 'lv2';
+    var isLv2 = isLevelSet(rec.practiceSet); // Lv2・Lv3
     // Lv2：学習項目ごとの正解数（回答前には項目名を出さないので、結果で確かめられるようにする）
     var byItem = '';
     if (isLv2) {
       var tally = {}, order_ = [];
       main.forEach(function (a) { var k = a.skillId; if (!tally[k]) { tally[k] = { n: 0, ok: 0 }; order_.push(k); } tally[k].n++; if (G.isSkillCorrect(a.result)) tally[k].ok++; });
-      byItem = '<section class="panel"><div class="panel-head"><h2>学習項目ごとの結果</h2></div><ul class="plain-list">' + LV2.skills.filter(function (sk) { return tally[sk.id]; }).map(function (sk) {
+      byItem = '<section class="panel"><div class="panel-head"><h2>学習項目ごとの結果</h2></div><ul class="plain-list">' + LEVELS[rec.practiceSet].skills.filter(function (sk) { return tally[sk.id]; }).map(function (sk) {
         return '<li><strong>' + esc(sk.label) + '</strong>：' + tally[sk.id].n + '問中 ' + tally[sk.id].ok + '問正解</li>';
       }).join('') + '</ul></section>';
     }
@@ -5663,7 +5974,7 @@ details.panel > p { margin-top: 8px; }
       review: '復習です。答えを見ずに思い出してみましょう。',
       trial: '試作の問題です（確認状況・復習予定には反映しません）。',
       // Lv2 は回答前に学習項目名（範囲）を出さない（範囲は単元タブと学習結果で確かめる）
-      self: item.retryOf ? '間違えた問題と同じ形式・同じ用法の、別の問題です。' : s.practiceSet === 'lv2' ? '自分で始めた練習です。確認状況・復習予定には反映しません。' : '自分で始めた練習です（範囲：' + (s.rangeLabel || '全範囲') + '）。確認状況・復習予定には反映しません。'
+      self: item.retryOf ? '間違えた問題と同じ形式・同じ用法の、別の問題です。' : isLevelSet(s.practiceSet) ? '自分で始めた練習です。確認状況・復習予定には反映しません。' : '自分で始めた練習です（範囲：' + (s.rangeLabel || '全範囲') + '）。確認状況・復習予定には反映しません。'
     }[item.attemptType] || '';
     if (item.retryOf) typeNote = '間違えた問題と同じ形式・同じ用法の、別の問題です。';
     // 確認問題は、問題画面の見出しでは「類題」と短く示す（記録・履歴の種類は「確認問題」のまま）
@@ -6782,18 +7093,21 @@ details.panel > p { margin-top: 8px; }
         view.params.selfRange = el.getAttribute('data-range'); render();
         var sr = appEl.querySelector('[data-act="self-range"][data-range="' + view.params.selfRange + '"]'); if (sr) sr.focus({ preventScroll: true });
         break;
-      case 'lv2-open':
-        view.params.lv2Open = !view.params.lv2Open; render();
-        var lo = appEl.querySelector('[data-act="lv2-open"]'); if (lo) lo.focus({ preventScroll: true });
+      case 'lv2-open': case 'lv3-open':
+        var lvO = act.slice(0, 3);
+        view.params[lvO + 'Open'] = !view.params[lvO + 'Open']; render();
+        var lo = appEl.querySelector('[data-act="' + act + '"]'); if (lo) lo.focus({ preventScroll: true });
         break;
-      case 'lv2-range':
-        view.params.lv2Range = el.getAttribute('data-range'); render();
-        var lr = appEl.querySelector('[data-act="lv2-range"][data-range="' + view.params.lv2Range + '"]'); if (lr) lr.focus({ preventScroll: true });
+      case 'lv2-range': case 'lv3-range':
+        var lvR = act.slice(0, 3);
+        view.params[lvR + 'Range'] = el.getAttribute('data-range'); render();
+        var lr = appEl.querySelector('[data-act="' + act + '"][data-range="' + view.params[lvR + 'Range'] + '"]'); if (lr) lr.focus({ preventScroll: true });
         break;
-      case 'lv2-start':
+      case 'lv2-start': case 'lv3-start':
+        var lvS = act.slice(0, 3);
         // 保存中の途中の学習は上書きしない（再開へ案内する）
-        if (state.activeSession) { notice = { tone: 'error', text: '途中の学習が保存されているため、Lv2の練習は始められません。「途中の学習を再開」から続きを進めてください。' }; render(); break; }
-        startSession(P.buildPracticeSetSession(state, LV2, view.params.lv2Range || 'all', t.app)); break;
+        if (state.activeSession) { notice = { tone: 'error', text: '途中の学習が保存されているため、' + LEVEL_NAME[lvS] + 'の練習は始められません。「途中の学習を再開」から続きを進めてください。' }; render(); break; }
+        startSession(P.buildPracticeSetSession(state, LEVELS[lvS], view.params[lvS + 'Range'] || 'all', t.app)); break;
       case 'add-word-set': addWordSet(); break;
       case 'add-word-del': addWordDel(); break;
       case 'lv1-start':
