@@ -351,9 +351,12 @@ async function answerChoice(page, q, correct) {
   await page.click('[data-act="history-unit"][data-unit="infinitive"]');
   const hist = await page.locator('.history-log').innerText();
   ok('履歴・復習（不定詞）に Lv2練習の回答が並ぶ', hist.includes('Lv2練習'));
-  // Lv1 はそのまま
+  // Lv1：初回の Lv1 はホームの課題（単元タブの「Lv1をもう一度」は初回の Lv1 を終えてから出る）
   await page.click('[data-go="units"]');
-  ok('Lv1を練習する（8問）はそのまま', (await page.locator('[data-act="lv1-start"]').innerText()).includes('8問'));
+  ok('初回の Lv1 の前は、単元タブに「Lv1をもう一度」を出さない', (await page.locator('[data-act="lv1-start"]').count()) === 0);
+  await page.click('[data-go="home"]');
+  ok('ホームの課題は「不定詞 Lv1（8問）」のまま', (await page.locator('.hero-title').innerText()) === '不定詞 Lv1' && (await page.locator('.hero-size').innerText()).includes('8問'));
+  await page.click('[data-go="units"]');
 
   await page.screenshot({ path: path.join(__dirname, 'out', 'lv2-units.png') }).catch(() => {});
   await ctx.close();

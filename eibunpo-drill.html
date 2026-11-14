@@ -3399,7 +3399,7 @@ details.panel > p { margin-top: 8px; }
 
     var evidence = [];
     if (counted.length) {
-      evidence.push('回答 ' + counted.length + '回（初回診断 ' + c.diagnostic + '・解き直し ' + c.retry + '・類題 ' + c.similar +
+      evidence.push('回答 ' + counted.length + '回（Lv1・初回 ' + c.diagnostic + '・解き直し ' + c.retry + '・類題 ' + c.similar +
         '・確認問題 ' + c.followup + '・復習 ' + c.review + '）');
       evidence.push('自力で安定して正解：' + n.solid + '回（異なる問題 ' + distinct + '問）');
       if (n.unsure) evidence.push('自力で正解・自信なし：' + n.unsure + '回');
@@ -4158,7 +4158,7 @@ details.panel > p { margin-top: 8px; }
     var u = unitState(state, bank.unit.id);
     var s = state.activeSession;
     if (s) {
-      var label = practiceSetLabel(s.practiceSet) || { diagnostic: '初回診断', practice: '類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習' }[s.type];
+      var label = practiceSetLabel(s.practiceSet) || { diagnostic: '不定詞 Lv1', practice: '類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習' }[s.type];
       var cur = s.current && s.current.index === s.index ? s.current : null;
       var where = !cur ? '' : cur.phase === 'reason' ? '（意味の問いの回答前）' : cur.phase === 'feedback' ? '（解説の表示中）' : '（回答の途中）';
       // 期限を迎えた復習（いま再開する学習回がその復習なら、その項目は数えない）
@@ -4174,17 +4174,18 @@ details.panel > p { margin-top: 8px; }
       };
     }
     if (!u.diagnosticDoneAt) {
-      // ホームでは「何を・何分・どこを押す」だけを示す。説明は「初回診断とは？」を押したときだけ開く
+      // 初回の学習＝不定詞 Lv1 の8問（内部の記録上の種類は以前どおり diagnostic）。説明は「Lv1とは？」を押したときだけ開く
       var n = activeQuestions(bank).filter(function (q) { return q.role === 'diagnostic'; }).length;
       return {
-        kind: 'diagnostic', title: '不定詞の初回診断',
+        kind: 'diagnostic', title: '不定詞 Lv1',
         detail: n + '問', detailKind: 'size',
         why: '',
-        help: { label: '初回診断とは？', text: '答えるたびに正誤と解説を表示します。答えに応じて、次に取り組む類題が決まります。' },
-        cta: '診断をはじめる'
+        help: { label: 'Lv1とは？', text: '最初に取り組む8問です。答えるたびに正誤と解説を表示し、間違えたときは同じ形の別の問題ですぐに解き直します。結果は項目ごとの確認状況と復習予定に反映されます。' },
+        cta: 'Lv1をはじめる'
       };
     }
-    if (!u.practiceDoneAt && !u.practiceSkippedAt) {
+    // 以前の「類題」の段階は、Lv1 の中の解き直しに置き換えたのでなくした（Lv1 のあとは後日の復習へ進む）
+    if (false) {
       var anyFlag = state.attempts.some(function (a) { return a.sessionId === u.diagnosticSessionId && needsFollowUp(a) && !EA.mastery.isExcluded(a, bank); });
       // 量の目安：これから始める「類題」の中身（buildPracticeSession と同じ）
       var pItems = buildPracticeSession(state, bank, now).items;
@@ -4477,7 +4478,9 @@ details.panel > p { margin-top: 8px; }
       result: g.result, feedback: g.feedback,
       confidence: cur.unsure ? 'unsure' : 'none',          // 押さなかった場合は「申告なし」（自信ありとは扱わない）
       hintUsed: !!cur.hintUsed, gaveUp: !!gaveUp,
-      afterExplanation: it.attemptType === 'retry' || !!s.explained[qq.skill],
+      // 不定詞 Lv1（初回）は、8問を1問ずつ自力の回答として数える（同じ回でほかの問題の解説を見ていても「解説後」にしない）。
+      // 間違えたあとの解き直し（別の問題）は「解説後」として数える
+      afterExplanation: it.attemptType === 'retry' || (s.type === 'diagnostic' ? !!it.retryOf : !!s.explained[qq.skill]),
       // 答える前にこの英文の日本語訳を見ていたか（日本語が問題文の形式・解き直し）
       translationShown: qq.format === 'ja2en' || qq.format === 'order' || qq.format === 'judge' || !!qq.jaShown || (qq.format === 'fill' && qq.showJa !== 'after') || it.attemptType === 'retry',
       choiceOrder: cur.choiceOrder || null,
@@ -4581,13 +4584,15 @@ details.panel > p { margin-top: 8px; }
       return;
     }
     var fq = shuffle(cands).sort(function (x, y) { return (last[x.id] || 0) - (last[y.id] || 0); })[0];
-    s.items.splice(s.index + 1, 0, { kind: 'question', questionId: fq.id, attemptType: 'self', retryOf: a.questionId });
+    // Lv1（初回）の解き直しは「類題（解説後）」として記録し、確認状況・復習予定の根拠にする。自分で始めた練習では self のまま
+    s.items.splice(s.index + 1, 0, { kind: 'question', questionId: fq.id, attemptType: s.type === 'diagnostic' ? 'similar' : 'self', retryOf: a.questionId });
     a.followUp = { added: fq.id, trigger: 'error', kind: 'retry' };
   }
 
   function planFollowUp(state, bank, s, a) {
     if (s.noRetry) return; // 解き直しを追加しない練習（不定詞 Lv2）
     if (s.practiceSet && a.attemptType === 'self') return planSetRetry(state, bank, s, a);
+    if (s.type === 'diagnostic') return planSetRetry(state, bank, s, a); // 不定詞 Lv1（初回）：間違えたら同じ型の別の問題ですぐ解き直す
     if (['similar', 'review', 'followup'].indexOf(a.attemptType) < 0) return;
     var wrong = G.isSkillWrong(a.result);
     var meaningNg = !!(a.reason && a.reason.correct === false);
@@ -4927,8 +4932,8 @@ details.panel > p { margin-top: 8px; }
   var teacherUnlocked = false, teacherForm = null, teacherMsg = '', pinLockTimer = null;
   var TAP_GUARD_MS = 250;
 
-  var TYPE_LABEL = { diagnostic: '初回診断', retry: '解き直し', similar: '類題', followup: '確認問題', review: '復習', trial: '試作', self: 'もう一度練習' };
-  var SESSION_LABEL = { diagnostic: '初回診断', practice: '類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習' };
+  var TYPE_LABEL = { diagnostic: 'Lv1（初回）', retry: '解き直し', similar: '類題', followup: '確認問題', review: '復習', trial: '試作', self: 'もう一度練習' };
+  var SESSION_LABEL = { diagnostic: '不定詞 Lv1', practice: '類題', review: '復習', trial: '試作：英文の構造', self: 'もう一度練習' };
   var FORMAT_LABEL = { fill: '空所補充', order: '並び替え', ja2en: '日本語→英語', meaning: '意味の確認' };
   var LV1 = EA.banks.infinitive; // 不定詞 Lv1 の8問は、不定詞（基本）の問題集の set: 'lv1'
   var LV2 = EA.banks['infinitive-lv2']; // 不定詞 Lv2 は別の問題集（範囲を選んで練習する。親の単元は不定詞）
@@ -4936,7 +4941,7 @@ details.panel > p { margin-top: 8px; }
   /** 問題の形式名（問題ごとに formatLabel があればそれ。用法の分類名は出さない） */
   function fmtLabel(qq) { return (qq && (qq.formatLabel || FORMAT_LABEL[qq.format])) || ''; }
   /** 回答の種類の表示名（決まった問題の練習は、その名前） */
-  function typeLabelOf(a) { return SET_SHORT[a.practiceSet] ? SET_SHORT[a.practiceSet] + (a.retryOf ? '・解き直し' : '') : (TYPE_LABEL[a.attemptType] || a.attemptType); }
+  function typeLabelOf(a) { if (a.sessionType === 'diagnostic' && a.retryOf) return 'Lv1・解き直し'; return SET_SHORT[a.practiceSet] ? SET_SHORT[a.practiceSet] + (a.retryOf ? '・解き直し' : '') : (TYPE_LABEL[a.attemptType] || a.attemptType); }
   /** 学習回の表示名（決まった問題の練習は、その名前） */
   function sessionLabelOf(s) { return P.practiceSetLabel(s.practiceSet) || SESSION_LABEL[s.type]; }
   var plain = U.plain, rich = U.rich;
@@ -5199,11 +5204,10 @@ details.panel > p { margin-top: 8px; }
     var u = P.unitState(state, BANK.unit.id);
     var s = state.activeSession;
     var reviewed = (state.sessions || []).some(function (x) { return x.type === 'review'; });
-    var cur = { diagnostic: 0, practice: 1, review: 2 }[task.kind];
-    if (task.kind === 'resume') { cur = s ? { diagnostic: 0, practice: 1, review: 2 }[s.type] : -1; if (cur === undefined) cur = -1; }
+    var cur = { diagnostic: 0, review: 1 }[task.kind];
+    if (task.kind === 'resume') { cur = s ? { diagnostic: 0, review: 1 }[s.type] : -1; if (cur === undefined) cur = -1; }
     var steps = [
-      { label: '初回診断', done: !!u.diagnosticDoneAt },
-      { label: '類題', done: !!u.practiceDoneAt, skipped: !u.practiceDoneAt && !!u.practiceSkippedAt },
+      { label: '不定詞 Lv1', done: !!u.diagnosticDoneAt },
       { label: '後日の復習', done: reviewed }
     ];
     return { steps: steps, cur: cur, done: steps.filter(function (x) { return x.done; }).length };
@@ -5213,7 +5217,7 @@ details.panel > p { margin-top: 8px; }
    *   いまここ … 番号＋太字＋「いまここ」／ 済み … ✓＋「済み」／ 見送り … －（破線の丸）＋「見送り」／ まだ … 番号＋「まだ」
    */
   function unitPath(us) {
-    return '<ol class="path" aria-label="この単元の流れ">' + us.steps.map(function (st, i) {
+    return '<ol class="path" aria-label="この単元の流れ" style="grid-template-columns: repeat(' + us.steps.length + ', minmax(0, 1fr))">' + us.steps.map(function (st, i) {
       var now_ = i === us.cur;
       var kind = now_ ? 'now' : st.done ? 'done' : st.skipped ? 'skipped' : 'todo';
       var label = { now: 'いまここ', done: '済み', skipped: '見送り', todo: 'まだ' }[kind];
@@ -5262,7 +5266,7 @@ details.panel > p { margin-top: 8px; }
       reviewFact = ''; // 「続きから再開」の下の案内（期限を迎えた復習が◯件）と重ねない
     } else if (due.length) {
       reviewFact = '<div class="dash-fact is-due">' + icon('calendar') + '<span>次の復習<strong class="fact-date">今日</strong><span class="fact-sub">' + due.length + '件</span></span>' +
-        (task.kind === 'review' ? '' : '<span class="fact-note">類題のあとに始められます</span>') + '</div>';
+        (task.kind === 'review' ? '' : '<span class="fact-note">いまの学習のあとに始められます</span>') + '</div>';
     } else if (next) {
       reviewFact = '<p class="dash-fact">' + icon('calendar') + '<span>次の復習<strong class="fact-date">' + esc(monthDay(next)) + '</strong></span></p>';
     }
@@ -5323,22 +5327,22 @@ details.panel > p { margin-top: 8px; }
   function renderUnits() {
     var u = P.unitState(state, BANK.unit.id);
     var steps = [
-      ['初回診断', !!u.diagnosticDoneAt],
-      ['類題', !!u.practiceDoneAt],
+      ['不定詞 Lv1', !!u.diagnosticDoneAt],
       ['1回目の復習', state.sessions.some(function (s) { return s.type === 'review'; })]
     ];
-    var canSelf = !!u.diagnosticDoneAt; // 初回の学習（初回診断）を終えた単元だけ
+    var canSelf = !!u.diagnosticDoneAt; // 初回の学習（不定詞 Lv1）を終えた単元だけ
     var selfOpen = canSelf && !!view.params.selfOpen;
     var lv2Open = !!LV2 && !!view.params.lv2Open; // Lv2 は初回診断の前でも開ける
     return '<h1 class="page-title">単元</h1>' +
       '<section class="panel unit-card"><div class="unit-head"><div><p class="eyebrow">利用できます</p><h2>' + esc(BANK.unit.title) + '</h2>' +
       '<p>' + esc(BANK.unit.description) + '</p></div>' +
       '<div class="unit-btns"><button type="button" class="btn-primary" data-go="home">ホームの課題へ</button>' +
-      (LV1 ? '<button type="button" class="btn-quiet" data-act="lv1-start"' + (state.activeSession ? ' disabled aria-describedby="lv1-busy"' : '') + '>' + icon('play') + 'Lv1を練習する（' + lv1Count() + '問）</button>' : '') +
+      // 初回の Lv1 はホームの課題。終えたあとは、確認状況・復習予定に反映しない「Lv1をもう一度」として出す
+      (LV1 && canSelf ? '<button type="button" class="btn-quiet" data-act="lv1-start"' + (state.activeSession ? ' disabled aria-describedby="lv1-busy"' : '') + '>' + icon('repeat') + 'Lv1をもう一度（' + lv1Count() + '問）</button>' : '') +
       (LV2 ? '<button type="button" class="btn-quiet" data-act="lv2-open" aria-expanded="' + lv2Open + '" aria-controls="lv2-practice">' + icon('play') + 'Lv2を練習する</button>' : '') +
       (canSelf ? '<button type="button" class="btn-quiet" data-act="self-open" aria-expanded="' + selfOpen + '" aria-controls="self-practice">' + icon('repeat') + 'もう一度練習する</button>' : '') +
       '</div></div>' +
-      (LV1 && state.activeSession ? '<div class="lv1-busy" id="lv1-busy"><p class="unit-scope">途中の学習が保存されているため、Lv1の練習はいま始められません（途中の学習を上書きしないため）。続きを最後まで進めてから始めてください。</p>' +
+      (LV1 && canSelf && state.activeSession ? '<div class="lv1-busy" id="lv1-busy"><p class="unit-scope">途中の学習が保存されているため、Lv1の練習はいま始められません（途中の学習を上書きしないため）。続きを最後まで進めてから始めてください。</p>' +
         '<div class="actions-inline"><button type="button" class="btn-primary" data-act="task-resume">途中の学習を再開</button></div></div>' : '') +
       (lv2Open ? lv2PracticeHtml() : '') +
       (selfOpen ? selfPracticeHtml(BANK) : '') +
@@ -5470,8 +5474,9 @@ details.panel > p { margin-top: 8px; }
       // Lv2 は回答前に学習項目名（範囲）を出さない（範囲は単元タブと学習結果で確かめる）
       self: item.retryOf ? '間違えた問題と同じ形式・同じ用法の、別の問題です。' : s.practiceSet === 'lv2' ? '自分で始めた練習です。確認状況・復習予定には反映しません。' : '自分で始めた練習です（範囲：' + (s.rangeLabel || '全範囲') + '）。確認状況・復習予定には反映しません。'
     }[item.attemptType] || '';
+    if (item.retryOf) typeNote = '間違えた問題と同じ形式・同じ用法の、別の問題です。';
     // 確認問題は、問題画面の見出しでは「類題」と短く示す（記録・履歴の種類は「確認問題」のまま）
-    var typeLabel = SET_SHORT[s.practiceSet] ? SET_SHORT[s.practiceSet] + (item.retryOf ? '・解き直し' : '') : item.attemptType === 'followup' ? '類題' : TYPE_LABEL[item.attemptType];
+    var typeLabel = s.type === 'diagnostic' ? (item.retryOf ? 'Lv1・解き直し' : 'Lv1') : SET_SHORT[s.practiceSet] ? SET_SHORT[s.practiceSet] + (item.retryOf ? '・解き直し' : '') : item.attemptType === 'followup' ? '類題' : TYPE_LABEL[item.attemptType];
 
     // 初回診断の1問目を初めて開いたときだけ、結果と解説がいつ出るかを短く案内する（そのまま答えられる位置）。
     // 診断を始めた直後だけ firstNoteFor が立つ。途中から再開したとき・再読み込みしたとき・2問目以降では出さない
@@ -5914,22 +5919,23 @@ details.panel > p { margin-top: 8px; }
     var atts = rec.attemptIds.map(attemptById).filter(function (a) { return a && q(a.questionId); }); // 削除した問題の回答は出さない
     var solid = atts.filter(M.isSolid).length;
     var flagged = atts.filter(P.needsFollowUp).length;
-    var h = '<p class="eyebrow">初回診断の結果</p><h1 class="page-title">' + atts.length + '問中、ヒントなし・自信がないの申告なしで正解 ' + solid + '問</h1>' +
-      '<p class="lead">この' + atts.length + '問だけで不定詞全体の理解は判断できません。気になる回答があった問題は、別の問題（類題）で確かめます。</p>';
-    h += '<ol class="result-list">' + atts.map(function (a, i) {
+    var main = atts.filter(function (a) { return !a.retryOf; }), re = atts.filter(function (a) { return a.retryOf; });
+    solid = main.filter(M.isSolid).length;
+    var reOk = re.filter(function (a) { return G.isSkillCorrect(a.result); }).length;
+    var nextAt = P.nextReviewDate(state, BANK);
+    var h = '<p class="eyebrow">不定詞 Lv1の結果</p><h1 class="page-title">' + main.length + '問中、ヒントなし・自信がないの申告なしで正解 ' + solid + '問</h1>' +
+      '<p class="lead">' + (re.length ? '解き直し ' + re.length + '問中 ' + reOk + '問正解。' : '') +
+      'この結果をもとに、項目ごとの確認状況と復習予定を決めました。' + (nextAt ? '次の復習は ' + U.fmtDate(nextAt) + '（' + U.relDay(nextAt, now()) + '）です。' : '') + '</p>';
+    var no = 0;
+    h += '<ol class="result-list">' + atts.map(function (a) {
       var qq = q(a.questionId);
-      return '<li class="result-row"><div class="result-main"><span class="result-no">' + (i + 1) + '</span>' +
-        '<div class="result-body"><p class="result-q">' + esc(qq.ja || qq.question) + '<span class="result-format">' + esc(fmtLabel(qq)) + '</span></p>' +
+      return '<li class="result-row"><div class="result-main"><span class="result-no">' + (a.retryOf ? '↳' : ++no) + '</span>' +
+        '<div class="result-body"><p class="result-q">' + esc(promptTextOf(qq)) + '<span class="result-format">' + esc((a.retryOf ? '解き直し・' : '') + fmtLabel(qq)) + '</span></p>' +
         '<p class="result-ans" lang="en">' + (a.responseText ? esc(a.responseText) : '（わからない）') + '</p>' +
         '<div class="result-tags">' + resultBadge(a.result) + flagsHtml(a) + '</div></div></div>' +
         '<details class="result-detail"><summary>解説を見る</summary>' + (a.feedback ? '<p class="feedback-note">' + esc(a.feedback) + '</p>' : '') + explanationHtml(qq) + '</details></li>';
     }).join('') + '</ol>';
-    h += '<div class="actions actions-split">' +
-      '<button type="button" class="btn-primary btn-lg" data-act="task-practice">' + (flagged ? '類題へ（' + flagged + '問）' : '別の問題でも確かめる（3問・任意）') + '</button>' +
-      // 診断はもう終わっているので、ここは記録を変えずにホームへ戻るだけ
-      '<button type="button" class="btn-quiet" data-act="skip-practice-later">ホームへ戻る（類題はあとで）</button>' +
-      (flagged ? '' : '<button type="button" class="btn-quiet" data-act="skip-practice">確認問題はとばす</button>') +
-      '</div>';
+    h += '<div class="actions actions-split"><button type="button" class="btn-primary btn-lg" data-go="home">ホームへ</button></div>';
     return h;
   }
 
@@ -6001,8 +6007,7 @@ details.panel > p { margin-top: 8px; }
     var next = P.nextReviewDate(state, bank);
     if (due.length) {
       if (state.activeSession) return { kind: 'blocked', why: '途中の学習を最後まで進めると始められます。', resume: true };
-      if (!u.diagnosticDoneAt) return { kind: 'blocked', why: '初回診断のあとに始められます。' };
-      if (!u.practiceDoneAt && !u.practiceSkippedAt) return { kind: 'blocked', why: '類題のあとに始められます。' };
+      if (!u.diagnosticDoneAt) return { kind: 'blocked', why: '不定詞 Lv1 のあとに始められます。' };
       var count = P.buildReviewSession(state, bank, t).items.length;
       if (count) return { kind: 'ready', count: count };
     }
@@ -6700,7 +6705,7 @@ details.panel > p { margin-top: 8px; }
     if (s.items.every(ok)) return '';
     if (s.type === 'diagnostic') {
       state.activeSession = null;
-      return '初回診断の問題が新しくなったため、途中だった初回診断は最初からになります（これまでの回答は履歴に残っています）。';
+      return '以前の初回診断は「不定詞 Lv1」に置き換わったため、途中だった初回診断は最初からになります（これまでの回答は履歴に残っています）。';
     }
     var curOk = ok(s.items[s.index]);
     var before = s.items.slice(0, s.index).filter(ok).length;
