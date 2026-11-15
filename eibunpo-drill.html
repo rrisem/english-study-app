@@ -823,7 +823,7 @@ details.panel > p { margin-top: 8px; }
 .reread-box p { margin: 0; }
 /* 根拠をタップ（試験導入）：英文の区切りは答える前から同じ形で置き、タップ待ちのときだけ点線で示す（英文の位置・折り返しは変えない） */
 .ev-seg { border-radius: 4px; padding: 0.3em 0; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
-.ev-tap .ev-seg { cursor: pointer; background: var(--surface); outline: 1.5px solid var(--accent-2); outline-offset: 0; -webkit-tap-highlight-color: transparent; }
+.ev-tap .ev-seg { cursor: pointer; background: var(--surface); outline: 1.5px solid var(--accent-2); -webkit-tap-highlight-color: transparent; }
 .ev-tap .ev-seg:active, .ev-tap .ev-seg:focus-visible { background: var(--accent-soft); outline: 3px solid var(--accent); }
 .ev-seg.is-evidence { background: var(--marker); color: var(--marker-ink); font-weight: 700; padding-left: 2px; padding-right: 2px; }
 .ev-seg.is-tapped:not(.is-evidence) { outline: 2px dotted var(--ng); outline-offset: 1px; }
@@ -3556,14 +3556,7 @@ details.panel > p { margin-top: 8px; }
     });
     return { choices: out, answer: ans };
   }
-  /**
-   * 根拠をタップ（試験導入）：英文を区切り（segs）に分け、segs をスペースでつないだものが英文と一致すること。
-   * answer … 根拠の区切りの番号 ／ prompt … 読み違えたときの指示 ／ why … 正解したときの理由（一言）
-   */
-  function evidence(en, ev) {
-    if (ev.segs.join(' ') !== en) throw new Error('evidence segs do not match: ' + en);
-    return ev;
-  }
+
   /** 短文1問 */
   function R(id, skill, use, d) {
     var c = choices(d.c);
@@ -3572,7 +3565,7 @@ details.panel > p { margin-top: 8px; }
       checks: d.checks || '初見の英文で、to＋動詞 の働きを手がかりに内容を読み取れるか',
       sentence: d.en, question: d.q, choices: c.choices, answer: c.answer,
       gloss: d.g, hint: '単語の意味',
-      evidence: d.ev ? evidence(d.en, d.ev) : undefined,
+      evidence: d.ev, // 根拠をタップ（試験導入）
       explanation: { answer: d.en, translation: d.ja, point: d.p, term: TERM[skill] } };
   }
   /** まとめ復習の英文1本（設問2つ。設問ごとに確かめる文法項目を持つ） */
@@ -3647,6 +3640,7 @@ details.panel > p { margin-top: 8px; }
 
     /* ===== 〜するために（副詞的用法・目的） ===== */
     // 学習当日の短文（2文）。根拠をタップを試験導入（ev）。根拠タップは答え合わせ中の練習で、定着の回数には数えない
+    //   ev.segs … 英文の区切り（スペースでつなぐと英文と同じになるように）／ answer … 根拠の区切りの番号 ／ why … 正解したときの理由
     R('rd-v-sd', 'inf-adv', 'sameDay', { en: 'Mika needed a photo of the old school gate for her report. After school, she went back to the classroom to ask her teacher for help.',
       ja: 'ミカはレポートのために、古い校門の写真が必要だった。放課後、彼女は先生に手伝いを頼むために教室へ戻った。',
       g: [['photo', '写真'], ['gate', '門'], ['report', 'レポート'], ['went back', '戻った（go back の過去形）'], ['ask A for help', 'A に手伝いを頼む']],
@@ -5338,7 +5332,7 @@ details.panel > p { margin-top: 8px; }
     // 根拠をタップ（試験導入）：選んだ答えが違ったとき、正答は見せずに本文の根拠を1回タップしてもらう（「解説を見る」で飛ばせる）。
     // 単語の意味を見ての答え直しの代わりに出す
     var ev = qq.evidence && !a.gaveUp && it.attemptType !== 'reread' && it.readingPurpose !== 'basic';
-    if (ev) s.current.evidenceHold = { tapped: null, recordId: null };
+    if (ev) s.current.evidenceHold = { tapped: null };
     if (!a.gaveUp && !a.hintUsed && it.attemptType !== 'reread' && it.readingPurpose !== 'basic') { if (!ev) s.current.readingHold = true; return; }
     if (a.gaveUp && it.attemptType !== 'reread' && it.readingPurpose !== 'basic') { EA.reading.unclear(state, a); return; }
     if ((a.hintUsed || it.attemptType === 'reread') && it.readingPurpose !== 'basic' && !s.basicAdded) {
@@ -5360,13 +5354,12 @@ details.panel > p { margin-top: 8px; }
    * 答え合わせ中の練習なので、短文読解の定着・復習予定・確認状況には反映しない。
    */
   function evidenceRecord(state, a, qq, s, t, seg) {
-    if (!state.reading) state.reading = { skills: {}, daily: null };
     if (!state.reading.evidence) state.reading.evidence = [];
     var chosen = null;
     (qq.choices || []).forEach(function (c) { if (c.id === a.response) chosen = c; });
     var ev = qq.evidence, skipped = seg == null;
     var rec = {
-      id: EA.util.uid('ev'), kind: 'evidence-tap', practice: true, counted: false,
+      id: EA.util.uid('ev'), practice: true,
       attemptId: a.id, questionId: qq.id, questionVersion: qq.version, skillId: qq.skill, sessionId: s.id,
       readingPurpose: a.readingPurpose || null,
       firstChoice: a.response, firstChoiceText: chosen ? chosen.text : null, mixSeg: chosen && chosen.mix ? chosen.mix.seg : null,
@@ -5387,7 +5380,7 @@ details.panel > p { margin-top: 8px; }
     seg = Number(seg);
     if (!qq || !qq.evidence || !(seg >= 0 && seg < qq.evidence.segs.length)) return null;
     var rec = evidenceRecord(state, a, qq, s, t, seg);
-    h.tapped = seg; h.recordId = rec.id;
+    h.tapped = seg;
     return rec;
   }
   /** 根拠をタップから答え合わせ（正誤・解説）へ。タップせずに進んだときは「飛ばした」として記録する */
@@ -5396,8 +5389,8 @@ details.panel > p { margin-top: 8px; }
     if (!s || !s.current || !s.current.evidenceHold) return null;
     var h = s.current.evidenceHold;
     var a = attemptById(state, s.current.attemptId), qq = q(bank, a.questionId);
-    if (h.tapped == null && qq) h.recordId = evidenceRecord(state, a, qq, s, t, null).id;
-    s.current.evidenceDone = { tapped: h.tapped, recordId: h.recordId };
+    if (h.tapped == null && qq) evidenceRecord(state, a, qq, s, t, null);
+    s.current.evidenceDone = { tapped: h.tapped };
     s.current.evidenceHold = null;
     // 単語の意味を見ずに解説へ進む（これまでの「答えと解説を見る」と同じ扱い）→ 次は基本語の短文
     if (!a.hintUsed) EA.reading.unclear(state, a);
@@ -7111,7 +7104,7 @@ details.panel > p { margin-top: 8px; }
   function evidencePassageHtml(qq, ev) {
     ev = ev || {};
     var E = qq.evidence, tap = ev.mode === 'tap', show = ev.mode === 'show';
-    return '<p class="q-passage' + (tap ? ' ev-tap' : '') + '" lang="en"' + (tap ? ' id="ev-passage" aria-describedby="ev-prompt"' : '') + '>' + E.segs.map(function (t, i) {
+    return '<p class="q-passage' + (tap ? ' ev-tap' : '') + '" lang="en"' + (tap ? ' aria-describedby="ev-prompt"' : '') + '>' + E.segs.map(function (t, i) {
       var cls = 'ev-seg' + (show && i === E.answer ? ' is-evidence' : '') + (ev.tapped === i ? ' is-tapped' : '');
       if (tap) return '<span class="' + cls + '" role="button" tabindex="0" data-act="ev-tap" data-seg="' + i + '">' + esc(t) + '</span>';
       return '<span class="' + cls + '">' + (show && i === E.answer ? '<span class="sr">（根拠）</span>' : '') + esc(t) + '</span>';
