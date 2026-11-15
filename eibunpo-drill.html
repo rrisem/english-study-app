@@ -821,6 +821,21 @@ details.panel > p { margin-top: 8px; }
 .gloss-list dd { margin: 0; }
 .reread-box { display: grid; gap: 10px; padding: 14px 16px; border: 2px solid var(--accent); border-radius: var(--r-s); }
 .reread-box p { margin: 0; }
+/* 根拠をタップ（試験導入）：英文の区切りは答える前から同じ形で置き、タップ待ちのときだけ点線で示す（英文の位置・折り返しは変えない） */
+.ev-seg { border-radius: 4px; padding: 0.3em 0; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.ev-tap .ev-seg { cursor: pointer; background: var(--surface); outline: 1.5px solid var(--accent-2); outline-offset: 0; -webkit-tap-highlight-color: transparent; }
+.ev-tap .ev-seg:active, .ev-tap .ev-seg:focus-visible { background: var(--accent-soft); outline: 3px solid var(--accent); }
+.ev-seg.is-evidence { background: var(--marker); color: var(--marker-ink); font-weight: 700; padding-left: 2px; padding-right: 2px; }
+.ev-seg.is-tapped:not(.is-evidence) { outline: 2px dotted var(--ng); outline-offset: 1px; }
+.ev-box { display: grid; gap: 10px; padding: 14px 16px; border: 2px solid var(--accent); border-radius: var(--r-s); }
+.ev-box p { margin: 0; }
+.ev-box .ev-prompt { font-weight: 700; font-size: var(--fs-m); }
+.ev-box .ev-note { color: var(--muted); font-size: var(--fs-xs); }
+.ev-box .ev-tapres { font-weight: 700; }
+.ev-mine { margin: 0; font-size: var(--fs-s); }
+.ev-mine .label { color: var(--ng); font-weight: 700; margin-right: 6px; }
+.ev-why { margin: 0; padding: 10px 14px; border-radius: var(--r-s); background: var(--ok-soft); }
+.ev-why strong { color: var(--ok); }
 .reading-note p { margin: 0; }
 .reading-note p + p { margin-top: 6px; }
 .reading-note .icon { color: var(--accent); }
@@ -3535,9 +3550,19 @@ details.panel > p { margin-top: 8px; }
     var out = list.map(function (c, i) {
       var id = 'abc'.charAt(i);
       if (c[1] == null) { ans = id; return { id: id, text: c[0] }; }
-      return { id: id, text: c[0], feedback: c[1] };
+      var o = { id: id, text: c[0], feedback: c[1] };
+      if (c[2]) o.mix = c[2]; // 根拠をタップ：この誤答が本文のどの情報（区切りの番号）と混ざったか、その一言
+      return o;
     });
     return { choices: out, answer: ans };
+  }
+  /**
+   * 根拠をタップ（試験導入）：英文を区切り（segs）に分け、segs をスペースでつないだものが英文と一致すること。
+   * answer … 根拠の区切りの番号 ／ prompt … 読み違えたときの指示 ／ why … 正解したときの理由（一言）
+   */
+  function evidence(en, ev) {
+    if (ev.segs.join(' ') !== en) throw new Error('evidence segs do not match: ' + en);
+    return ev;
   }
   /** 短文1問 */
   function R(id, skill, use, d) {
@@ -3547,6 +3572,7 @@ details.panel > p { margin-top: 8px; }
       checks: d.checks || '初見の英文で、to＋動詞 の働きを手がかりに内容を読み取れるか',
       sentence: d.en, question: d.q, choices: c.choices, answer: c.answer,
       gloss: d.g, hint: '単語の意味',
+      evidence: d.ev ? evidence(d.en, d.ev) : undefined,
       explanation: { answer: d.en, translation: d.ja, point: d.p, term: TERM[skill] } };
   }
   /** まとめ復習の英文1本（設問2つ。設問ごとに確かめる文法項目を持つ） */
@@ -3620,10 +3646,20 @@ details.panel > p { margin-top: 8px; }
       p: 'to write with が a pen を後ろから説明する（それを使って書くペン）。' }),
 
     /* ===== 〜するために（副詞的用法・目的） ===== */
-    R('rd-v-sd', 'inf-adv', 'sameDay', { en: 'Naoki went to the library early to find a quiet seat.', ja: 'ナオキは静かな席を見つけるために、早く図書館へ行った。',
-      g: [['library', '図書館'], ['quiet', '静かな'], ['seat', '席']], q: 'ナオキが早く図書館へ行ったのはなぜですか？',
-      c: [['早く行ったので、静かな席が見つかったから', 'to find は目的（見つけるために）です。見つかったという結果は書かれていません。'], ['静かな席を見つけるため', null], ['静かな席の見つけ方を知るため', '「知る」にあたる語はありません。']],
-      p: 'to find a quiet seat が、早く行った目的を表す。見つかったかどうかは分からない。' }),
+    // 学習当日の短文（2文）。根拠をタップを試験導入（ev）。根拠タップは答え合わせ中の練習で、定着の回数には数えない
+    R('rd-v-sd', 'inf-adv', 'sameDay', { en: 'Mika needed a photo of the old school gate for her report. After school, she went back to the classroom to ask her teacher for help.',
+      ja: 'ミカはレポートのために、古い校門の写真が必要だった。放課後、彼女は先生に手伝いを頼むために教室へ戻った。',
+      g: [['photo', '写真'], ['gate', '門'], ['report', 'レポート'], ['went back', '戻った（go back の過去形）'], ['ask A for help', 'A に手伝いを頼む']],
+      q: 'ミカが放課後に教室へ戻ったのはなぜですか？',
+      c: [['古い校門の写真を撮るため', '写真が必要だったことは1文目の背景です。教室へ戻った目的は to ask her teacher for help です。',
+            { seg: 1, text: '写真が必要だったのは背景です。教室へ戻った目的は、went back に続く to ask her teacher for help に書かれています。' }],
+          ['先生に手伝いを頼むため', null],
+          ['先生が手伝ってくれたから', 'to ask … for help は「手伝いを頼むために」という目的です。手伝ってもらえたかどうかは書かれていません。',
+            { seg: 5, text: '「手伝ってくれた」という結果は書かれていません。教室へ戻った目的は、went back に続く to ask her teacher for help（手伝いを頼むために）に書かれています。' }]],
+      p: 'went back to the classroom に続く to ask her teacher for help が、教室へ戻った目的を表す。1文目（写真が必要だった）は背景で、手伝ってもらえたかどうかは書かれていない。',
+      ev: { segs: ['Mika needed', 'a photo of the old school gate', 'for her report.', 'After school,', 'she went back to the classroom', 'to ask her teacher for help.'],
+        answer: 5, prompt: '教室に戻った目的が書かれている部分をタップ',
+        why: 'went back に続く to ask her teacher for help が、教室へ戻った目的です。' } }),
     R('rd-v-c1', 'inf-adv', 'check', { en: 'To catch the first train, Emi left home before six.', ja: '始発電車に乗るために、エミは6時前に家を出た。',
       g: [['catch', '（電車に）間に合って乗る'], ['the first train', '始発電車'], ['left', '出た（leave の過去形）']], q: 'エミが6時前に家を出たのはなぜですか？',
       c: [['始発電車に乗るため', null], ['始発電車に乗ったあと、家に戻ったから', '文頭の To catch は目的（乗るために）で、乗ったあとのことは書かれていません。'], ['始発電車に乗る人を、家で待つため', '家を出たので、家で待ってはいません。']],
@@ -4330,7 +4366,8 @@ details.panel > p { margin-top: 8px; }
       // profile：講師に送る学習記録のコードに入れる、この記録の持ち主（studentId は端末ごとに自動でつける）
       profile: { studentId: EA.util.uid('st'), name: '' },
       // reading：短文読解の定着と復習予定（文法項目ごと。js/reading.js）
-      reading: { skills: {}, daily: null },
+      //   evidence：根拠をタップの記録（最初の回答＝attempts とは別。答え合わせ中の練習で、定着の回数には数えない）
+      reading: { skills: {}, daily: null, evidence: [] },
       attempts: [],
       schedule: {},
       units: {},
@@ -5298,7 +5335,11 @@ details.panel > p { margin-top: 8px; }
     EA.reading.apply(state, a, qq, it);
     var wrong = EA.grading.isSkillWrong(a.result);
     if (!wrong) return;
-    if (!a.gaveUp && !a.hintUsed && it.attemptType !== 'reread' && it.readingPurpose !== 'basic') { s.current.readingHold = true; return; }
+    // 根拠をタップ（試験導入）：選んだ答えが違ったとき、正答は見せずに本文の根拠を1回タップしてもらう（「解説を見る」で飛ばせる）。
+    // 単語の意味を見ての答え直しの代わりに出す
+    var ev = qq.evidence && !a.gaveUp && it.attemptType !== 'reread' && it.readingPurpose !== 'basic';
+    if (ev) s.current.evidenceHold = { tapped: null, recordId: null };
+    if (!a.gaveUp && !a.hintUsed && it.attemptType !== 'reread' && it.readingPurpose !== 'basic') { if (!ev) s.current.readingHold = true; return; }
     if (a.gaveUp && it.attemptType !== 'reread' && it.readingPurpose !== 'basic') { EA.reading.unclear(state, a); return; }
     if ((a.hintUsed || it.attemptType === 'reread') && it.readingPurpose !== 'basic' && !s.basicAdded) {
       var used = {}; s.items.forEach(function (x) { used[x.questionId] = true; });
@@ -5312,6 +5353,55 @@ details.panel > p { margin-top: 8px; }
         EA.reading.unclear(state, a);
       }
     }
+  }
+
+  /**
+   * 根拠をタップ：本文の区切り seg を1回だけ受け付け、最初の回答（attempt）とは別に state.reading.evidence に記録する。
+   * 答え合わせ中の練習なので、短文読解の定着・復習予定・確認状況には反映しない。
+   */
+  function evidenceRecord(state, a, qq, s, t, seg) {
+    if (!state.reading) state.reading = { skills: {}, daily: null };
+    if (!state.reading.evidence) state.reading.evidence = [];
+    var chosen = null;
+    (qq.choices || []).forEach(function (c) { if (c.id === a.response) chosen = c; });
+    var ev = qq.evidence, skipped = seg == null;
+    var rec = {
+      id: EA.util.uid('ev'), kind: 'evidence-tap', practice: true, counted: false,
+      attemptId: a.id, questionId: qq.id, questionVersion: qq.version, skillId: qq.skill, sessionId: s.id,
+      readingPurpose: a.readingPurpose || null,
+      firstChoice: a.response, firstChoiceText: chosen ? chosen.text : null, mixSeg: chosen && chosen.mix ? chosen.mix.seg : null,
+      skipped: skipped, tapped: skipped ? null : seg, tappedText: skipped ? null : ev.segs[seg],
+      answerSeg: ev.answer, correct: skipped ? null : seg === ev.answer,
+      at: t.app
+    };
+    if (state.mode === 'demo') rec.demo = true;
+    state.reading.evidence.push(rec);
+    return rec;
+  }
+  function tapEvidence(state, bank, seg, t) {
+    var s = state.activeSession;
+    if (!s || !s.current || s.current.phase !== 'feedback' || !s.current.evidenceHold) return null;
+    var h = s.current.evidenceHold;
+    if (h.tapped != null) return null; // 1回だけ
+    var a = attemptById(state, s.current.attemptId), qq = q(bank, a.questionId);
+    seg = Number(seg);
+    if (!qq || !qq.evidence || !(seg >= 0 && seg < qq.evidence.segs.length)) return null;
+    var rec = evidenceRecord(state, a, qq, s, t, seg);
+    h.tapped = seg; h.recordId = rec.id;
+    return rec;
+  }
+  /** 根拠をタップから答え合わせ（正誤・解説）へ。タップせずに進んだときは「飛ばした」として記録する */
+  function leaveEvidence(state, bank, t) {
+    var s = state.activeSession;
+    if (!s || !s.current || !s.current.evidenceHold) return null;
+    var h = s.current.evidenceHold;
+    var a = attemptById(state, s.current.attemptId), qq = q(bank, a.questionId);
+    if (h.tapped == null && qq) h.recordId = evidenceRecord(state, a, qq, s, t, null).id;
+    s.current.evidenceDone = { tapped: h.tapped, recordId: h.recordId };
+    s.current.evidenceHold = null;
+    // 単語の意味を見ずに解説へ進む（これまでの「答えと解説を見る」と同じ扱い）→ 次は基本語の短文
+    if (!a.hintUsed) EA.reading.unclear(state, a);
+    return a;
   }
 
   /** 短文で誤答したあと「単語の意味を見て答え直す」：同じ問いを、単語の意味を見た状態でもう一度（ヒントありとして記録） */
@@ -5392,7 +5482,7 @@ details.panel > p { margin-top: 8px; }
     var s = state.activeSession;
     if (!s) return false;
     var it = s.items[s.index];
-    var allowed = (opts && opts.internal) || (it && it.kind === 'explain') || (s.current && s.current.index === s.index && s.current.phase === 'feedback');
+    var allowed = (opts && opts.internal) || (it && it.kind === 'explain') || (s.current && s.current.index === s.index && s.current.phase === 'feedback' && !s.current.evidenceHold);
     if (!allowed) return false;
     s.index++;
     s.current = null;
@@ -5449,6 +5539,7 @@ details.panel > p { margin-top: 8px; }
     start: start, item: item, ensureCurrent: ensureCurrent, pause: pause, resume: resume,
     suspend: suspend, recover: recover, touch: touch, repairOrders: repairOrders,
     submit: submit, submitReason: submitReason, next: next, finish: finish, reread: reread, reveal: reveal,
+    tapEvidence: tapEvidence, leaveEvidence: leaveEvidence,
     reasonDecision: reasonDecision, attemptById: attemptById, shuffledPool: shuffledPool, orderDetail: orderDetail
   };
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -5838,7 +5929,9 @@ details.panel > p { margin-top: 8px; }
     }
     return {
       kind: 'ea-records', v: 1, exportId: EA.util.uid('x'), studentId: state.profile.studentId, name: state.profile.name || '',
-      mode: state.mode, exportedAt: now, from: from, to: now, days: opts.days || null, attempts: list.map(compact)
+      mode: state.mode, exportedAt: now, from: from, to: now, days: opts.days || null, attempts: list.map(compact),
+      // 根拠をタップ（答え合わせ中の練習。最初の回答とは別の記録）
+      evidenceTaps: ((state.reading && state.reading.evidence) || []).filter(function (e) { return !opts.days || e.at >= from; })
     };
   }
 
@@ -6447,7 +6540,7 @@ details.panel > p { margin-top: 8px; }
     }
     if (qq.format === 'meaning') {
       if (qq.reading) {
-        h += '<p class="q-passage" lang="en">' + esc(qq.sentence) + '</p><p class="q-ja q-question">' + esc(qq.question) + '</p>';
+        h += (qq.evidence ? evidencePassageHtml(qq, opts.ev) : '<p class="q-passage" lang="en">' + esc(qq.sentence) + '</p>') + '<p class="q-ja q-question">' + esc(qq.question) + '</p>';
       } else if (qq.jaShown && !qq.sentence) {
         // 正しい語順を選ぶ：日本語 → 設問（日本語の意味まで含めて選ぶ）
         h += '<p class="q-ja">' + esc(qq.ja) + '</p>';
@@ -6974,16 +7067,20 @@ details.panel > p { margin-top: 8px; }
         '<span class="helpers-note">' + (qq2.hint ? '「自信がない」「ヒントを見る」は押さなくてかまいません。押しても減点はありません（ヒントを見た場合は「ヒントあり」と記録します）。' : '「自信がない」は押さなくてかまいません。押しても減点はありません。') + '「' + giveUpLabel(s) + '」を押すと、この問題は「わからない」として記録され、正解には数えられません。' +
           '' + '</span>' +
         '</div>' +
-        '<div class="actions"><button type="button" class="btn-primary btn-lg" data-act="submit" id="submit-btn"' + (hasDraft(qq2, cur) ? '' : ' disabled') + '>回答を確定</button></div>';
+        '<div class="actions"><button type="button" class="btn-primary btn-lg" data-act="submit" id="submit-btn"' + (hasDraft(qq2, cur) ? '' : ' disabled') + '>' + (qq2.evidence ? '答えを確認' : '回答を確定') + '</button></div>';
     } else {
       var a = attemptById(cur.attemptId);
       if (cur.phase === 'reason') {
         // 意味の問いに答えるまでは、日本語訳・正答・正誤・解説を出さない。英文と、聞いている部分（太字）だけを示す
         body += reasonAskHtml(qq2, cur);
+      } else if (qq2.reading && cur.evidenceHold && qq2.evidence) {
+        body += evidenceHoldHtml(qq2, a, cur);
       } else if (qq2.reading && cur.readingHold) {
         body += readingHoldHtml(qq2, a, cur);
       } else {
-        body += questionPromptHtml(qq2, qq2.format === 'fill' ? a.response : null);
+        // 根拠をタップの問題は、答え合わせで根拠の語句を強調する（正解したときは、その場で理由を一言）
+        body += questionPromptHtml(qq2, qq2.format === 'fill' ? a.response : null, qq2.evidence ? { ev: { mode: 'show', tapped: cur.evidenceDone ? cur.evidenceDone.tapped : null } } : null);
+        if (qq2.evidence && EA.grading.isSkillCorrect(a.result) && !a.gaveUp) body += '<p class="ev-why" role="status"><strong>✓ 根拠</strong>　' + esc(qq2.evidence.why) + '</p>';
         if (qq2.reading && a.hintUsed) body += glossHtml(qq2);
         if (qq2.choices) body += resultChoicesHtml(qq2, a, cur);
         else body += '<div class="your-answer"><span class="label">あなたの答え</span><span lang="en">' + (a.responseText ? esc(a.responseText) : '（わからない）') + '</span></div>';
@@ -7005,6 +7102,39 @@ details.panel > p { margin-top: 8px; }
       }
     }
     return progress + body + '</section>';
+  }
+
+  /**
+   * 根拠をタップ（試験導入）の英文。答える前から同じ区切りで描くので、タップ待ちに変わっても英文の位置・折り返しは同じ。
+   * ev.mode … 'tap'（タップ待ち）／ 'show'（根拠を強調）／ なし（ふつうの英文）。ev.tapped … タップした区切り
+   */
+  function evidencePassageHtml(qq, ev) {
+    ev = ev || {};
+    var E = qq.evidence, tap = ev.mode === 'tap', show = ev.mode === 'show';
+    return '<p class="q-passage' + (tap ? ' ev-tap' : '') + '" lang="en"' + (tap ? ' id="ev-passage" aria-describedby="ev-prompt"' : '') + '>' + E.segs.map(function (t, i) {
+      var cls = 'ev-seg' + (show && i === E.answer ? ' is-evidence' : '') + (ev.tapped === i ? ' is-tapped' : '');
+      if (tap) return '<span class="' + cls + '" role="button" tabindex="0" data-act="ev-tap" data-seg="' + i + '">' + esc(t) + '</span>';
+      return '<span class="' + cls + '">' + (show && i === E.answer ? '<span class="sr">（根拠）</span>' : '') + esc(t) + '</span>';
+    }).join(' ') + '</p>';
+  }
+  /** 根拠をタップ：タップ待ち → 1回タップしたら根拠を強調し、最初の答えが本文のどの情報と混ざったかを一言 */
+  function evidenceHoldHtml(qq, a, cur) {
+    var h = cur.evidenceHold, E = qq.evidence, tapped = h.tapped != null;
+    var mine = null;
+    (qq.choices || []).forEach(function (c) { if (c.id === a.response) mine = c; });
+    // 選んだ答え（読み違え）だけを示す。正答はまだ見せない（指示がスマホの1画面に収まるよう、枠の中に1行で）
+    var body = questionPromptHtml(qq, null, { ev: { mode: tapped ? 'show' : 'tap', tapped: h.tapped } });
+    var mineHtml = '<p class="ev-mine"><span class="label">× あなたの答え</span>' + (mine ? rich(mine.text) : '') + '</p>';
+    if (!tapped) {
+      return body + '<div class="ev-box" role="note">' + mineHtml + '<p class="ev-prompt" id="ev-prompt">' + esc(E.prompt) + '</p>' +
+        '<p class="ev-note">上の英文で、1か所だけタップします（答え合わせ中の練習です。定着の回数には数えません）。</p>' +
+        '<div class="actions-inline"><button type="button" class="btn-quiet" data-act="ev-leave">解説を見る</button></div></div>';
+    }
+    var hit = h.tapped === E.answer;
+    return body + '<div class="ev-box" role="status">' + mineHtml + '<p class="ev-tapres">' +
+      (hit ? '○ その部分です。' : '△ タップしたのは「<span lang="en">' + esc(E.segs[h.tapped]) + '</span>」。根拠は黄色の部分です。') + '</p>' +
+      '<p>' + esc(mine && mine.mix ? mine.mix.text : E.why) + '</p>' +
+      '<div class="actions-inline"><button type="button" class="btn-primary btn-lg" data-act="ev-leave">解説を見る</button></div></div>';
   }
 
   /** 短文読解：必要な単語の意味（語注） */
@@ -8201,7 +8331,7 @@ details.panel > p { margin-top: 8px; }
     syncClock(); saveOk = true;
   }
 
-  var GUARDED = { submit: 1, giveup: 1, reason: 1, 'reason-choose': 1, next: 1 };
+  var GUARDED = { submit: 1, giveup: 1, reason: 1, 'reason-choose': 1, next: 1, 'ev-tap': 1, 'ev-leave': 1 };
 
   /* ================= 効果音（採点結果を初めて表示したときだけ。表示・採点・保存には関係しない） ================= */
   /*
@@ -8348,6 +8478,10 @@ details.panel > p { margin-top: 8px; }
       }
       case 'reading-reread': { var rr = S.reread(state, SB(), t); if (rr === false) break; tapGuardUntil = Date.now() + TAP_GUARD_MS; afterProgress(rr); break; }
       case 'reading-reveal': if (S.reveal(state)) { persist(); render(); } break;
+      case 'ev-tap': if (S.tapEvidence(state, SB(), el.getAttribute('data-seg'), t)) { tapGuardUntil = Date.now() + TAP_GUARD_MS; persist(); render(); } break;
+      case 'ev-leave':
+        if (S.leaveEvidence(state, SB(), t)) { tapGuardUntil = Date.now() + TAP_GUARD_MS; persist(); render(); try { root.scrollTo(0, 0); } catch (e) { /* 無視 */ } }
+        break;
       case 'day-open': view.params.openDay = view.params.openDay === el.getAttribute('data-day') ? null : el.getAttribute('data-day'); render();
         var dob = appEl.querySelector('[data-act="day-open"][data-day="' + el.getAttribute('data-day') + '"]'); if (dob) dob.focus({ preventScroll: true }); break;
       case 'day-back': go('history', { openDay: el.getAttribute('data-day') }); var db = appEl.querySelector('[data-act="day-open"][data-day="' + el.getAttribute('data-day') + '"]'); if (db) db.scrollIntoView({ block: 'center' }); break;
@@ -8410,7 +8544,10 @@ details.panel > p { margin-top: 8px; }
         if (!res) break; // すでに確定済み（二重確定は記録しない）
         tapGuardUntil = Date.now() + TAP_GUARD_MS;
         soundIfResultShown(res.attempt); // 意味の問いへ進むとき・初回診断では、まだ正誤を出さないので鳴らない
-        afterProgress(res.finished); break;
+        afterProgress(res.finished);
+        // 根拠をタップ：英文を上部バーのすぐ下に置き、英文とタップの指示を1画面に収める（英文の中の位置・折り返しは答える前と同じ）
+        if (!res.finished && state.activeSession && state.activeSession.current && state.activeSession.current.evidenceHold) scrollToPassage();
+        break;
       }
       case 'reason-choose': selectReason(el.getAttribute('data-choice')); break;
       case 'reason':
@@ -8474,6 +8611,14 @@ details.panel > p { margin-top: 8px; }
     }
   }
 
+  /** 短文の英文を、上部バー（固定表示）のすぐ下に来るようにスクロールする */
+  function scrollToPassage() {
+    var pg = appEl.querySelector('.q-passage');
+    if (!pg) return;
+    var bar = document.querySelector('.topbar');
+    var off = (bar ? bar.getBoundingClientRect().bottom : 0) + 12;
+    try { root.scrollTo(0, Math.max(0, pg.getBoundingClientRect().top + root.scrollY - off)); } catch (e) { /* 無視 */ }
+  }
   function scrollToSkill(id) {
     var el = document.getElementById('skill-' + id);
     if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start' });
@@ -8513,6 +8658,10 @@ details.panel > p { margin-top: 8px; }
   function boot() {
     appEl = document.getElementById('app');
     appEl.addEventListener('click', onClick);
+    // 根拠をタップ：英文の区切り（role=button の span）は、キーボードの Enter・スペースでも選べる
+    appEl.addEventListener('keydown', function (ev) {
+      if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.closest && ev.target.closest('[data-act="ev-tap"]')) { ev.preventDefault(); onClick(ev); }
+    });
     appEl.addEventListener('submit', onPinSubmit);
     appEl.addEventListener('input', function (ev) {
       if (ev.target.id === 'profile-name') { state.profile.name = ev.target.value.trim(); sendCode = null; schedulePersist(); }
